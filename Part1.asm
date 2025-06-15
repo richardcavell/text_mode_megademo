@@ -12,60 +12,81 @@
 * Part of this code was written by Ciaran Anscomb
 * You can visit his website at https://6809.org.uk
 
-DISPL		EQU	$B99C
-SAM_TY_SET	EQU	$FFDF
-SAM_TY_CLEAR	EQU	$FFDE
-
-* The following number is found through experimentation
+* This starting location is found through experimentation
 
 		ORG $3000
 
+**********************
 * Zero the DP register
+**********************
 
 	clrb
-	tfr b, dp
+	tfr	b, dp
 
+*******************
 * Check for 64K RAM
+*******************
 
-	orcc  #0b00010000	; Switch off IRQ interrupts for now
+	lbsr	switch_off_irq		; Switch off IRQ interrupts for now
+	lbsr	set_sam_ty		; Switch ROM out, upper 32K of RAM in
 
-	lda   #$ff
-	sta   SAM_TY_SET	; Switch ROM out, upper 32K of RAM in
+	; This code was modified from some code written by Ciaran Anscomb
 
-* This code was modified from some code written by Ciaran Anscomb
-
-	lda $0062
-	ldb $8063
+	lda	$0062
+	ldb	$8063
 	coma
 	comb
-	std $8062
-	cmpd $8062
-	lbne ram_not_found
-	cmpd $0062
-	lbeq ram_not_found
+	std	$8062
+	cmpd	$8062
+	bne	ram_not_found
+	cmpd	$0062
+	beq	ram_not_found
 
-* End code written by Ciaran Anscomb
+	; End code written by Ciaran Anscomb
 
-	lda   #$ff
-	sta   SAM_TY_CLEAR	; Switch upper 32K of RAM out, ROM back in
+	lbsr	clear_sam_ty		; Switch upper 32K RAM out, ROM in
+	lbsr	switch_on_irq		; Switch IRQ interrupts back on
+	bra	ram_check_end
 
-	andcc #0b11101111	; Switch interrupts back on
+ram_not_found:
+	lbsr	clear_sam_ty
+	lbsr	switch_on_irq
 
+	ldx	#ram_error_message
+	lbsr	display_message
+
+	lda	#$01
+	rts				; Return to the operating system
+
+ram_error_message:
+	FCV	"YOU"
+	FCB	$8f			; blank space
+	FCV	"NEED"
+	FCB	$8f
+	FCB	54			; '6'
+	FCB	52			; '4'
+	FCV	"K"
+	FCB	$8f
+	FCV	"RAM"
+	FCB	$8f
+	FCV	"FOR"
+	FCB	$8f
+	FCV	"THIS"
+	FCB	$8f
+	FCV	"DEMO"
+	FCB	$22			; A quotation mark ends the error message
+
+ram_check_end:
+
+*************************
 * Install our IRQ handler
+*************************
 
-IRQ_HANDLER	EQU	$10d
+	lbsr	install_irq_service_routine
 
-	orcc  #0b00010000	; Switch off interrupts for now
-
-	ldy IRQ_HANDLER		; Load the current vector into y
-	sty decb_irq_service_routine	; We will call it at the end of our own handler
-
-	ldx #irq_service_routine
-	stx IRQ_HANDLER		; Our own interrupt service routine is installed
-
-	andcc #0b11101111	; Switch interrupts back on
-
+******************************
 * Turn on 6-bit audio circuits
+******************************
 
 	lbsr turn_6bit_audio_on	; Turn on our audio circuits
 
@@ -223,7 +244,142 @@ title_screen_text:
 line_counts:
 	RZB 16			; 16 zeroes.
 
-* This routine clears the first text buffer
+*****************************************************************************
+*	Subroutines
+*****************************************************************************
+
+* Assume that no registers are preserved
+
+*********************************
+* Switch IRQ interrupts on or off
+*********************************
+
+switch_off_irq:
+
+	orcc	#0b00010000	; Switch off IRQ interrupts
+	rts
+
+switch_on_irq:
+
+	andcc	#0b11101111	; Switch interrupts back on
+	rts
+
+**********************************
+* Switch SAM TY register on or off
+**********************************
+
+SAM_TY_SET	EQU	$FFDF
+SAM_TY_CLEAR	EQU	$FFDE
+
+set_sam_ty:
+
+	lda	#$ff
+	sta	SAM_TY_SET	; Switch ROM out, upper 32K of RAM in
+	rts
+
+clear_sam_ty:
+
+	lda	#$00
+	sta	SAM_TY_CLEAR	; Switch upper 32K of RAM out, ROM back in
+	rts
+
+************************************************************
+* Display a message using the operating system
+*
+* X = string containing the message (ended by double quotes)
+************************************************************
+
+DISPL		EQU	$B99C
+
+display_message:
+
+	clr	$6F			; Output to the screen
+	leax	-1,x			; The first character is skipped over
+	JSR	DISPL			; Put the string to the screen
+	rts
+
+*********************************
+* Install our IRQ service routine
+*********************************
+
+IRQ_HANDLER	EQU	$10d
+
+install_irq_service_routine:
+
+	bsr	switch_off_irq		; Switch off interrupts for now
+
+	ldy	IRQ_HANDLER			; Load the current vector into y
+	sty	decb_irq_service_routine	; We will call it at the end of our own handler
+
+	ldx	#irq_service_routine
+	stx	IRQ_HANDLER		; Our own interrupt service routine is installed
+
+	bsr	switch_on_irq		; Switch interrupts back on
+
+	rts
+
+**********************
+* Our IRQ handler
+**********************
+
+vblank_happened:
+	FCB	0
+
+irq_service_routine:
+	lda	#1
+	sta	vblank_happened
+
+					; In the interests of making our IRQ handler run as fast
+					; as possible, the routine assumes that
+					; decb_irq_service_routine has been correctly initialized
+
+	jmp	[decb_irq_service_routine]
+
+decb_irq_service_routine:
+	RZB 2
+
+*********************
+* Turn 6-bit audio on
+*********************
+
+AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
+DDRA		EQU	$FF20
+PIA2_CRA	EQU	$FF21
+AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
+
+turn_6bit_audio_on:
+
+* This code was modified from code written by Trey Tomes
+
+	lda	AUDIO_PORT_ON
+	ora	#0b00001000
+	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
+
+* End code modified from code written by Trey Tomes
+
+* This code was written by other people (see the top of this file)
+
+	ldb PIA2_CRA
+	andb #0b11111011
+	stb PIA2_CRA
+
+	lda #0b11111100
+	sta DDRA
+
+	orb #0b00000100
+	stb PIA2_CRA
+
+* End of code written by other people
+
+	rts
+
+
+
+
+
+
+* Clear the screen
+
 clr:
 	ldx #TEXTBUF
 	lda #$60
@@ -248,18 +404,6 @@ get_random:
 	std SEED
 	rts
 
-vblank_happened:
-	FCB 0
-
-irq_service_routine:
-	lda #1
-	sta vblank_happened
-
-	jmp [decb_irq_service_routine]
-
-decb_irq_service_routine:
-	RZB 2
-
 wait_for_vblank:
 	clra
 	sta  vblank_happened	; Put a zero in vblank_happened
@@ -269,36 +413,6 @@ wait_loop:
 	beq  wait_loop
 
 	rts			; ...return to caller
-
-turn_6bit_audio_on:
-AUDIO_PORT_ON	EQU $FF23		; Port Enable Audio (bit 3)
-PIA2_CRA	EQU $FF21
-DDRA		EQU $FF20
-AUDIO_PORT  	EQU $FF20		; (top 6 bits)
-
-* This code was modified from code written by Trey Tomes.
-
-	lda AUDIO_PORT_ON
-	ora #0b00001000
-	sta AUDIO_PORT_ON	; Turn on 6-bit audio
-
-* End code written by or modified from code written by Trey Tomes
-
-* This code was written by other people.
-
-	ldb PIA2_CRA
-	andb #0b11111011
-	stb PIA2_CRA
-
-	lda #0b11111100
-	sta DDRA
-
-	orb #0b00000100
-	stb PIA2_CRA
-
-* End of code written by other people
-
-	rts
 
 * This plays any sound sample
 * X = The sound data
@@ -325,37 +439,6 @@ send_value:
 
 sound_bytes:
 	RZB 2
-
-ram_not_found:
-	lda   #$ff
-	sta   SAM_TY_CLEAR	; Switch ROM back in
-
-	andcc #0b11101111	; Switch interrupts back on
-
-	clr $6F			; Output to the screen
-	ldx #ram_error_message-1
-	JSR DISPL		; Put the string to the screen
-	rts
-
-ram_error_message:
-	FCV "YOU"
-	FCB $8f
-	FCV "NEED"
-	FCB $8f
-	FCB 54			;64k
-	FCB 52
-	FCV "K"
-	FCB $8f
-	FCV "RAM"
-	FCB $8f
-	FCV "FOR"
-	FCB $8f
-	FCV "THIS"
-	FCB $8f
-	FCV "DEMO"
-	FCB $22			; A quotation mark ends the string
-
-ram_error_end:
 
 * Brings text onto the screen using an animation
 * X = string to print

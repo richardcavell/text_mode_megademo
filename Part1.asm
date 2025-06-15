@@ -13,7 +13,7 @@
 * You can visit his website at https://6809.org.uk
 
 * This starting location is found through experimentation with mame -debug
-* This appears to be unused memory
+* and the CLEAR command
 
 		ORG $1600
 
@@ -180,7 +180,8 @@ find_non_space:
 
 	pshs	b,x
 	ldx	#pluck_sound
-	ldd	#(pluck_sound_end-pluck_sound)
+	ldy	#pluck_sound_end
+	lda	#1
 	lbsr	play_sound			; Play the pluck noise
 	puls	b,x
 
@@ -240,8 +241,12 @@ find_zero:
 				; If yes, then fall through to the next section
 
 	ldx	#title_sound
-	ldd	#(title_sound_end-title_sound)
-	lbsr	play_sound			; Play the pluck noise
+	ldy	#title_sound_end
+	ldu	#title_sound+4000
+	ldu	#title_sound+5000
+	lda	#8
+	ldb	#5
+	lbsr	play_repeating_sound	; Play the title sound
 
 end:
 	bra end
@@ -434,36 +439,105 @@ get_random:
 	std	SEED
 	rts
 
-*************************
+*******************************
 * Play a sound sample
 *
 * Inputs:
 * X = The sound data
-* D = The length in bytes
-*************************
+* Y = The end of the sound data
+* A = The delay between samples
+*******************************
 
 play_sound:
 	bsr	switch_off_irq_and_firq
 
-	cmpd	#0
-	beq	send_values_finished	; If we have no data, exit
+	pshs	y
 
 send_value:
-	lda	,x+
-	nop
-	nop
-	nop
-	nop
-	sta	AUDIO_PORT
-	subd	#1
+	cmpx	,s			; Compare X with Y
 
-	bne	send_value
+	beq	send_values_finished	; If we have no data, exit
+
+	ldb	,x+
+	stb	AUDIO_PORT
+
+	tfr	a,b
+
+sound_delay_loop:
+	tstb
+	beq	send_value		; Have we completed the delay?
+
+	decb				; If not, then wait some more
+	bra	sound_delay_loop
 
 send_values_finished:
+
+	puls	y
 
 	lbsr	switch_on_irq_and_firq
 
 	rts
+
+***********************************
+* Play a repeating sound sample
+*
+* Inputs:
+* X = The sound data
+* Y = The end of the sound data
+* U The repeat start point, then
+* (Pushed onto S)
+*   The repeat end point
+* A = The delay between samples
+* B = The number of times to repeat
+***********************************
+
+play_repeating_sound:
+        lbsr	switch_off_irq_and_firq
+
+	pshs	y			; ,s points to the end of the sound data
+
+	tfr	d,y			; We use Y to save the values in A/B
+
+send_rpt_value:
+	cmpx	,s			; Compare X with Y
+	beq	sound_rpt_finished
+
+	cmpx	,u			; Have we hit the repeat point?
+
+	tfr	y,d			; Does not affect condition codes
+
+	beq	send_rpt_values_finished	; If we have no more data, exit
+
+	pshs	b
+        ldb     ,x+
+        stb     AUDIO_PORT
+	puls	b
+
+sound_rpt_delay_loop:
+        tsta
+        beq     send_rpt_value		; Have we completed the delay?
+
+        deca				; If not, then wait some more
+        bra     sound_rpt_delay_loop
+
+send_rpt_values_finished:
+	tstb
+	beq	sound_rpt_finished
+
+	decb
+	ldx	2,s			; X goes back to the repeat point
+	bra	send_rpt_value
+
+sound_rpt_finished:
+	leas	2,s			; Unwind the stack and throw away
+					;   the value that was there
+					; The caller must undo the push to S
+					;   that they made
+
+	lbsr	switch_on_irq_and_firq
+
+	rts
+
 
 ******************
 * Clear the screen

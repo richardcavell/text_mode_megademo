@@ -12,9 +12,10 @@
 * Part of this code was written by Ciaran Anscomb
 * You can visit his website at https://6809.org.uk
 
-* This starting location is found through experimentation
+* This starting location is found through experimentation with mame -debug
+* This appears to be unused memory
 
-		ORG $3000
+		ORG $1600
 
 **********************
 * Zero the DP register
@@ -218,25 +219,29 @@ screen_is_empty:
 * Title screen
 **************
 title_screen:
-	ldy #title_screen_text
+	ldy	#title_screen_text
 
 print_text_loop:
-	lda ,y+
-	ldb ,y+
-	tfr y,x
+	lda	,y+
+	ldb	,y+
+	tfr	y,x
 
-	pshs y
-	lbsr text_appears
-	puls y
+	pshs	y
+	lbsr	text_appears
+	puls	y
 
 find_zero:
-	tst ,y+
-	bne find_zero
+	tst	,y+
+	bne	find_zero
 
-	lda #255		; This marks the end of the text lines
-	cmpa ,y			; Is that what we have?
-	bne print_text_loop	; If not, then print the next line
+	lda	#255		; This marks the end of the text lines
+	cmpa	,y		; Is that what we have?
+	bne	print_text_loop	; If not, then print the next line
 				; If yes, then fall through to the next section
+
+	ldx	#title_sound
+	ldd	#(title_sound_end-title_sound)
+	lbsr	play_sound			; Play the pluck noise
 
 end:
 	bra end
@@ -440,36 +445,19 @@ get_random:
 play_sound:
 	bsr	switch_off_irq_and_firq
 
-	tfr	d, y
-
-send_value:
-	cmpy	#0
+	cmpd	#0
 	beq	send_values_finished	; If we have no data, exit
 
-	tfr	y,d
-	andb	#0b00000011		; Get the last two bits
-	beq	send_values		; If they're both 0, start doing it
-					;  4 samples at a time
-
+send_value:
 	lda	,x+
+	nop
+	nop
+	nop
+	nop
 	sta	AUDIO_PORT
-	leay	-1,y
+	subd	#1
 
-	bra	send_value
-
-send_values:			; Go 4 samples at a time
-
-	lda	,x+
-	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
-	lda	,x+
-	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
-	lda	,x+
-	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
-	lda	,x+
-	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
-
-	leay	-4,y
-	bne	send_values
+	bne	send_value
 
 send_values_finished:
 
@@ -566,6 +554,10 @@ test_area:
 pluck_sound:
 	INCLUDEBIN "Pluck.raw"
 pluck_sound_end:
+
+title_sound:
+	INCLUDEBIN "Title.raw"
+title_sound_end:
 
 * We have two text buffers, to enable double buffering
 * Memory locations 1024-1535 and 1536-2047

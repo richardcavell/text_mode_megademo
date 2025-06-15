@@ -15,7 +15,7 @@
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
-		ORG $1600
+		ORG $1800
 
 **********************
 * Zero the DP register
@@ -235,19 +235,17 @@ find_zero:
 	tst	,y+
 	bne	find_zero
 
-	lda	#255		; This marks the end of the text lines
-	cmpa	,y		; Is that what we have?
-	bne	print_text_loop	; If not, then print the next line
-				; If yes, then fall through to the next section
+	lda	#255			; This marks the end of the text
+					;   lines
+	cmpa	,y			; Is that what we have?
+	bne	print_text_loop		; If not, then print the next line
+					; If yes, then fall through to the
+					;   next section
 
 	ldx	#title_sound		; Start of sound
 	ldy	#title_sound_end	; End of sound
-	ldu	#title_sound+5000	; End of repeated part
-	pshs	u
-	ldu	#title_sound+4000	; Start of repeated part
-	lda	#8			; Delay between samples
-	ldb	#15			; Number of times to repeat
-	lbsr	play_repeating_sound	; Play the title sound
+	lda	#8
+	lbsr	play_sound		; Play the title sound
 
 end:
 	bra end
@@ -491,49 +489,68 @@ send_values_finished:
 * A = The delay between samples
 * B = The number of times to repeat
 ***********************************
-
+	nop
 play_repeating_sound:
+
+	pshs	d			; Add 1 to the repeat end point
+	ldd	4,s
+	addd	#1
+	std	4,s
+	puls	d
+
+	pshs	y			; ,s is equal to y
+					; 4,s is equal to the repeat end point
+
         lbsr	switch_off_irq_and_firq
 
-	pshs	y			; ,s points to the end of the sound data
+play_repeating_sound_loop:
 
-	tfr	d,y			; We use Y to save the values in A/B
+	cmpx	,s
+	beq	play_repeating_sound_finished
 
-send_rpt_value:
-	cmpx	,s			; Compare X with Y
-	beq	sound_rpt_finished
-
-	cmpx	,u			; Have we hit the repeat point?
-
-	tfr	y,d			; Does not affect condition codes
-
-	beq	send_rpt_values_finished	; If we have no more data, exit
-
-	pshs	b
-        ldb     ,x+
-        stb     AUDIO_PORT
-	puls	b
-
-sound_rpt_delay_loop:
-        tsta
-        beq     send_rpt_value		; Have we completed the delay?
-
-        deca				; If not, then wait some more
-        bra     sound_rpt_delay_loop
-
-send_rpt_values_finished:
 	tstb
-	beq	sound_rpt_finished
+	beq	play_repeating_no_rpta
+
+	cmpx	4,s
+	bne	play_repeating_no_rptb
+
+	tfr	u,x			; Send the marker back to the
+					;   repeat start
 
 	decb
-	ldx	2,s			; X goes back to the repeat point
-	bra	send_rpt_value
 
-sound_rpt_finished:
-	leas	2,s			; Unwind the stack and throw away
-					;   the value that was there
-					; The caller must undo the push to S
-					;   that they made
+	bra play_repeating_no_rptb
+
+play_repeating_no_rpta:
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+
+play_repeating_no_rptb:
+
+	pshs	a
+	lda	,x+
+	sta	AUDIO_PORT		; Send the sample to the audio port
+	puls	a
+
+	pshs	a
+
+play_repeating_delay_loop:
+
+	deca
+	bne	play_repeating_delay_loop
+
+	puls	a
+
+	bra	play_repeating_sound_loop
+
+play_repeating_sound_finished:
+	leas	4,s			; Undo the pushes onto the stack
+					;   and throw away the values that
+					;   were there
 
 	lbsr	switch_on_irq_and_firq
 

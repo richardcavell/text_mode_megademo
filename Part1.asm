@@ -240,12 +240,13 @@ find_zero:
 	bne	print_text_loop	; If not, then print the next line
 				; If yes, then fall through to the next section
 
-	ldx	#title_sound
-	ldy	#title_sound_end
-	ldu	#title_sound+4000
-	ldu	#title_sound+5000
-	lda	#8
-	ldb	#5
+	ldx	#title_sound		; Start of sound
+	ldy	#title_sound_end	; End of sound
+	ldu	#title_sound+5000	; End of repeated part
+	pshs	u
+	ldu	#title_sound+4000	; Start of repeated part
+	lda	#8			; Delay between samples
+	ldb	#15			; Number of times to repeat
 	lbsr	play_repeating_sound	; Play the title sound
 
 end:

@@ -4,6 +4,7 @@ The sound Modelm.ogg came from here:
 https://commons.wikimedia.org/wiki/File:Modelm.ogg
 by Cpuwhiz13
 
-The sound Title music is part of:
-https://commons.wikimedia.org/wiki/File:Congratulations_and_Salutations_(Antti_Luode).mp3
-by Antti Luode
+The Title sound is part of:
+
+https://commons.wikimedia.org/wiki/File:Joy_To_The_World.ogg
+by Lowell Mason, Isaac Watts, U.S. Army Chorus

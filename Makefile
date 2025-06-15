@@ -1,6 +1,7 @@
 # Makefile
 # Part of Name of Demo by Richard Cavell
 # June 2025
+# v1.0
 
 DISK		=	NNDEMO.DSK
 BASIC_PART	=	DEMO.BAS
@@ -17,20 +18,24 @@ SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper
 
 # asm6809 is by Ciaran Anscomb
-ASM		=	asm6809 -v
+ASM		=	asm6809
+ASMFLAGS	=	-C -v
+
+# You can change this to your favorite C compiler
 CC		=	gcc
-CFLAGS		=	-std=c89 -Wall -Wextra -Werror -Wpedantic -fmax-errors=1
+CFLAGS		=	-std=c89 -Wpedantic -Wall -Wextra -Werror -O2
+CFLAGS		+=	-fmax-errors=1
 
 .DEFAULT: all
 
 .PHONY:	all clean disk help info mame mame-debug xroar
 
-all:	$(DISK) $(PART1) $(PART2) $(SOUND_STR) $(PLUCK_SOUND)
+all:	$(DISK) $(DISK_IMG) $(PART1) $(PART2) $(SOUND_STR) $(PLUCK_SOUND)
 disk:	$(DISK)
 
-$(DISK): $(BASIC_PART) $(PART1) $(PART2)
-	@echo "Compiling disk" $@
+$(DISK): $(DISK_IMG) $(BASIC_PART) $(PART1) $(PART2)
 	@rm -f -v $@
+	@echo "Compiling disk" $@
 	decb dskini $@ -3
 	decb copy $(BASIC_PART) -r -t $(DISK),$(BASIC_PART)
 	decb copy -2 -b -r $(PART1) $(DISK),$(PART1)
@@ -39,12 +44,12 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2)
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND)
 	@echo "Assembling" $@
-	$(ASM) -o $@ -C $<
+	$(ASM) $(ASMFLAGS) -o $@ $<
 	@echo "Done"
 
 $(PART2): $(PART2_SRC)
 	@echo "Assembling" $@
-	$(ASM) -o $@ -C $<
+	$(ASM) $(ASMFLAGS) -o $@ $<
 	@echo "Done"
 
 $(SOUND_STR): $(SOUND_STR_SRC)
@@ -66,12 +71,12 @@ $(PLUCK_SOUND): $(PLUCK_SOUND_UNS) $(SOUND_STR)
 help: info
 
 info:
-	@echo "This demo has no name yet"
+	@echo "This demo has no name yet v1.0"
 	@echo "by Richard Cavell"
 	@echo "make all"
 	@echo "make clean"
 	@echo "make disk"
-	@echo "make info"
+	@echo "make info"	# Also make help
 	@echo "make mame"
 	@echo "make mame-debug"
 	@echo "make xroar"

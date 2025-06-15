@@ -1,6 +1,7 @@
 Text mode demo
 by Richard Cavell
 Readme.txt
+v1.0
 June 2025
 
 The TRS-80 Color Computer was first sold in 1981. It has a MC6847 chip, that

@@ -84,96 +84,114 @@ ram_check_end:
 
 	lbsr	install_irq_service_routine
 
+*************************
+* Turn off the disk motor
+*************************
+
+	lbsr	turn_off_disk_motor
+
 ******************************
 * Turn on 6-bit audio circuits
 ******************************
 
-	lbsr turn_6bit_audio_on	; Turn on our audio circuits
+	lbsr	turn_6bit_audio_on
 
-* This is the text buffer we're using
-TEXTBUF		EQU	1024
-TEXTBUFSIZE	EQU	512
+***********************************************************
+* Pluck routine - make characters disappear from the screen
+***********************************************************
 
-	ldx #TEXTBUF
-	ldy #line_counts	; There are 16 of these
+TEXTBUF		EQU	$400		; We're not double-buffering
+TEXTBUFSIZE	EQU	$200		; so there's only one text screen
 
-count_chars:
-	ldb #32
+; First, count the number of characters on each line of the screen
+
+	ldx	#TEXTBUF
+	ldy	#line_counts		; There are 16 of these
+
+count_chars_on_one_line:
+	ldb	#32			; There are 32 characters per line
 
 test_char:
-	lda  ,x+
-	cmpa #$60		; Is it a space?
-	beq  space_char
+	lda	,x+
+	cmpa	#$60			; Is it a space?
+	beq	space_char
 
-	inc  ,y			; Count another non-space character
+	inc	,y			; Count another non-space character
 
 space_char:
 	decb
-	bne test_char
+	bne	test_char
 
-	cmpx #TEXTBUF+TEXTBUFSIZE
-	beq count_chars_finished
+	cmpx	#TEXTBUF+TEXTBUFSIZE
+	beq	count_chars_end
 
-	leay 1,y		; Start counting the next line
-	bra count_chars
+	leay	1,y			; Start counting the next line
+	bra	count_chars_on_one_line
 
-count_chars_finished:
+line_counts:
+	RZB 16			; 16 zeroes
+line_counts_end:
+
+count_chars_end:
+
+; Now, check to see if the screen is empty yet
 
 check_text_screen_empty:
-	ldy #line_counts
+	ldy	#line_counts
 
 test_line:
-	tst  ,y+
-	bne  not_empty
-	cmpy #line_counts+16
-	bne test_line
+	tst	,y+
+	bne	not_empty
+	cmpy	#line_counts_end
+	bne	test_line
 
 empty:
-	bra screen_is_empty
+	bra	screen_is_empty	; Go to the next piece of this demo
 
 not_empty:
-	ldy #line_counts
 
 choose_line:
-	lbsr get_random 	; Get a random number in D
+	lbsr	get_random 	; Get a random number in D
+	ldy	#line_counts
 
 	clra
-	andb #0b00001111	; Make it between 0 and 15
+	andb	#0b00001111	; Make it between 0 and 15
 
-	tst b,y			; If there are no more characters on this line
-	beq choose_line		; choose a different one
+	tst	b,y		; If there are no more characters on this line
+	beq	choose_line	; choose a different one
 
-	dec b,y			; There'll be one less character now
+	dec	b,y		; There'll be one less character now
 
-	lda #32
+	lda	#32
 	mul 			; Multiply b by 32 and put the answer in D
 
-	ldx #TEXTBUF+32		; Make X point to the end of the line
-	leax d,x		; that we will pluck from
+	ldx	#TEXTBUF+32	; Make X point to the end of the line
+	leax	d,x		; that we will pluck from
 
-	lda #$60		; Space
+	lda	#$60		; Green box (space)
 
 find_non_space:
-	cmpa ,-x		; Go backwards until we find a non-space
-	beq find_non_space
+	cmpa	,-x		; Go backwards until we find a non-space
+	beq	find_non_space
 
-	ldb ,x			; Save the character in B
+				; X = position of the character we're plucking
+	ldb	,x		; B = the character
 
-	pshs b,x,y
-	ldx #pluck_sound	; Play the pluck noise
-	ldy #pluck_sound_end
-	lbsr play_sound
-	puls b,x,y
+	pshs	b,x
+	ldx	#pluck_sound
+	ldd	#(pluck_sound_end-pluck_sound)
+	lbsr	play_sound			; Play the pluck noise
+	puls	b,x
 
 POLCAT	EQU	$A000		; ROM routine
 
 pluck_loop:
-	jsr [POLCAT]		; Is the spacebar being pressed?
-	cmpa #' '
-	bne do_pluck		; No, then keep plucking
+	jsr	[POLCAT]	; Is the spacebar being pressed?
+	cmpa	#' '
+	bne	do_pluck	; No, then pluck the character
 
-	lbsr clr		; Yes, then clear the screen
-	bra screen_is_empty	; And go to the next part
+	lbsr	clr		; Yes, then clear the screen
+	bra	screen_is_empty	; And go to the next part
 
 do_pluck:
 	lbsr wait_for_vblank	; This is how we time
@@ -241,9 +259,6 @@ title_screen_text:
 	FCB 0
 	FCB 255		; The end
 
-line_counts:
-	RZB 16			; 16 zeroes.
-
 *****************************************************************************
 *	Subroutines
 *****************************************************************************
@@ -261,7 +276,32 @@ switch_off_irq:
 
 switch_on_irq:
 
-	andcc	#0b11101111	; Switch interrupts back on
+	andcc	#0b11101111	; Switch IRQ interrupts back on
+	rts
+
+******************************************
+* Switch IRQ and FIRQ interrupts on or off
+******************************************
+
+switch_off_irq_and_firq:
+
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+	rts
+
+switch_on_irq_and_firq:
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
+	rts
+
+*********************
+* Turn off disk motor
+*********************
+
+DSKREG	EQU	$FF40
+
+turn_off_disk_motor:
+
+	clr	DSKREG		; Turn off disk motor
 	rts
 
 **********************************
@@ -286,6 +326,7 @@ clear_sam_ty:
 ************************************************************
 * Display a message using the operating system
 *
+* Input:
 * X = string containing the message (ended by double quotes)
 ************************************************************
 
@@ -329,9 +370,9 @@ irq_service_routine:
 	lda	#1
 	sta	vblank_happened
 
-					; In the interests of making our IRQ handler run as fast
-					; as possible, the routine assumes that
-					; decb_irq_service_routine has been correctly initialized
+					; In the interests of making our IRQ handler run fast,
+					; the routine assumes that decb_irq_service_routine
+					; has been correctly initialized
 
 	jmp	[decb_irq_service_routine]
 
@@ -359,86 +400,116 @@ turn_6bit_audio_on:
 
 * This code was written by other people (see the top of this file)
 
-	ldb PIA2_CRA
-	andb #0b11111011
-	stb PIA2_CRA
+	ldb	PIA2_CRA
+	andb	#0b11111011
+	stb	PIA2_CRA
 
-	lda #0b11111100
-	sta DDRA
+	lda	#0b11111100
+	sta	DDRA
 
-	orb #0b00000100
-	stb PIA2_CRA
+	orb	#0b00000100
+	stb	PIA2_CRA
 
 * End of code written by other people
 
 	rts
 
-
-
-
-
-
-* Clear the screen
-
-clr:
-	ldx #TEXTBUF
-	lda #$60
-
-clear_char:
-	sta ,x+
-
-	cmpx #TEXTBUF+TEXTBUFSIZE
-	bne clear_char
-	rts
+**********************************************************
+* Returns a random-ish number from 0...65535
+*
+* Output:
+* D = the random number
+**********************************************************
 
 SEED:
-	FCB 0xBE
-	FCB 0xEF
-
-* Returns a random-ish number from 0...65535 in register D
+	FCB	0xBE
+	FCB	0xEF
 
 get_random:
-	ldd SEED
+	ldd	SEED
 	mul
-	addd #3037
-	std SEED
+	addd	#3037
+	std	SEED
 	rts
 
-wait_for_vblank:
-	clra
-	sta  vblank_happened	; Put a zero in vblank_happened
-
-wait_loop:
-	tst  vblank_happened	; As soon as a 1 appears...
-	beq  wait_loop
-
-	rts			; ...return to caller
-
-* This plays any sound sample
+*************************
+* Play a sound sample
+*
+* Inputs:
 * X = The sound data
-* Y = The end of the sound data
+* D = The length in bytes
+*************************
 
 play_sound:
-	orcc #0b01010000	; Turn off IRQ and FIRQ
-	clr  $ff40		; Turn off disk motor
+	bsr	switch_off_irq_and_firq
 
-	stx sound_bytes		; X is the start of the sample
-	tfr y,d
-	subd sound_bytes	; D is the length of our sample
+	tfr	d, y
 
 send_value:
-	lda ,x+
-	sta AUDIO_PORT		; Poke the relevant value into Audio Port
+	cmpy	#0
+	beq	send_values_finished	; If we have no data, exit
 
-	subd #1
-	blo  send_value
+	tfr	y,d
+	andb	#0b00000011		; Get the last two bits
+	beq	send_values		; If they're both 0, start doing it
+					;  4 samples at a time
 
-	andcc #0b10101111	; Turn IRQ and FIRQ back on
+	lda	,x+
+	sta	AUDIO_PORT
+	leay	-1,y
+
+	bra	send_value
+
+send_values:			; Go 4 samples at a time
+
+	lda	,x+
+	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
+	lda	,x+
+	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
+	lda	,x+
+	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
+	lda	,x+
+	sta	AUDIO_PORT	; Poke the raw sound data into the Audio Port
+
+	leay	-4,y
+	bne	send_values
+
+send_values_finished:
+
+	lbsr	switch_on_irq_and_firq
 
 	rts
 
-sound_bytes:
-	RZB 2
+******************
+* Clear the screen
+******************
+
+clr:
+	ldx	#TEXTBUF
+	ldd	#$6060			; Two green boxes
+
+clear_char:
+	std	,x+			; Might as well do 8 bytes at a time
+	std	,x+
+	std	,x+
+	std	,x+
+
+	cmpx	#TEXTBUF+TEXTBUFSIZE	; Finish in the lower-right corner
+	bne	clear_char
+	rts
+
+*****************
+* Wait for VBlank
+*****************
+
+wait_for_vblank:
+	clr	vblank_happened		; Put a zero in vblank_happened
+
+wait_loop:
+	tst	vblank_happened		; As soon as a 1 appears...
+	beq	wait_loop
+
+	rts				; ...return to caller
 
 * Brings text onto the screen using an animation
 * X = string to print
@@ -460,7 +531,7 @@ buff_box:
 	sta ,x			; Put it on the screen
 
 	pshs b,x,u
-	lbsr wait_for_vblank
+	bsr wait_for_vblank
 	puls b,x,u
 
 	tstb			; If non-zero, we are not printing out

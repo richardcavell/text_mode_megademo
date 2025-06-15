@@ -242,10 +242,21 @@ find_zero:
 					; If yes, then fall through to the
 					;   next section
 
-	ldx	#title_sound		; Start of sound
-	ldy	#title_sound_end	; End of sound
+	ldx	#rjfc_presents_sound		; Start of sound
+	ldy	#rjfc_presents_sound_end	; End of sound
 	lda	#8
-	lbsr	play_sound		; Play the title sound
+	lbsr	play_sound		; Play the sound
+
+	ldd	#1900
+
+title_delay:				; Pause for a fraction of a second
+	subd	#1
+	bne	title_delay
+
+	ldx	#text_mode_demo_sound		; Start of sound
+	ldy	#text_mode_demo_sound_end	; End of sound
+	lda	#8
+	lbsr	play_sound		; Play the sound
 
 end:
 	bra end
@@ -644,12 +655,16 @@ test_area:
 	RZB 2
 
 pluck_sound:
-	INCLUDEBIN "Pluck.raw"
+	INCLUDEBIN "Sounds/Pluck.raw"
 pluck_sound_end:
 
-title_sound:
-	INCLUDEBIN "Title.raw"
-title_sound_end:
+rjfc_presents_sound:
+	INCLUDEBIN "Sounds/RJFC_presents.raw"
+rjfc_presents_sound_end:
+
+text_mode_demo_sound:
+	INCLUDEBIN "Sounds/text_mode_demo.raw"
+text_mode_demo_sound_end:
 
 * We have two text buffers, to enable double buffering
 * Memory locations 1024-1535 and 1536-2047

@@ -11,13 +11,17 @@ PART2		=	PART2.BIN
 PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 
-PLUCK_SOUND	=	Pluck.raw
+PLUCK_SOUND	=	Sounds/Pluck.raw
 PLUCK_SOUND_SRC	=	Sounds/Modelm.wav
-PLUCK_SOUND_UNS	=	Pluck_unstripped.raw
+PLUCK_SOUND_UNS	=	Sounds/Modelm_unstripped.raw
 
-TITLE_SOUND	=	Title.raw
-TITLE_SOUND_SRC	=	Sounds/Title.wav
-TITLE_SOUND_UNS	=	Title_unstripped.raw
+RJFC_SOUND	=	Sounds/RJFC_presents.raw
+RJFC_SOUND_SRC	=	Sounds/RJFC_presents.wav
+RJFC_SOUND_UNS	=	Sounds/RJFC_presents_unstripped.raw
+
+TMD_SOUND	=	Sounds/text_mode_demo.raw
+TMD_SOUND_SRC	=	Sounds/textmodedemo.wav
+TMD_SOUND_UNS	=	Sounds/textmodedemo_unstripped.raw
 
 SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper
@@ -36,7 +40,7 @@ CFLAGS		+=	-fmax-errors=1
 .PHONY:	all clean disk help info mame mame-debug xroar
 
 all:	$(DISK) $(DISK_IMG) $(PART1) $(PART2) $(SOUND_STR)
-all:	$(PLUCK_SOUND) $(TITLE_SOUND)
+all:	$(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
 disk:	$(DISK)
 
 $(DISK): $(DISK_IMG) $(BASIC_PART) $(PART1) $(PART2)
@@ -48,7 +52,7 @@ $(DISK): $(DISK_IMG) $(BASIC_PART) $(PART1) $(PART2)
 	decb copy -2 -b -r $(PART2) $(DISK),$(PART2)
 	@echo "Done"
 
-$(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(TITLE_SOUND)
+$(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
 	@echo "Assembling" $@
 	$(ASM) $(ASMFLAGS) -o $@ $<
 	@echo "Done"
@@ -74,13 +78,24 @@ $(PLUCK_SOUND): $(PLUCK_SOUND_UNS) $(SOUND_STR)
 	./$(SOUND_STR) $< $@
 	@echo "Done"
 
-$(TITLE_SOUND_UNS): $(TITLE_SOUND_SRC)
+$(RJFC_SOUND_UNS): $(RJFC_SOUND_SRC)
 	@rm -v -f $@
 	@echo "Resampling" $@
 	ffmpeg -i $< -v warning -af 'aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular' -f u8 -c:a pcm_u8 $@
 	@echo "Done"
 
-$(TITLE_SOUND): $(TITLE_SOUND_UNS) $(SOUND_STR)
+$(RJFC_SOUND): $(RJFC_SOUND_UNS) $(SOUND_STR)
+	@echo "Soundstripping" $@
+	./$(SOUND_STR) $< $@
+	@echo "Done"
+
+$(TMD_SOUND_UNS): $(TMD_SOUND_SRC)
+	@rm -v -f $@
+	@echo "Resampling" $@
+	ffmpeg -i $< -v warning -af 'aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular' -f u8 -c:a pcm_u8 $@
+	@echo "Done"
+
+$(TMD_SOUND): $(TMD_SOUND_UNS) $(SOUND_STR)
 	@echo "Soundstripping" $@
 	./$(SOUND_STR) $< $@
 	@echo "Done"
@@ -101,7 +116,8 @@ info:
 clean:
 	@rm -f -v $(DISK) $(PART1) $(PART2) $(SOUND_STR)
 	@rm -f -v $(PLUCK_SOUND_UNS) $(PLUCK_SOUND)
-	@rm -f -v $(TITLE_SOUND_UNS) $(TITLE_SOUND)
+	@rm -f -v $(RJFC_SOUND_UNS) $(RJFC_SOUND)
+	@rm -f -v $(TMD_SOUND_UNS) $(TMD_SOUND)
 
 mame: $(DISK)
 	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"

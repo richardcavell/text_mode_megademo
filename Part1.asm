@@ -194,32 +194,29 @@ pluck_loop:
 	bra	screen_is_empty	; And go to the next part
 
 do_pluck:
-	lbsr wait_for_vblank	; This is how we time
+	lbsr	wait_for_vblank	; This is how we time
 
-	lda #$60
-	sta ,x+			; Replace it with a space
+	lda	#$60
+	sta	,x+		; Replace it with a space
 
-	tfr d,y			; Save the character in lower byte of Y
-	tfr x,d
-	andb #0b00011111	; Is the address divisible by 32?
+	tfr	d,y		; Save the character in the lower byte of Y
+	tfr	x,d
+	andb	#0b00011111	; Is the address divisible by 32?
 
-	bne move_character	; No, keep shifting it
-
-				; Yes, fallthrough because we've reached the right
-				;   side of the screen
-
-	bra check_text_screen_empty	; Go back and start again
+	beq	check_text_screen_empty	; Yes, then we have reached the right side
+				; of the screen, so start another pluck
 
 move_character:
-	tfr y,d			; Get the character being saved back in B
+	tfr	y,d		; Get the character being saved back in B
 
-	stb ,x			; Put the character one position to the right
-	bra pluck_loop
+	stb	,x		; Put the character one position to the right
+	bra	pluck_loop
 
 screen_is_empty:
 
-	nop
-
+**************
+* Title screen
+**************
 title_screen:
 	ldy #title_screen_text
 

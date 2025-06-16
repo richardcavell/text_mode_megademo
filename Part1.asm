@@ -292,6 +292,24 @@ find_zero:
 skip_title_screen:		; If space was pressed
 	lbsr	clear_screen	; Just clear the screen
 
+**************
+* Create a dot
+**************
+
+	ldx	#TEXTBUF + 8 * 32 + 16	; in the middle of the screen
+
+	lda	#'*'+64		; Non-inverted asterisk
+	sta	,x
+
+	ldb	#10
+
+dot_wait:
+	pshs	b
+	lbsr	wait_for_vblank
+	puls	b
+	decb
+	bne	dot_wait
+
 end:
 	rts
 
@@ -1067,9 +1085,29 @@ clear_loop:
 
 	rts
 
+******************************************************
+* sine function
+*
+* Input:
+* A = angle (unsigned) (256 is a complete circle)
+*
+* Output:
+* A = sin of angle (signed byte between -127 and +127)
+******************************************************
+
+sin:
+	ldx	#sin_table
+	lda	a,x
+
+	rts
+
 *************************************
 * Here is our raw data for our sounds
 *************************************
+
+sin_table:
+	INCLUDEBIN "Sin_table"
+sin_table_end:
 
 flash_screen_storage:			; Use the area of memory reserved for
 					; the pluck sound, because we're not

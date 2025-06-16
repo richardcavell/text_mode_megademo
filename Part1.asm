@@ -188,12 +188,14 @@ find_non_space:
 POLCAT	EQU	$A000		; ROM routine
 
 pluck_loop:
-	jsr	[POLCAT]	; Is the spacebar being pressed?
-	cmpa	#' '
-	bne	do_pluck	; No, then pluck the character
+	pshs	b,x
+	jsr	[POLCAT]
+	cmpa	#' '		; Check for space bar being pressed
+	puls	b,x		; Does not affect CCs
+	bne	do_pluck	; If not, then continue plucking
 
-	lbsr	clr		; Yes, then clear the screen
-	bra	screen_is_empty	; And go to the next part
+	lbsr	clr		; If so, clear the screen
+	bra	screen_is_empty	; and skip this section
 
 do_pluck:
 	lbsr	wait_for_vblank	; This is how we time
@@ -219,6 +221,7 @@ screen_is_empty:
 **************
 * Title screen
 **************
+
 title_screen:
 	ldy	#title_screen_text
 
@@ -285,6 +288,9 @@ find_zero:
 
 	lda	#4
 	lbsr	drop_screen_content
+
+skip_title_screen:		; If space was pressed
+	lbsr	clr		; Just clear the screen
 
 end:
 	rts
@@ -626,6 +632,25 @@ wait_loop:
 
 	rts				; ...return to caller
 
+*****************************
+* Is space bar being pressed?
+*
+* Inputs: None
+*****************************
+
+check_space:
+	pshs	a,b,x,y,u		; Save all registers
+	jsr	[POLCAT]		; A ROM routine
+	cmpa	#' '
+	puls	a,b,x,y,u		; Does not affect CCs
+	bne	check_space_return
+
+	leas	4,s			; Remove the return addresses
+	lbra	skip_title_screen	; address from the stack
+
+check_space_return:
+	rts
+
 ************************************************
 * Brings text onto the screen using an animation
 * X = string to print
@@ -643,9 +668,15 @@ text_appears:
 	puls	b		; B is the character position to start
 				;   printing the string
 
+	nop
+	nop
+	nop
+
 buff_box:
 	lda	#$cf		; A buff box
 	sta	,x		; Put it on the screen
+
+	lbsr	check_space	; Space bar skips this section
 
 	pshs	b,x,u
 	bsr	wait_for_vblank
@@ -705,6 +736,8 @@ encase_text:
 				; and fallthrough
 
 encase_text_loop:
+	lbsr	check_space	; Space bar exits this
+
 	pshs	b,x
 	bsr	wait_for_vblank	; Start on the next frame
 	puls	b,x
@@ -802,6 +835,8 @@ flash_chars_loop:
 	bsr	flash_chars_white
 	puls	b,x
 
+	lbsr	check_space
+
 	pshs	b,x
 	lbsr	wait_for_vblank
 	puls	b,x
@@ -809,6 +844,8 @@ flash_chars_loop:
 	pshs	b,x
 	bsr	restore_chars
 	puls	b,x
+
+	lbsr	check_space
 
 	pshs	b,x
 	lbsr	wait_for_vblank
@@ -891,6 +928,8 @@ flash_screen_copy_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_copy_loop
 
+	lbsr	check_space
+
 	lbsr	wait_for_vblank
 
 	ldx	#TEXTBUF
@@ -905,7 +944,10 @@ flash_screen_white_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_white_loop
 
+	lbsr	check_space
 	lbsr	wait_for_vblank
+
+	lbsr	check_space
 	lbsr	wait_for_vblank
 
 	ldx	#TEXTBUF
@@ -924,7 +966,9 @@ flash_screen_restore_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_restore_loop
 
+	lbsr	check_space
 	lbsr	wait_for_vblank
+	lbsr	check_space
 	lbsr	wait_for_vblank
 
 	rts
@@ -935,10 +979,6 @@ flash_screen_restore_loop:
 * Inputs:
 * A = starting line
 ********************************
-
-	nop
-	nop
-	nop
 
 drop_screen_content:
 	pshs	a
@@ -960,6 +1000,11 @@ drop_screen_content:
 	bsr	clear_line		; Clear the top line
 	puls	a
 
+	lbsr	check_space
+	pshs	a
+	lbsr	wait_for_vblank
+	puls	a
+	lbsr	check_space
 	pshs	a
 	lbsr	wait_for_vblank
 	puls	a

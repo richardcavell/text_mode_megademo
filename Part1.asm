@@ -242,24 +242,21 @@ find_zero:
 					; If yes, then fall through to the
 					;   next section
 
-	ldx	#rjfc_presents_sound		; Start of sound
-	ldy	#rjfc_presents_sound_end	; End of sound
+	ldx	#rjfc_presents_tmd_sound	; Start of sound
+	ldy	#rjfc_presents_tmd_sound_end	; End of sound
 	lda	#8
 	lbsr	play_sound		; Play the sound
 
-	ldd	#1900
+	lda	#5
+	lbsr	encase_right
 
-title_delay:				; Pause for a fraction of a second
-	subd	#1
-	bne	title_delay
+	lda	#10
+	lbsr	encase_left
 
-	ldx	#text_mode_demo_sound		; Start of sound
-	ldy	#text_mode_demo_sound_end	; End of sound
-	lda	#8
-	lbsr	play_sound		; Play the sound
+	lda	#12
+	lbsr	encase_right
 
 end:
-	bra end
 	rts
 
 title_screen_text:
@@ -484,7 +481,7 @@ send_values_finished:
 
 	puls	y
 
-	lbsr	switch_on_irq_and_firq
+	bsr	switch_on_irq_and_firq
 
 	rts
 
@@ -500,7 +497,7 @@ send_values_finished:
 * A = The delay between samples
 * B = The number of times to repeat
 ***********************************
-	nop
+
 play_repeating_sound:
 
 	pshs	d			; Add 1 to the repeat end point
@@ -599,72 +596,121 @@ wait_loop:
 
 	rts				; ...return to caller
 
+************************************************
 * Brings text onto the screen using an animation
 * X = string to print
 * A = line number (0 to 15)
 * B = character position (0 to 31)
+************************************************
 
 text_appears:
-	tfr x,u			; U = string to print
-	pshs b
-	ldy #TEXTBUF
-	ldb #32
+	tfr	x,u		; U = string to print
+	pshs	b
+	ldy	#TEXTBUF
+	ldb	#32
 	mul
-	leax d,y		; X is where to start the animation
-	puls b			; B is the character position to start
+	leax	d,y		; X is where to start the animation
+	puls	b		; B is the character position to start
 				;   printing the string
 
 buff_box:
-	lda #$cf		; A buff box
-	sta ,x			; Put it on the screen
+	lda	#$cf		; A buff box
+	sta	,x		; Put it on the screen
 
-	pshs b,x,u
-	bsr wait_for_vblank
-	puls b,x,u
+	pshs	b,x,u
+	bsr	wait_for_vblank
+	puls	b,x,u
 
 	tstb			; If non-zero, we are not printing out
-	bne green_box		; yet
+	bne	green_box	; yet
 
-	lda ,u+			; Get the next character from the string
-	bne store_char		; And put it on the screen
+	lda	,u+		; Get the next character from the string
+	bne	store_char	; And put it on the screen
 
-	leau -1,u		; It was a zero we retrieved: Repoint U
+	leau	-1,u		; It was a zero we retrieved: Repoint U
 				; And fall through to using a green box
 
 green_box:
 	tstb
-	beq skip_decrement
+	beq	skip_decrement
 
 	decb
 
 skip_decrement:
-	lda #$60		; Put a green box in A
+	lda	#$60		; Put a green box in A
 
 store_char:
-	sta ,x+			; Put the relevant character (green box or char) into
+	sta	,x+		; Put the relevant character (green box or char) into
 				;   the relevant position
 
-	stx  test_area
-	lda  #0b11111
-	anda test_area+1	; Is the character position divisible by 32?
+	stx	test_area
+	lda	#0b11111
+	anda	test_area+1	; Is the character position divisible by 32?
 
-	bne buff_box		; If no, then go back and do it again
+	bne	buff_box	; If no, then go back and do it again
 	rts
 
 test_area:
-	RZB 2
+	RZB	2
+
+*************************************
+* Encases text on the screen
+* A = line number
+* B = direction (0 = right, 1 = left)
+*************************************
+
+encase_right:
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x		; X is our starting position
+
+encase_right_loop:
+	pshs	x
+	bsr	wait_for_vblank	; Start on the next frame
+	puls	x
+
+encase_right_more:
+	lda	#$60		; Green box (space)
+
+	cmpa	,x		; If x points to a green box...
+	bne	chars_found_right
+
+	lda	#125		; then put a '=' in it
+	sta	,x+		; and increment
+
+	bra	encase_are_we_done	; Go back and do the next one
+
+chars_found_right:
+	lda	#125		; This is '='
+	sta	-32,x		; add '=' above
+	sta	32,x		;   and below
+	leax	1,x		; fallthrough
+
+encase_are_we_done:
+	tfr	x,d
+	andb	#0b00011111	; If X is evenly divisible
+	bne	encase_right_loop	;   by 32, then
+
+	rts			; we are finished
+
+
+
+encase_left:
+	rts
+
+*************************************
+* Here is our raw data for our sounds
+*************************************
 
 pluck_sound:
 	INCLUDEBIN "Sounds/Pluck.raw"
 pluck_sound_end:
 
-rjfc_presents_sound:
-	INCLUDEBIN "Sounds/RJFC_presents.raw"
-rjfc_presents_sound_end:
-
-text_mode_demo_sound:
+rjfc_presents_tmd_sound:
+	INCLUDEBIN "Sounds/RJFC_presents.raw"	; Simply concatenate these two files
 	INCLUDEBIN "Sounds/text_mode_demo.raw"
-text_mode_demo_sound_end:
+rjfc_presents_tmd_sound_end:
 
 * We have two text buffers, to enable double buffering
 * Memory locations 1024-1535 and 1536-2047

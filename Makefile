@@ -70,7 +70,7 @@ $(SOUND_STR): $(SOUND_STR_SRC)
 $(PLUCK_SOUND_UNS): $(PLUCK_SOUND_SRC)
 	@rm -v -f $@
 	@echo "Resampling" $@
-	ffmpeg -i $< -v warning -af 'aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular' -f u8 -c:a pcm_u8 $@
+	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@echo "Done"
 
 $(PLUCK_SOUND): $(PLUCK_SOUND_UNS) $(SOUND_STR)
@@ -81,7 +81,7 @@ $(PLUCK_SOUND): $(PLUCK_SOUND_UNS) $(SOUND_STR)
 $(RJFC_SOUND_UNS): $(RJFC_SOUND_SRC)
 	@rm -v -f $@
 	@echo "Resampling" $@
-	ffmpeg -i $< -v warning -af 'aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular' -f u8 -c:a pcm_u8 $@
+	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@echo "Done"
 
 $(RJFC_SOUND): $(RJFC_SOUND_UNS) $(SOUND_STR)
@@ -92,7 +92,7 @@ $(RJFC_SOUND): $(RJFC_SOUND_UNS) $(SOUND_STR)
 $(TMD_SOUND_UNS): $(TMD_SOUND_SRC)
 	@rm -v -f $@
 	@echo "Resampling" $@
-	ffmpeg -i $< -v warning -af 'aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular' -f u8 -c:a pcm_u8 $@
+	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@echo "Done"
 
 $(TMD_SOUND): $(TMD_SOUND_UNS) $(SOUND_STR)

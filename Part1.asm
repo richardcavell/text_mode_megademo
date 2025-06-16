@@ -249,7 +249,7 @@ find_zero:
 
 	lda	#5
 	ldb	#0
-	lbsr	encase_text
+	lbsr	encase_text		; "Encase" the three text items
 
 	lda	#8
 	ldb	#1
@@ -258,6 +258,18 @@ find_zero:
 	lda	#12
 	ldb	#0
 	lbsr	encase_text
+
+	lda	#5
+	ldb	#3
+	lbsr	flash_text_white
+
+	lda	#8
+	ldb	#3
+	lbsr	flash_text_white
+
+	lda	#12
+	ldb	#3
+	lbsr	flash_text_white
 
 end:
 	rts
@@ -738,10 +750,119 @@ encase_right:
 
 	rts			; we are finished
 
+**************************************
+* Flashes text with white (buff) boxes
+*
+* Inputs:
+* A = line number (0 to 15)
+* B = number of times to flash
+**************************************
 
+flash_text_white:
+	pshs	b
 
-encase_left:
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x		; X = starting position
+
+	ldy	#flash_text_storage
+
+flash_copy_line:
+	ldd	,x++		; Save the whole line
+	std	,y++
+
+	cmpy	#flash_text_storage_end
+	bne	flash_copy_line
+
+				; Now the line has been saved,
+				; Turn all text to white
+
+	leax	-32,x		; Back to the start of the line
+
+	puls	b
+
+flash_chars_loop:
+	pshs	b,x
+	bsr	flash_chars_white
+	puls	b,x
+
+	pshs	b,x
+	lbsr	wait_for_vblank
+	puls	b,x
+
+	pshs	b,x
+	bsr	restore_chars
+	puls	b,x
+
+	pshs	b,x
+	lbsr	wait_for_vblank
+	puls	b,x
+
+	tstb			; We do this routine b times
+	beq	flash_finished
+
+	decb
+	bra	flash_chars_loop
+
+flash_finished:
+	rts			; Done, go away now
+
+*********************************
+* Turns all chars on a line white
+*********************************
+
+flash_chars_white:
+	lda	,x
+
+	cmpa	#125		; '='
+	beq	not_flashable
+
+	cmpa	#65		; Is it from A to
+	blo	not_flashable
+	cmpa	#127		; Question mark
+	bhi	not_flashable
+
+	lda	#$cf		; a buff box
+	sta	,x		; store it, and fall through
+
+not_flashable:
+	leax	1,x
+	tfr	x,d
+	andb	#0b00011111	; Calculate x mod 32
+	bne	flash_chars_white	; If more, go back
+
 	rts
+
+*****************************************
+* Restore the chars from our storage area
+*
+* Inputs:
+* X = pointer to start of the line
+*****************************************
+
+restore_chars:
+	ldy	#flash_text_storage
+
+flash_restore_chars:
+	ldd	,y++
+	std	,x++
+
+	cmpy	#flash_text_storage_end
+	bne	flash_restore_chars
+
+	rts
+
+flash_text_storage:
+	RZB	32
+flash_text_storage_end:
+
+* We have two text buffers, to enable double buffering
+* Memory locations 1024-1535 and 1536-2047
+TEXTBUF2	EQU	1536
+
+
+
 
 *************************************
 * Here is our raw data for our sounds
@@ -755,8 +876,3 @@ rjfc_presents_tmd_sound:
 	INCLUDEBIN "Sounds/RJFC_presents.raw"	; Simply concatenate these two files
 	INCLUDEBIN "Sounds/text_mode_demo.raw"
 rjfc_presents_tmd_sound_end:
-
-* We have two text buffers, to enable double buffering
-* Memory locations 1024-1535 and 1536-2047
-TEXTBUF2	EQU	1536
-

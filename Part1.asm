@@ -194,7 +194,7 @@ pluck_loop:
 	puls	b,x		; Does not affect CCs
 	bne	do_pluck	; If not, then continue plucking
 
-	lbsr	clr		; If so, clear the screen
+	lbsr	clear_screen	; If so, clear the screen
 	bra	screen_is_empty	; and skip this section
 
 do_pluck:
@@ -290,7 +290,7 @@ find_zero:
 	lbsr	drop_screen_content
 
 skip_title_screen:		; If space was pressed
-	lbsr	clr		; Just clear the screen
+	lbsr	clear_screen	; Just clear the screen
 
 end:
 	rts
@@ -605,7 +605,7 @@ play_repeating_sound_finished:
 * Clear the screen
 ******************
 
-clr:
+clear_screen:
 	ldx	#TEXTBUF
 	ldd	#$6060			; Two green boxes
 

@@ -275,6 +275,17 @@ find_zero:
 	lbsr	flash_screen
 	lbsr	flash_screen
 
+* Drop the lines off the bottom end of the screen
+
+	lda	#11
+	lbsr	drop_screen_content
+
+	lda	#7
+	lbsr	drop_screen_content
+
+	lda	#4
+	lbsr	drop_screen_content
+
 end:
 	rts
 
@@ -915,6 +926,99 @@ flash_screen_restore_loop:
 
 	lbsr	wait_for_vblank
 	lbsr	wait_for_vblank
+
+	rts
+
+********************************
+* Drop screen content
+*
+* Inputs:
+* A = starting line
+********************************
+
+	nop
+	nop
+	nop
+
+drop_screen_content:
+	pshs	a
+	inca
+	inca
+	bsr	drop_line		; Drop the bottom line
+	puls	a
+
+	pshs	a
+	inca
+	bsr	drop_line		; Drop the middle line
+	puls	a
+
+	pshs	a
+	bsr	drop_line		; Drop the top line
+	puls	a
+
+	pshs	a
+	bsr	clear_line		; Clear the top line
+	puls	a
+
+	pshs	a
+	lbsr	wait_for_vblank
+	puls	a
+
+	inca				; Next time, start a line lower
+
+	cmpa	#16			; until the starting position is off
+					; the screen
+	bne	drop_screen_content
+	rts
+
+drop_line:
+	cmpa	#15
+	blo	do_drop
+
+	rts				; Off the bottom end of the screen
+
+do_drop:
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x			; X = pointer to a line of the screen
+
+	ldb	#32
+
+move_line_down:
+	lda	,x			; Retrieve the character
+	sta	32,x			; and store it one line below
+	leax	1,x
+
+	decb
+	bne	move_line_down
+
+	rts
+
+clear_line:
+	cmpa	#16
+	blo	do_clear
+
+	rts				; Off the bottom end
+
+do_clear:
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x
+
+	ldb	#8
+
+	lda	#$60
+
+clear_loop:
+	sta	,x+
+	sta	,x+
+	sta	,x+
+	sta	,x+
+
+	decb
+	bne	clear_loop
 
 	rts
 

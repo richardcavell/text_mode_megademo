@@ -26,14 +26,31 @@ TMD_SOUND_UNS	=	Sounds/textmodedemo_unstripped.raw
 SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper
 
+SIN_GENERATOR	=	sin_table_generator
+SIN_GEN_SRC	=	sin_table_generator.c
+SIN_TABLE	=	sin_table.asm
+
 # asm6809 is by Ciaran Anscomb
 ASM		=	asm6809
 ASMFLAGS	=	-C -v
 
 # You can change this to your favorite C compiler
-CC		=	gcc
-CFLAGS		=	-std=c89 -Wpedantic -Wall -Wextra -Werror -O2
-CFLAGS		+=	-fmax-errors=1
+CC        =  gcc
+CFLAGS    = -std=c89 -Wpedantic
+CFLAGS   += -Wall -Wextra -Werror -fmax-errors=1
+CFLAGS   += -Walloca -Wbad-function-cast -Wcast-align -Wcast-qual -Wconversion
+CFLAGS   += -Wdisabled-optimization -Wdouble-promotion -Wduplicated-cond
+CFLAGS   += -Werror=format-security -Werror=implicit-function-declaration
+CFLAGS   += -Wfloat-equal -Wformat=2 -Wformat-overflow -Wformat-truncation
+CFLAGS   += -Wlogical-op -Wmissing-prototypes -Wmissing-declarations
+CFLAGS   += -Wno-missing-field-initializers -Wnull-dereference
+CFLAGS   += -Woverlength-strings -Wpointer-arith -Wredundant-decls -Wshadow
+CFLAGS   += -Wsign-conversion -Wstack-protector -Wstrict-aliasing
+CFLAGS   += -Wstrict-overflow -Wswitch-default -Wswitch-enum
+CFLAGS   += -Wundef -Wunreachable-code -Wunsafe-loop-optimizations
+CFLAGS   += -fstack-protector-strong
+CFLAGS   += -g -O2
+LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro
 
 .DEFAULT: all
 
@@ -52,7 +69,7 @@ $(DISK): $(DISK_IMG) $(BASIC_PART) $(PART1) $(PART2)
 	decb copy -2 -b -r $(PART2) $(DISK),$(PART2)
 	@echo "Done"
 
-$(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
+$(PART1): $(PART1_SRC) $(SIN_TABLE) $(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
 	@echo "Assembling" $@
 	$(ASM) $(ASMFLAGS) -o $@ $<
 	@echo "Done"
@@ -100,6 +117,12 @@ $(TMD_SOUND): $(TMD_SOUND_UNS) $(SOUND_STR)
 	./$(SOUND_STR) $< $@
 	@echo "Done"
 
+$(SIN_GENERATOR): $(SIN_GEN_SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -lm
+
+$(SIN_TABLE): $(SIN_GENERATOR)
+	./$< $@
+
 help: info
 
 info:
@@ -118,6 +141,7 @@ clean:
 	@rm -f -v $(PLUCK_SOUND_UNS) $(PLUCK_SOUND)
 	@rm -f -v $(RJFC_SOUND_UNS) $(RJFC_SOUND)
 	@rm -f -v $(TMD_SOUND_UNS) $(TMD_SOUND)
+	@rm -f -v $(SIN_GENERATOR) $(SIN_TABLE)
 
 mame: $(DISK)
 	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"

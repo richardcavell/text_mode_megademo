@@ -1106,7 +1106,7 @@ sin:
 *************************************
 
 sin_table:
-	INCLUDEBIN "Sin_table"
+	INCLUDE "sin_table.asm"
 sin_table_end:
 
 flash_screen_storage:			; Use the area of memory reserved for

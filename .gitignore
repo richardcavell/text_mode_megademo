@@ -5,6 +5,8 @@ Pluck.raw
 Pluck_unstripped.raw
 pluck*.wav
 pluck*.mp3
+sin_table.asm
+sin_table_generator
 sound_stripper
 Title.raw
 Title_unstripped.raw

@@ -694,7 +694,7 @@ buff_box:
 	lda	#$cf		; A buff box
 	sta	,x		; Put it on the screen
 
-	lbsr	check_space	; Space bar skips this section
+	bsr	check_space	; Space bar skips this section
 
 	pshs	b,x,u
 	bsr	wait_for_vblank
@@ -754,7 +754,7 @@ encase_text:
 				; and fallthrough
 
 encase_text_loop:
-	lbsr	check_space	; Space bar exits this
+	bsr	check_space	; Space bar exits this
 
 	pshs	b,x
 	bsr	wait_for_vblank	; Start on the next frame
@@ -1085,19 +1085,21 @@ clear_loop:
 
 	rts
 
-******************************************************
+*************************************************************
 * sine function
 *
 * Input:
 * A = angle (unsigned) (256 is a complete circle)
+* (D can be used as well)
 *
 * Output:
-* A = sin of angle (signed byte between -127 and +127)
-******************************************************
+* D = sin of angle (signed double byte between -256 and +256)
+*************************************************************
 
 sin:
 	ldx	#sin_table
-	lda	a,x
+	leax	a,x
+	ldd	a,x		; Put sin_table + 2 * A into D
 
 	rts
 

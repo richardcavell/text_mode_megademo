@@ -271,6 +271,10 @@ find_zero:
 	ldb	#3
 	lbsr	flash_text_white
 
+	lbsr	flash_screen
+	lbsr	flash_screen
+	lbsr	flash_screen
+
 end:
 	rts
 
@@ -857,22 +861,76 @@ flash_text_storage:
 	RZB	32
 flash_text_storage_end:
 
-* We have two text buffers, to enable double buffering
-* Memory locations 1024-1535 and 1536-2047
-TEXTBUF2	EQU	1536
 
+**************************
+* Flashes the screen white
+*
+* Inputs:
+*   none
+**************************
 
+flash_screen:
+	ldx	#TEXTBUF
+	ldy	#flash_screen_storage
 
+flash_screen_copy_loop:
+	ldd	,x++			; Make a copy of everything on the screen
+	std	,y++
+
+	cmpx	#TEXTBUF+TEXTBUFSIZE
+	bne	flash_screen_copy_loop
+
+	lbsr	wait_for_vblank
+
+	ldx	#TEXTBUF
+	ldd	#$cfcf
+
+flash_screen_white_loop:
+	std	,x++			; Make the whole screen buff color
+	std	,x++
+	std	,x++
+	std	,x++
+
+	cmpx	#TEXTBUF+TEXTBUFSIZE
+	bne	flash_screen_white_loop
+
+	lbsr	wait_for_vblank
+	lbsr	wait_for_vblank
+
+	ldx	#TEXTBUF
+	ldy	#flash_screen_storage
+
+flash_screen_restore_loop:
+	ldd	,y++
+	std	,x++
+	ldd	,y++
+	std	,x++
+	ldd	,y++
+	std	,x++
+	ldd	,y++
+	std	,x++
+
+	cmpx	#TEXTBUF+TEXTBUFSIZE
+	bne	flash_screen_restore_loop
+
+	lbsr	wait_for_vblank
+	lbsr	wait_for_vblank
+
+	rts
 
 *************************************
 * Here is our raw data for our sounds
 *************************************
+
+flash_screen_storage:			; Use the area of memory reserved for
+					; the pluck sound, because we're not
+					; using it again
 
 pluck_sound:
 	INCLUDEBIN "Sounds/Pluck.raw"
 pluck_sound_end:
 
 rjfc_presents_tmd_sound:
-	INCLUDEBIN "Sounds/RJFC_presents.raw"	; Simply concatenate these two files
-	INCLUDEBIN "Sounds/text_mode_demo.raw"
+	INCLUDEBIN "Sounds/RJFC_presents.raw"	; Simply concatenate these
+	INCLUDEBIN "Sounds/text_mode_demo.raw"	; two files
 rjfc_presents_tmd_sound_end:

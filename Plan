@@ -4,21 +4,8 @@ by Richard Cavell
 
 A routine that receives the loaded machine language and delivers it to upper
 32K.
-Title screen
-A white box appears at the left hand side and sweeps to the right side.
-As it passes the letters RJFC appear. Sound effect: Pronunciation of RJFC
-A red box appears.
-"Presents"
-A blue box appears
-"Name of Demo"
 
 Add BREAK recognition to skip parts
-
-A buff line comes over the RJFC, and is wiped off from the left.
-
-A red line comes over the Presents
-
-A blue line comes over the Name of Demo
 
 The top part becomes a scrolltext:
 Welcome to Name of Demo. Blah blah blah.

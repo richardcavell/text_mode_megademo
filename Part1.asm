@@ -248,13 +248,16 @@ find_zero:
 	lbsr	play_sound		; Play the sound
 
 	lda	#5
-	lbsr	encase_right
+	ldb	#0
+	lbsr	encase_text
 
-	lda	#10
-	lbsr	encase_left
+	lda	#8
+	ldb	#1
+	lbsr	encase_text
 
 	lda	#12
-	lbsr	encase_right
+	ldb	#0
+	lbsr	encase_text
 
 end:
 	rts
@@ -659,38 +662,79 @@ test_area:
 * B = direction (0 = right, 1 = left)
 *************************************
 
-encase_right:
+encase_text:
+	tfr	d,y		; Y (lower 8 bits) is direction
+
 	ldb	#32
 	mul
 	ldx	#TEXTBUF
 	leax	d,x		; X is our starting position
 
-encase_right_loop:
-	pshs	x
-	bsr	wait_for_vblank	; Start on the next frame
-	puls	x
+	tfr	y,d		; B is direction
+	tstb			; If 0, start on the left side
+	beq	encase_text_loop
 
-encase_right_more:
+	leax	31,x		; If 1, start on the right side
+				; and fallthrough
+
+encase_text_loop:
+	pshs	b,x
+	bsr	wait_for_vblank	; Start on the next frame
+	puls	b,x
+
+encase_text_more:
 	lda	#$60		; Green box (space)
 
 	cmpa	,x		; If x points to a green box...
-	bne	chars_found_right
+	bne	encase_char_found
 
 	lda	#125		; then put a '=' in it
-	sta	,x+		; and increment
 
+	tstb
+	bne	encase_backwards
+
+	sta	,x+		; and increment
+	bra	encase_finished_storing
+
+encase_backwards:
+	sta	,x
+	leax	-1,x		; and decrement
+
+encase_finished_storing:
 	bra	encase_are_we_done	; Go back and do the next one
 
-chars_found_right:
+encase_char_found:
 	lda	#125		; This is '='
 	sta	-32,x		; add '=' above
 	sta	32,x		;   and below
-	leax	1,x		; fallthrough
 
+	tstb
+	bne	encase_chars_found_backwards
+
+	leax	1,x		; fallthrough
+	bra	encase_are_we_done
+
+encase_chars_found_backwards:
+	leax	-1,x
+				; fallthrough
 encase_are_we_done:
+	tstb
+	beq	encase_right	; If we're going right
+
+	tfr	d,y
+	tfr	x,d
+	andb	#0b00011111
+	cmpb	#0b00011111	; If X mod 32 == 31
+	tfr	y,d
+	bne	encase_text_loop
+	rts
+
+encase_right:
+	tfr	d,y
 	tfr	x,d
 	andb	#0b00011111	; If X is evenly divisible
-	bne	encase_right_loop	;   by 32, then
+	tfr	y,d
+	bne	encase_text_loop	;   by 32, then
 
 	rts			; we are finished
 

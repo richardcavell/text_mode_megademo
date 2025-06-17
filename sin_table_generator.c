@@ -11,13 +11,15 @@
 
 const double pi = 3.14159265358979323846;
 
-void fprintf_error()
+static void
+fprintf_error()
 {
 	fprintf(stderr, "%s%i%c", "Couldn't print to output file. Error number : ", errno, '\n');
 	exit(EXIT_FAILURE);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	FILE *fp = NULL;
 	int ret = 0;
@@ -52,10 +54,12 @@ int main(int argc, char *argv[])
 		double f = sin(angle) * 256;
 		long int j = 0;
 
-		if (f >= 0) j = f;	/* If positive, then simply assign the value */
+		f += 0.5;		/* This will cause round to nearest */
+
+		if (f >= 0) j = (long int) f;	/* If positive, then simply assign the value */
 		else
 		{
-			long int k = -f;	/* Make sure that we round to zero */
+			long int k = (long int) -f;	/* Make sure that we round to zero */
 			j = -k;
 		}
 

@@ -365,6 +365,7 @@ move_dot:
 	std	sine_of_angle
 
 	ldx	scale_factor		; X = scale factor, D is sine
+
 	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
 	lbsr	round_to_nearest	; Need to round this up or down
 	sta	displacement		; This is the displacement
@@ -781,10 +782,6 @@ text_appears:
 	puls	b		; B is the character position to start
 				;   printing the string
 
-	nop
-	nop
-	nop
-
 buff_box:
 	lda	#$cf		; A buff box
 	sta	,x		; Put it on the screen
@@ -960,6 +957,7 @@ flash_chars_loop:
 	lda	#5
 	ldx	#skip_title_screen
 	lbsr	check_space
+	puls	b,x
 
 	pshs	b,x
 	lbsr	wait_for_vblank
@@ -1368,7 +1366,6 @@ multiply_more:
 
 	tfr	a,b			; We lose precision here
 	clra
-
 	addd	result
 
 	ldd	result			; Return value in D
@@ -1397,8 +1394,8 @@ round_to_nearest:
 	cmpa	#128			; Has it overflowed?
 	bne	done_adjusting_a	; No, finish up
 
-	lda	#127			; We have overflowed, so clamp at largest number
-	ldb	#255
+	lda	#127			; We have overflowed, so clamp
+	ldb	#255			; to the largest number
 	rts
 
 negative_d:

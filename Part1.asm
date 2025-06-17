@@ -366,7 +366,6 @@ move_dot:
 
 	ldx	scale_factor		; X = scale factor, D is sine
 	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
-
 	lbsr	round_to_nearest	; Need to round this up or down
 	sta	displacement		; This is the displacement
 
@@ -376,7 +375,7 @@ move_dot:
 
 	jsr	wait_for_vblank
 
-	lda	#$60
+	lda	#$60		; Green box
 	ldx	dot_previous
 	sta	,x		; Erase previous dot
 
@@ -1257,34 +1256,49 @@ sin_table_end:
 result_sign:	RZB	0
 
 multiply_fixed_point:
-	clra
-	sta	result_sign
+	clr	result_sign
 
 	tsta			; Is D negative?
 	bpl	D_is_positive
 
-	lda	#255
-	sta	result_sign
+				; D is negative
+	com	result_sign
 
-; complement D
+	bsr	complement_d
 
 D_is_positive:
 	cmpx	#0		; Is X negative?
 	bpl	X_is_positive
 
-	com	result_sign
+	com	result_sign	; If yes, then result switches sign
 
-; complement X
+	pshs	d
+	tfr	x,d
+	bsr	complement_d	; And make it positive
+	tfr	d,x
+	puls	d
 
 X_is_positive:
 	bsr	multiply_fixed_point_unsigned
 
-	tst	result_sign
+	tst	result_sign	; If the result should be negative
 	beq	result_is_positive
 
-; complement D
+	bsr	complement_d	; Then make it negative
 
 result_is_positive:
+	rts
+
+complement_d:
+	coma
+	comb
+	addd	#1
+	cmpd	#$8000
+	bne	no_overflow
+
+	ldd	#$7fff		; Clamp at highest possible value
+
+no_overflow:
 	rts
 
 **********************************

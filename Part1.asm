@@ -296,7 +296,9 @@ skip_title_screen:		; If space was pressed
 * Create a dot
 **************
 
-	ldx	#TEXTBUF + 8 * 32 + 16	; in the middle of the screen
+DOT_START	EQU	(TEXTBUF+8*32+16)
+
+	ldx	#DOT_START	; in the middle of the screen
 
 	lda	#'*'+64		; Non-inverted asterisk
 	sta	,x
@@ -304,11 +306,85 @@ skip_title_screen:		; If space was pressed
 	ldb	#10
 
 dot_wait:
+	pshs	d
+	jsr	dot_wait_check_space
+	puls	d
+
 	pshs	b
 	lbsr	wait_for_vblank
 	puls	b
 	decb
 	bne	dot_wait
+
+***************
+* The dot moves
+***************
+
+	bra	dot_moves
+
+scale_factor:
+	RZB	2		; Fixed point scale factor
+angle:
+	RZB	1		; 0-255 out of 256
+sine_of_angle:
+	RZB	2		; 256 to -256
+dot_previous:
+	RZB	2		; Previously drawn location of dot
+displacement:
+	RZB	1		; The amount that the dot moves
+new_position:
+	RZB	2		; The calculated new position
+
+dot_moves:
+	ldd	#0		; Our scale factor
+	std	scale_factor
+
+	lda	#0		; A is our angle
+	sta	angle		; (A fixed-point fraction)
+
+	ldd	#DOT_START	; the previous location of the dot
+	std	dot_previous
+
+print_dot:
+	clra			; A is really don't care
+	ldb	angle		; D is our angle in fixed point
+	lbsr	sin		; D is now the sine of our angle
+	std	sine_of_angle
+
+	ldx	scale_factor		; X = scale factor, D is sine
+	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
+
+	lbsr	round_to_nearest	; Need to round this up or down
+	sta	displacement		; This is the displacement
+
+	jsr	dot_move_check_space
+	jsr	wait_for_vblank
+
+	lda	#$60
+	ldx	dot_previous
+	sta	,x		; Erase previous dot
+
+	lda	displacement
+	ldx	#DOT_START
+	leax	a,x		; X is now the position of the new dot
+
+	lda	#'*' + 64
+	sta	,x		; Draw the new dot
+	stx	dot_previous	; And erase after next VBlank
+
+	ldd	scale_factor	; Increase the scale factor
+	addd	#200		; gradually
+	std	scale_factor
+
+	lda	angle		; (A fixed-point fraction)
+	adda	#2		; It rotates constantly
+	sta	angle
+
+	bra	print_dot
+
+skip_dot:	; This is addressed by dot_check_space and dot_move_check_space
+
+	lbsr	clear_screen
 
 end:
 	rts
@@ -669,6 +745,32 @@ check_space:
 check_space_return:
 	rts
 
+dot_wait_check_space:
+	pshs	a,b,x,y,u
+	jsr	[POLCAT]
+	cmpa	#' '
+	puls	a,b,x,y,u
+	bne	dot_end_return
+
+	leas	2,s
+	lbra	skip_dot
+
+dot_end_return:
+	rts
+
+dot_move_check_space:
+	pshs	a,b,x,y,u
+	jsr	[POLCAT]
+	cmpa	#' '
+	puls	a,b,x,y,u
+	bne	dot_move_return
+
+	leas	2,s
+	lbra	skip_dot
+
+dot_move_return:
+	rts
+
 ************************************************
 * Brings text onto the screen using an animation
 * X = string to print
@@ -754,10 +856,10 @@ encase_text:
 				; and fallthrough
 
 encase_text_loop:
-	bsr	check_space	; Space bar exits this
+	lbsr	check_space	; Space bar exits this
 
 	pshs	b,x
-	bsr	wait_for_vblank	; Start on the next frame
+	lbsr	wait_for_vblank	; Start on the next frame
 	puls	b,x
 
 encase_text_more:
@@ -1089,8 +1191,8 @@ clear_loop:
 * sine function
 *
 * Input:
-* A = angle (unsigned) (256 is a complete circle)
-* (D can be used as well)
+* D = angle (unsigned) (256 is a complete circle)
+* (just B is used)
 *
 * Output:
 * D = sin of angle (signed double byte between -256 and +256)
@@ -1098,18 +1200,48 @@ clear_loop:
 
 sin:
 	ldx	#sin_table
-	leax	a,x
-	ldd	a,x		; Put sin_table + 2 * A into D
+	leax	b,x
+	ldd	b,x		; Put sin_table + 2 * B into D
+
+	rts
+
+sin_table:
+	INCLUDE "sin_table.asm"
+sin_table_end:
+
+************************
+* Multiply fixed point
+*
+* Inputs:
+* D = fixed point number
+* X = fixed point number
+*
+* Outputs:
+* D = result
+************************
+
+multiply_fixed_point:
+
+
+	rts
+
+**************************
+* Round to nearest
+*
+* Input:
+* D = fixed point number
+*
+* Output:
+* D = that number, rounded
+**************************
+
+round_to_nearest:
 
 	rts
 
 *************************************
 * Here is our raw data for our sounds
 *************************************
-
-sin_table:
-	INCLUDE "sin_table.asm"
-sin_table_end:
 
 flash_screen_storage:			; Use the area of memory reserved for
 					; the pluck sound, because we're not

@@ -303,12 +303,14 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 	lda	#'*'+64		; Non-inverted asterisk
 	sta	,x
 
-	ldb	#10
+	ldb	#10		; Wait this number of frames
 
 dot_wait:
-	pshs	d
-	jsr	dot_wait_check_space
-	puls	d
+	pshs	b
+	lda	#1
+	ldx	#skip_dot
+	jsr	check_space
+	puls	b
 
 	pshs	b
 	lbsr	wait_for_vblank
@@ -336,16 +338,27 @@ new_position:
 	RZB	2		; The calculated new position
 
 dot_moves:
+				; First, set everything to 0
+
 	ldd	#0		; Our scale factor
 	std	scale_factor
 
 	lda	#0		; A is our angle
 	sta	angle		; (A fixed-point fraction)
 
+	ldd	#0
+	std	sine_of_angle	; The sine will be calculated later
+
 	ldd	#DOT_START	; the previous location of the dot
 	std	dot_previous
 
-print_dot:
+	lda	#0
+	sta	displacement
+
+	ldd	#0
+	std	new_position
+
+move_dot:
 	clra			; A is really don't care
 	ldb	angle		; D is our angle in fixed point
 	lbsr	sin		; D is now the sine of our angle
@@ -357,7 +370,10 @@ print_dot:
 	lbsr	round_to_nearest	; Need to round this up or down
 	sta	displacement		; This is the displacement
 
-	jsr	dot_move_check_space
+	lda	#0
+	ldx	#skip_dot
+	jsr	check_space
+
 	jsr	wait_for_vblank
 
 	lda	#$60
@@ -380,9 +396,9 @@ print_dot:
 	adda	#2		; It rotates constantly
 	sta	angle
 
-	bra	print_dot
+	bra	move_dot
 
-skip_dot:	; This is addressed by dot_check_space and dot_move_check_space
+skip_dot:	; This is one of the addresses given to check_space
 
 	lbsr	clear_screen
 
@@ -726,50 +742,28 @@ wait_loop:
 
 	rts				; ...return to caller
 
-*****************************
+********************************************************
 * Is space bar being pressed?
 *
-* Inputs: None
-*****************************
+* Inputs:
+* A = number of bytes on S stack that need to be removed
+* X = address to skip to if space bar is pressed
+********************************************************
 
 check_space:
 	pshs	a,b,x,y,u		; Save all registers
 	jsr	[POLCAT]		; A ROM routine
 	cmpa	#' '
 	puls	a,b,x,y,u		; Does not affect CCs
-	bne	check_space_return
+	beq	skip
 
-	leas	4,s			; Remove the return addresses
-	lbra	skip_title_screen	; address from the stack
-
-check_space_return:
 	rts
 
-dot_wait_check_space:
-	pshs	a,b,x,y,u
-	jsr	[POLCAT]
-	cmpa	#' '
-	puls	a,b,x,y,u
-	bne	dot_end_return
-
-	leas	2,s
-	lbra	skip_dot
-
-dot_end_return:
-	rts
-
-dot_move_check_space:
-	pshs	a,b,x,y,u
-	jsr	[POLCAT]
-	cmpa	#' '
-	puls	a,b,x,y,u
-	bne	dot_move_return
-
-	leas	2,s
-	lbra	skip_dot
-
-dot_move_return:
-	rts
+skip:
+	leas	2,s			; Remove the return address
+	leas	a,s			; And any other return addresses
+					;   and stack contents
+	jmp	,x			; Skip to next section
 
 ************************************************
 * Brings text onto the screen using an animation
@@ -796,7 +790,11 @@ buff_box:
 	lda	#$cf		; A buff box
 	sta	,x		; Put it on the screen
 
+	pshs	b,x,u
+	lda	#7
+	ldx	#skip_title_screen
 	bsr	check_space	; Space bar skips this section
+	puls	b,x,u
 
 	pshs	b,x,u
 	bsr	wait_for_vblank
@@ -856,7 +854,11 @@ encase_text:
 				; and fallthrough
 
 encase_text_loop:
+	pshs	b,x
+	lda	#5
+	ldx	#skip_title_screen
 	lbsr	check_space	; Space bar exits this
+	puls	b,x
 
 	pshs	b,x
 	lbsr	wait_for_vblank	; Start on the next frame
@@ -955,6 +957,9 @@ flash_chars_loop:
 	bsr	flash_chars_white
 	puls	b,x
 
+	pshs	b,x
+	lda	#5
+	ldx	#skip_title_screen
 	lbsr	check_space
 
 	pshs	b,x
@@ -965,7 +970,11 @@ flash_chars_loop:
 	bsr	restore_chars
 	puls	b,x
 
+	pshs	b,x
+	lda	#5
+	ldx	#skip_title_screen
 	lbsr	check_space
+	puls	b,x
 
 	pshs	b,x
 	lbsr	wait_for_vblank
@@ -1048,6 +1057,8 @@ flash_screen_copy_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_copy_loop
 
+	lda	#2
+	ldx	#skip_title_screen
 	lbsr	check_space
 
 	lbsr	wait_for_vblank
@@ -1064,9 +1075,13 @@ flash_screen_white_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_white_loop
 
+	lda	#2
+	ldx	#skip_title_screen
 	lbsr	check_space
 	lbsr	wait_for_vblank
 
+	lda	#2
+	ldx	#skip_title_screen
 	lbsr	check_space
 	lbsr	wait_for_vblank
 
@@ -1086,9 +1101,16 @@ flash_screen_restore_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_restore_loop
 
+	lda	#2
+	ldx	#skip_title_screen
 	lbsr	check_space
+
 	lbsr	wait_for_vblank
+
+	lda	#2
+	ldx	#skip_title_screen
 	lbsr	check_space
+
 	lbsr	wait_for_vblank
 
 	rts
@@ -1120,11 +1142,23 @@ drop_screen_content:
 	bsr	clear_line		; Clear the top line
 	puls	a
 
+
+	pshs	a
+	lda	#3
+	ldx	#skip_title_screen
 	lbsr	check_space
+	puls	a
+
 	pshs	a
 	lbsr	wait_for_vblank
 	puls	a
+
+	pshs	a
+	lda	#3
+	ldx	#skip_title_screen
 	lbsr	check_space
+	puls	a
+
 	pshs	a
 	lbsr	wait_for_vblank
 	puls	a

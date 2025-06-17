@@ -388,7 +388,7 @@ move_dot:
 	stx	dot_previous	; And erase after next VBlank
 
 	ldd	scale_factor	; Increase the scale factor
-	addd	#100		; gradually
+	addd	#10		; gradually
 
 	cmpd	#2000		; If D is over 2000,
 	blt	d_is_clamped

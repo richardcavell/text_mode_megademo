@@ -389,7 +389,14 @@ move_dot:
 	stx	dot_previous	; And erase after next VBlank
 
 	ldd	scale_factor	; Increase the scale factor
-	addd	#200		; gradually
+	addd	#100		; gradually
+
+	cmpd	#2000		; If D is over 2000,
+	blt	d_is_clamped
+
+	ldd	#2000		; Make it equal to 2000
+
+d_is_clamped:
 	std	scale_factor
 
 	lda	angle		; (A fixed-point fraction)
@@ -1339,13 +1346,9 @@ multiply_fixed_point_unsigned:
 	ldb	x_upper
 	mul
 
-	tsta			; If a is not clear, we have overflowed
-	beq	multiply_more
+	tsta			; If a is not clear,
+	bne	overflow	; we have overflowed
 
-	ldd	#$ffff		; Load highest possible number
-	rts
-
-multiply_more:
 	stb	result_upper
 
 	lda	d_upper
@@ -1353,12 +1356,14 @@ multiply_more:
 	mul
 
 	addd	result
+	std	result
 
 	lda	d_lower
 	ldb	x_upper
 	mul
 
 	addd	result
+	std	result
 
 	lda	d_lower
 	ldb	x_lower
@@ -1367,8 +1372,13 @@ multiply_more:
 	tfr	a,b			; We lose precision here
 	clra
 	addd	result
+	std	result
 
 	ldd	result			; Return value in D
+	rts
+
+overflow:
+	ldd	#$ffff			; Return highest possible number
 	rts
 
 **************************

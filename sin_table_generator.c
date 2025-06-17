@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 		double f = sin(angle) * 256;
 		long int j = 0;
 
-/*		f = round(f);		*/
+/*		f = round(f);		This is C99 */
 
 		f += 0.5;		/* This will cause round to nearest */
 

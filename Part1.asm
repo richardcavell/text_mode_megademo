@@ -1257,7 +1257,7 @@ sin_table_end:
 * D = result, signed
 *****************************
 
-result_sign:	RZB	0
+result_sign:	RZB	1
 
 multiply_fixed_point:
 	clr	result_sign

@@ -1209,20 +1209,121 @@ sin_table:
 	INCLUDE "sin_table.asm"
 sin_table_end:
 
-************************
-* Multiply fixed point
+*****************************
+* Multiply fixed point signed
 *
 * Inputs:
-* D = fixed point number
-* X = fixed point number
+* D = fixed point number, signed
+* X = fixed point number, signed
+*
+* Outputs:
+* D = result, signed
+*****************************
+
+result_sign:	RZB	0
+
+multiply_fixed_point:
+	clra
+	sta	result_sign
+
+	tsta			; Is D negative?
+	bpl	D_is_positive
+
+	lda	#255
+	sta	result_sign
+
+; complement D
+
+D_is_positive:
+	cmpx	#0		; Is X negative?
+	bpl	X_is_positive
+
+	com	result_sign
+
+; complement X
+
+X_is_positive:
+	bsr	multiply_fixed_point_unsigned
+
+	tst	result_sign
+	beq	result_is_positive
+
+; complement D
+
+result_is_positive:
+	rts
+
+**********************************
+* Multiply fixed point unsigned
+*
+* Inputs:
+* D = fixed point number, unsigned
+* X = fixed point number, unsigned
 *
 * Outputs:
 * D = result
-************************
+**********************************
 
-multiply_fixed_point:
+saved_d:
+d_upper:
+	RZB	1	; Save both operands
+d_lower:
+	RZB	1
 
+saved_x:
+x_upper:
+	RZB	1
+x_lower:
+	RZB	1
 
+result:
+result_upper:
+	RZB	1
+result_lower:
+	RZB	1
+
+multiply_fixed_point_unsigned:
+	std	saved_d		; Save D
+	stx	saved_x		; Save X
+	clra
+	clrb
+	std	result		; Result is 0
+
+	lda	d_upper
+	ldb	x_upper
+	mul
+
+	tsta			; If a is not clear, we have overflowed
+	beq	multiply_more
+
+	ldd	#$ffff		; Load highest possible number
+	rts
+
+multiply_more:
+	stb	result_upper
+
+	lda	d_upper
+	ldb	x_lower
+	mul
+
+	addd	result
+
+	lda	d_lower
+	ldb	x_upper
+	mul
+
+	addd	result
+
+	lda	d_lower
+	ldb	x_lower
+	mul
+
+	tfr	a,b			; We lose precision here
+	clra
+
+	addd	result
+
+	ldd	result			; Return value in D
 	rts
 
 **************************
@@ -1236,7 +1337,36 @@ multiply_fixed_point:
 **************************
 
 round_to_nearest:
+	tsta
 
+	bmi	negative_d
+
+	tstb
+	bpl	no_adjust_a
+
+	adda	#1			; Add 1 to whole part
+
+	cmpa	#128			; Has it overflowed?
+	bne	done_adjusting_a	; No, finish up
+
+	lda	#127			; We have overflowed, so clamp at largest number
+	ldb	#255
+	rts
+
+negative_d:
+	tstb
+	bpl	no_adjust_a		; If closest to a, return a
+
+	suba	#1
+	cmpa	#127
+	bne	done_adjusting_a	; Has it overflowed?
+
+	lda	#128			; Yes, then set D to the largest
+	ldb	#255			; negative number
+
+done_adjusting_a:
+no_adjust_a:
+	clrb
 	rts
 
 *************************************

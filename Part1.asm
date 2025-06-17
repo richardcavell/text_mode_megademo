@@ -365,7 +365,6 @@ move_dot:
 	std	sine_of_angle
 
 	ldx	scale_factor		; X = scale factor, D is sine
-
 	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
 	lbsr	round_to_nearest	; Need to round this up or down
 	sta	displacement		; This is the displacement

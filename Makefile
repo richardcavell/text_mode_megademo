@@ -58,6 +58,7 @@ LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro
 
 all:	$(DISK) $(DISK_IMG) $(PART1) $(PART2) $(SOUND_STR)
 all:	$(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
+
 disk:	$(DISK)
 
 $(DISK): $(DISK_IMG) $(BASIC_PART) $(PART1) $(PART2)

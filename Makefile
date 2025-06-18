@@ -11,17 +11,17 @@ PART2		=	PART2.BIN
 PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 
-PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
 PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
+PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 
-RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents.raw
 RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents.wav
 RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_resampled.raw
+RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents.raw
 
-TMD_SOUND	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw
 TMD_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.wav
 TMD_SOUND_RES	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo_resampled.raw
+TMD_SOUND	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw
 
 SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper

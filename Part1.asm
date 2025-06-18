@@ -371,9 +371,9 @@ move_dot:
 
 	lda	#0
 	ldx	#skip_dot
-	jsr	check_space
+	lbsr	check_space
 
-	jsr	wait_for_vblank
+	lbsr	wait_for_vblank
 
 	lda	#$60		; Green box
 	ldx	dot_previous
@@ -388,7 +388,7 @@ move_dot:
 	stx	dot_previous	; And erase after next VBlank
 
 	ldd	scale_factor	; Increase the scale factor
-	addd	#10		; gradually
+	addd	#20		; gradually
 
 	cmpd	#2000		; If D is over 2000,
 	blt	d_is_clamped
@@ -402,7 +402,78 @@ d_is_clamped:
 	adda	#2		; It rotates constantly
 	sta	angle
 
+	ldd	scale_factor
+	cmpd	#2000
+	bne	move_dot
+
+	lda	angle
+	cmpa	#0
+	bne	move_dot
+
+	lda	counter
+	inca
+	cmpa	#2
+	beq	expand_dot
+
+	sta	counter
 	bra	move_dot
+
+counter:
+	RZB	1
+
+*****************
+* The dot expands
+*****************
+
+expand_dot
+	bra	dot_expands
+
+dot_expands:
+move_dot_expands:
+	clra			; A is really don't care
+	ldb	angle		; D is our angle in fixed point
+	lbsr	sin		; D is now the sine of our angle
+	std	sine_of_angle
+
+	ldx	scale_factor		; X = scale factor, D is sine
+	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
+	lbsr	round_to_nearest	; Need to round this up or down
+	sta	displacement		; This is the displacement
+
+	lda	#0
+	ldx	#skip_dot
+	lbsr	check_space
+
+	lbsr	wait_for_vblank
+
+	lda	#$60		; Green box
+	ldx	dot_previous
+	sta	,x		; Erase previous dot
+
+	lda	displacement
+	ldx	#DOT_START
+	leax	a,x		; X is now the position of the new dot
+
+	lda	#'X'
+	sta	,x		; Draw the new dot
+	stx	dot_previous	; And erase after next VBlank
+
+	ldd	scale_factor	; Increase the scale factor
+	addd	#20		; gradually
+
+	cmpd	#2000		; If D is over 2000,
+	blt	d_is_clamped_expands
+
+	ldd	#2000		; Make it equal to 2000
+
+d_is_clamped_expands:
+	std	scale_factor
+
+	lda	angle			; (A fixed-point fraction)
+	adda	#2			; It rotates constantly
+	sta	angle
+
+	bra	move_dot_expands
 
 skip_dot:	; This is one of the addresses given to check_space
 
@@ -1236,9 +1307,10 @@ clear_loop:
 *************************************************************
 
 sin:
+	clra			; Clamp it to 0-255
 	ldx	#sin_table
-	leax	b,x
-	ldd	b,x		; Put sin_table + 2 * B into D
+	leax	d,x
+	ldd	d,x		; Put sin_table + 2 * B into D
 
 	rts
 
@@ -1380,15 +1452,15 @@ overflow:
 	ldd	#$ffff			; Return highest possible number
 	rts
 
-**************************
+*************************************
 * Round to nearest
 *
 * Input:
 * D = fixed point number
 *
 * Output:
-* D = that number, rounded
-**************************
+* D = that number, rounded to nearest
+*************************************
 
 round_to_nearest:
 	tsta
@@ -1409,17 +1481,13 @@ round_to_nearest:
 
 negative_d:
 	tstb
-	bpl	no_adjust_a		; If closest to a, return a
+	bpl	round_to_neg_inf
 
-	suba	#1
-	cmpa	#127
-	bne	done_adjusting_a	; Has it overflowed?
-
-	lda	#128			; Yes, then set D to the largest
-	ldb	#255			; negative number
+	adda	#1
 
 done_adjusting_a:
 no_adjust_a:
+round_to_neg_inf:
 	clrb
 	rts
 

@@ -26,13 +26,13 @@ TMD_SOUND	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw
 SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper
 
-SIN_GENERATOR	=	sin_table_generator
 SIN_GEN_SRC	=	sin_table_generator.c
+SIN_GENERATOR	=	sin_table_generator
 SIN_TABLE	=	sin_table.asm
 
 # asm6809 is by Ciaran Anscomb
 ASM		=	asm6809
-ASMFLAGS	=	-C -v
+ASMFLAGS	=	-C -v -8
 
 # You can change this to your favorite C compiler
 CC        =  gcc

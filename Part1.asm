@@ -1500,10 +1500,10 @@ flash_screen_storage:			; Use the area of memory reserved for
 					; using it again
 
 pluck_sound:
-	INCLUDEBIN "Sounds/Pluck.raw"
+	INCLUDEBIN "Sounds/Pluck/Pluck.raw"
 pluck_sound_end:
 
 rjfc_presents_tmd_sound:
-	INCLUDEBIN "Sounds/RJFC_presents.raw"	; Simply concatenate these
-	INCLUDEBIN "Sounds/text_mode_demo.raw"	; two files
+	INCLUDEBIN "Sounds/RJFC_Presents_TMD/RJFC_Presents.raw"		; Simply concatenate these
+	INCLUDEBIN "Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw"	; two files
 rjfc_presents_tmd_sound_end:

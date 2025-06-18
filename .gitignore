@@ -1,8 +1,12 @@
 TMDEMO.DSK
 PART1.BIN
 PART2.BIN
-Pluck.raw
 sin_table.asm
 sin_table_generator
 sound_stripper
-Sounds/*
+Sounds/Pluck/Model_M_resampled.raw
+Sounds/Pluck/Pluck.raw
+Sounds/RJFC_Presents_TMD/RJFC_Presents_resampled.raw
+Sounds/RJFC_Presents_TMD/RJFC_Presents.raw
+Sounds/RJFC_Presents_TMD/Text_Mode_Demo_resampled.raw
+Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw

@@ -1,13 +1,14 @@
-The sounds come from Wikimedia Commons.
+This file is part of Text Mode Demo by Richard Cavell
+June 2025
 
-The sound Modelm.ogg came from here:
+The sound Modelm.ogg came from Wikimedia Commons, from here:
 https://commons.wikimedia.org/wiki/File:Modelm.ogg
 by Cpuwhiz13
 
-RJFC presents and Text mode demo were created by this website:
+RJFC Presents and Text Mode Demo were created by this website:
 https://speechsynthesis.online/
 The voice is "Ryan"
 
-The Joy sound is part of:
+The Joy sound is from Wikimedia Commons:
 https://commons.wikimedia.org/wiki/File:Joy_To_The_World.ogg
 by Lowell Mason, Isaac Watts, U.S. Army Chorus

@@ -11,17 +11,17 @@ PART2		=	PART2.BIN
 PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 
-PLUCK_SOUND	=	Sounds/Pluck.raw
-PLUCK_SOUND_SRC	=	Sounds/Modelm.wav
-PLUCK_SOUND_UNS	=	Sounds/Modelm_unstripped.raw
+PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
+PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
+PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
 
-RJFC_SOUND	=	Sounds/RJFC_presents.raw
-RJFC_SOUND_SRC	=	Sounds/RJFC_presents.wav
-RJFC_SOUND_UNS	=	Sounds/RJFC_presents_unstripped.raw
+RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents.raw
+RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents.wav
+RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_resampled.raw
 
-TMD_SOUND	=	Sounds/text_mode_demo.raw
-TMD_SOUND_SRC	=	Sounds/textmodedemo.wav
-TMD_SOUND_UNS	=	Sounds/textmodedemo_unstripped.raw
+TMD_SOUND	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw
+TMD_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.wav
+TMD_SOUND_RES	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo_resampled.raw
 
 SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper
@@ -84,35 +84,35 @@ $(SOUND_STR): $(SOUND_STR_SRC)
 	$(CC) $(CFLAGS) -o $@ $<
 	@echo "Done"
 
-$(PLUCK_SOUND_UNS): $(PLUCK_SOUND_SRC)
+$(PLUCK_SOUND_RES): $(PLUCK_SOUND_SRC)
 	@rm -v -f $@
 	@echo "Resampling" $@
 	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@echo "Done"
 
-$(PLUCK_SOUND): $(PLUCK_SOUND_UNS) $(SOUND_STR)
+$(PLUCK_SOUND): $(PLUCK_SOUND_RES) $(SOUND_STR)
 	@echo "Soundstripping" $@
 	./$(SOUND_STR) $< $@
 	@echo "Done"
 
-$(RJFC_SOUND_UNS): $(RJFC_SOUND_SRC)
+$(RJFC_SOUND_RES): $(RJFC_SOUND_SRC)
 	@rm -v -f $@
 	@echo "Resampling" $@
 	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@echo "Done"
 
-$(RJFC_SOUND): $(RJFC_SOUND_UNS) $(SOUND_STR)
+$(RJFC_SOUND): $(RJFC_SOUND_RES) $(SOUND_STR)
 	@echo "Soundstripping" $@
 	./$(SOUND_STR) $< $@
 	@echo "Done"
 
-$(TMD_SOUND_UNS): $(TMD_SOUND_SRC)
+$(TMD_SOUND_RES): $(TMD_SOUND_SRC)
 	@rm -v -f $@
 	@echo "Resampling" $@
 	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@echo "Done"
 
-$(TMD_SOUND): $(TMD_SOUND_UNS) $(SOUND_STR)
+$(TMD_SOUND): $(TMD_SOUND_RES) $(SOUND_STR)
 	@echo "Soundstripping" $@
 	./$(SOUND_STR) $< $@
 	@echo "Done"
@@ -138,9 +138,9 @@ info:
 
 clean:
 	@rm -f -v $(DISK) $(PART1) $(PART2) $(SOUND_STR)
-	@rm -f -v $(PLUCK_SOUND_UNS) $(PLUCK_SOUND)
-	@rm -f -v $(RJFC_SOUND_UNS) $(RJFC_SOUND)
-	@rm -f -v $(TMD_SOUND_UNS) $(TMD_SOUND)
+	@rm -f -v $(PLUCK_SOUND_RES) $(PLUCK_SOUND)
+	@rm -f -v $(RJFC_SOUND_RES) $(RJFC_SOUND)
+	@rm -f -v $(TMD_SOUND_RES) $(TMD_SOUND)
 	@rm -f -v $(SIN_GENERATOR) $(SIN_TABLE)
 
 mame: $(DISK)

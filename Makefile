@@ -15,13 +15,9 @@ PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
 PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
 PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 
-RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents.wav
-RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_resampled.raw
-RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents.raw
-
-TMD_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.wav
-TMD_SOUND_RES	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo_resampled.raw
-TMD_SOUND	=	Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw
+RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav
+RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
+RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw
 
 SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper
@@ -58,8 +54,8 @@ LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro
 
 all:	$(DISK) $(PART1) $(PART2)
 all:	$(SIN_GENERATOR) $(SIN_TABLE)
-all:	$(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
-all:	$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES) $(TMD_SOUND_RES)
+all:	$(PLUCK_SOUND) $(RJFC_SOUND)
+all:	$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
 all:	$(SOUND_STR)
 
 disk:	$(DISK)
@@ -73,7 +69,7 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2)
 	decb copy -2 -b -r $(PART2) $(DISK),$(PART2)
 	@echo "... Done"
 
-$(PART1): $(PART1_SRC) $(SIN_TABLE) $(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
+$(PART1): $(PART1_SRC) $(SIN_TABLE) $(PLUCK_SOUND) $(RJFC_SOUND)
 $(PART2): $(PART2_SRC)
 
 $(PART1) $(PART2):
@@ -86,20 +82,18 @@ $(SIN_TABLE): $(SIN_GENERATOR)
 
 $(PLUCK_SOUND): $(PLUCK_SOUND_RES)
 $(RJFC_SOUND): $(RJFC_SOUND_RES)
-$(TMD_SOUND): $(TMD_SOUND_RES)
 
-$(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND): $(SOUND_STR)
+$(PLUCK_SOUND) $(RJFC_SOUND): $(SOUND_STR)
 
-$(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND):
+$(PLUCK_SOUND) $(RJFC_SOUND):
 	@echo "Soundstripping" $@ ...
 	./$(SOUND_STR) $< $@
 	@echo "... Done"
 
 $(RJFC_SOUND_RES): $(RJFC_SOUND_SRC)
 $(PLUCK_SOUND_RES): $(PLUCK_SOUND_SRC)
-$(TMD_SOUND_RES): $(TMD_SOUND_SRC)
 
-$(RJFC_SOUND_RES) $(PLUCK_SOUND_RES) $(TMD_SOUND_RES):
+$(RJFC_SOUND_RES) $(PLUCK_SOUND_RES):
 	@rm -v -f $@
 	@echo "Resampling" $@ ...
 	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
@@ -135,8 +129,8 @@ license:
 clean:
 	@rm -f -v $(DISK) $(PART1) $(PART2)
 	@rm -f -v $(SIN_GENERATOR) $(SIN_TABLE)
-	@rm -f -v $(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
-	@rm -f -v $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES) $(TMD_SOUND_RES)
+	@rm -f -v $(PLUCK_SOUND) $(RJFC_SOUND)
+	@rm -f -v $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
 	@rm -f -v $(SOUND_STR)
 
 mame: $(DISK)

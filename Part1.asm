@@ -1504,6 +1504,5 @@ pluck_sound:
 pluck_sound_end:
 
 rjfc_presents_tmd_sound:
-	INCLUDEBIN "Sounds/RJFC_Presents_TMD/RJFC_Presents.raw"		; Simply concatenate these
-	INCLUDEBIN "Sounds/RJFC_Presents_TMD/Text_Mode_Demo.raw"	; two files
+	INCLUDEBIN "Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav"
 rjfc_presents_tmd_sound_end:

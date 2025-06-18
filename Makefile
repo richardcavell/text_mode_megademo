@@ -1,9 +1,9 @@
 # Makefile
-# Part of Name of Demo by Richard Cavell
-# June 2025
+# Part of Text Mode Demo by Richard Cavell
 # v1.0
+# June 2025
 
-DISK		=	NNDEMO.DSK
+DISK		=	TMDEMO.DSK
 BASIC_PART	=	DEMO.BAS
 PART1		=	PART1.BIN
 PART2		=	PART2.BIN

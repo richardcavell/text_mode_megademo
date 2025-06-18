@@ -54,7 +54,7 @@ LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro
 
 .DEFAULT: all
 
-.PHONY:	all clean disk help info mame mame-debug xroar
+.PHONY:	all clean disk help info license mame mame-debug xroar
 
 all:	$(DISK) $(DISK_IMG) $(PART1) $(PART2) $(SOUND_STR)
 all:	$(PLUCK_SOUND) $(RJFC_SOUND) $(TMD_SOUND)
@@ -133,9 +133,13 @@ info:
 	@echo "make clean"
 	@echo "make disk"
 	@echo "make info"	# Also make help
+	@echo "make license"
 	@echo "make mame"
 	@echo "make mame-debug"
 	@echo "make xroar"
+
+license:
+	@cat LICENSE
 
 clean:
 	@rm -f -v $(DISK) $(PART1) $(PART2) $(SOUND_STR)

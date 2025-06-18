@@ -303,7 +303,7 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 	lda	#'*'+64		; Non-inverted asterisk
 	sta	,x
 
-	ldb	#10		; Wait this number of frames
+	ldb	#50		; Wait this number of frames
 
 dot_wait:
 	pshs	b
@@ -324,6 +324,15 @@ dot_wait:
 
 	bra	dot_moves
 
+phase:
+	RZB	1		; 0 = Starting to move
+				; 1 = Changing to X
+				; 2 = Changing to :-)
+				; 3 = Changing to !
+				; 4 = Changing back to *
+dot_frames:
+	RZB	2
+
 scale_factor:
 	RZB	2		; Fixed point scale factor
 angle:
@@ -339,6 +348,12 @@ new_position:
 
 dot_moves:
 				; First, set everything to 0
+
+	lda	#0
+	sta	phase		; Which thing are we up to?
+
+	ldd	#0
+	std	dot_frames	; Number of frames
 
 	ldd	#0		; Our scale factor
 	std	scale_factor
@@ -375,6 +390,32 @@ move_dot:
 
 	lbsr	wait_for_vblank
 
+	ldd	dot_frames		; Add 1 to dot_frames
+	addd	#1
+	std	dot_frames
+
+	lda	phase			; If we're in phase 0...
+	bne	next_test
+	cmpd	#2000			; once we're at full speed...
+	bne	next_test
+	ldd	dot_frames
+	cmpa	#150
+	blo	next_test
+	lda	angle			; and angle is 0...
+	bne	next_test
+
+	lda	#1			; ...go to phase 1
+	sta	phase
+	bra	next_test_again
+
+next_test:
+	cmpd	#200			; After 200 frames,...
+	bne	next_test_again
+
+	lda	#2
+	sta	phase			; ...go to phase 2
+
+next_test_again:
 	lda	#$60		; Green box
 	ldx	dot_previous
 	sta	,x		; Erase previous dot
@@ -383,8 +424,36 @@ move_dot:
 	ldx	#DOT_START
 	leax	a,x		; X is now the position of the new dot
 
-	lda	#'*' + 64
-	sta	,x		; Draw the new dot
+	lda	phase
+	bne	_test_for_1
+
+	lda	#'*' + 64	; In phase 0, draw *
+	sta	,x
+	bra	phase_finished
+
+_test_for_1:
+	lda	phase
+	cmpa	#1
+	bne	_test_for_2
+
+	lda	#'X'		; In phase 1, change to an X
+	sta	,x
+
+	bra	phase_finished
+
+_test_for_2:
+	lda	phase
+	cmpa	#2
+	bne	phase_finished
+	lda	#':' + 64
+	sta	-1,x
+	lda	#'-' + 64
+	sta	,x
+	lda	#')'
+	sta	1,x
+	bra	phase_finished
+
+phase_finished:
 	stx	dot_previous	; And erase after next VBlank
 
 	ldd	scale_factor	; Increase the scale factor
@@ -402,81 +471,12 @@ d_is_clamped:
 	adda	#2		; It rotates constantly
 	sta	angle
 
-	ldd	scale_factor
-	cmpd	#2000
-	bne	move_dot
-
-	lda	angle
-	cmpa	#0
-	bne	move_dot
-
-	lda	counter
-	inca
-	cmpa	#2
-	beq	expand_dot
-
-	sta	counter
-	bra	move_dot
+	lbra	move_dot
 
 counter:
 	RZB	1
 
-*****************
-* The dot expands
-*****************
-
-expand_dot
-	bra	dot_expands
-
-dot_expands:
-move_dot_expands:
-	clra			; A is really don't care
-	ldb	angle		; D is our angle in fixed point
-	lbsr	sin		; D is now the sine of our angle
-	std	sine_of_angle
-
-	ldx	scale_factor		; X = scale factor, D is sine
-	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
-	lbsr	round_to_nearest	; Need to round this up or down
-	sta	displacement		; This is the displacement
-
-	lda	#0
-	ldx	#skip_dot
-	lbsr	check_space
-
-	lbsr	wait_for_vblank
-
-	lda	#$60		; Green box
-	ldx	dot_previous
-	sta	,x		; Erase previous dot
-
-	lda	displacement
-	ldx	#DOT_START
-	leax	a,x		; X is now the position of the new dot
-
-	lda	#'X'
-	sta	,x		; Draw the new dot
-	stx	dot_previous	; And erase after next VBlank
-
-	ldd	scale_factor	; Increase the scale factor
-	addd	#20		; gradually
-
-	cmpd	#2000		; If D is over 2000,
-	blt	d_is_clamped_expands
-
-	ldd	#2000		; Make it equal to 2000
-
-d_is_clamped_expands:
-	std	scale_factor
-
-	lda	angle			; (A fixed-point fraction)
-	adda	#2			; It rotates constantly
-	sta	angle
-
-	bra	move_dot_expands
-
-skip_dot:	; This is one of the addresses given to check_space
-
+skip_dot:
 	lbsr	clear_screen
 
 end:

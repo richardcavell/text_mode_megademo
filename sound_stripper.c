@@ -17,7 +17,10 @@ int main(int argc, char *argv[])
 
 	if (argc != 3)
 	{
-		fprintf(stderr, "%s%s%s", "Usage: ", argv[0],
+		(void) fprintf(stderr,
+			"%s%s%s",
+		        "Usage: ",
+			 argv[0],
 			" inputfile outputfile\n");
 		exit(EXIT_FAILURE);
 	}
@@ -26,11 +29,12 @@ int main(int argc, char *argv[])
 
 	if (input_fp == NULL)
 	{
-		fprintf(stderr, "%s%s%s%i%c", "Couldn't open input file ",
-					   argv[1],
-					   ". Error number: ",
-					   errno,
-					   '\n');
+		(void) fprintf(stderr, "%s%s%s%i%c",
+				 "Couldn't open input file ",
+				  argv[1],
+				 ". Error number: ",
+				  errno,
+				  '\n');
 		exit(EXIT_FAILURE);
 	}
 
@@ -38,11 +42,12 @@ int main(int argc, char *argv[])
 
 	if (output_fp == NULL)
 	{
-		fprintf(stderr, "%s%s%s%i%c", "Couldn't open output file ",
-					   argv[2],
-					   ". Error number: ",
-					   errno,
-					   '\n');
+		(void) fprintf(stderr, "%s%s%s%i%c",
+				"Couldn't open output file ",
+				 argv[2],
+				". Error number: ",
+				 errno,
+				'\n');
 		exit(EXIT_FAILURE);
 	}
 
@@ -52,7 +57,7 @@ int main(int argc, char *argv[])
 
 		if (fputc(c, output_fp) == EOF)
 		{
-			fprintf(stderr, "%s%s%s%i%c",
+			(void) fprintf(stderr, "%s%s%s%i%c",
                                         "Couldn't write to output file ",
 					argv[2],
 					". Error code: ",
@@ -65,16 +70,25 @@ int main(int argc, char *argv[])
 
 	if (fclose(input_fp) == EOF)
 	{
-		fprintf(stderr, "%s%s%s%i%c", "Couldn't close input file ",
-				argv[1], ". Error code: ", errno, '\n');
+		(void) fprintf(stderr, "%s%s%s%i%c",
+					"Couldn't close input file ",
+					argv[1],
+					". Error code: ",
+					 errno,
+					'\n');
 
 		exit(EXIT_FAILURE);
 	}
 
 	if (fclose(output_fp) == EOF)
 	{
-		fprintf(stderr, "%s%s%s%i%c", "Couldn't close output file ",
-				argv[2], ". Error code: ", errno, '\n');
+		(void) fprintf(stderr,
+			       "%s%s%s%i%c",
+			       "Couldn't close output file ",
+				argv[2],
+			       ". Error code: ",
+				errno,
+			       '\n');
 
 		exit(EXIT_FAILURE);
 	}

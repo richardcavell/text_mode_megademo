@@ -1,6 +1,6 @@
-Text mode demo
-by Richard Cavell
 Readme.txt
+Text Mode Demo
+by Richard Cavell
 v1.0
 June 2025
 

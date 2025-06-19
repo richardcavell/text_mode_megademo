@@ -2,9 +2,6 @@ Plan
 Text mode demo v1.0
 by Richard Cavell
 
-A routine that receives the loaded machine language and delivers it to upper
-32K.
-
 Add BREAK recognition to skip parts
 
 The top part becomes a scrolltext:
@@ -27,6 +24,6 @@ It then spins in 3 dimensions. It's made of asterisks.
 Scrolltext: Now begone!
 The cube then zooms off the screen.
 
-Using semigraphics, black rises up from the bottom and goes to line 2.
+black rises up from the bottom and goes to line 2.
 It then drops down, revealing blue.
 

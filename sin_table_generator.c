@@ -14,7 +14,10 @@ const double pi = 3.14159265358979323846;
 static void
 fprintf_error()
 {
-	(void) fprintf(stderr, "%s%i%c", "Couldn't print to output file. Error number : ", errno, '\n');
+	(void) fprintf(stderr, "%s%i%c",
+			 "Couldn't print to output file. Error number : ",
+			  errno,
+			 '\n');
 	exit(EXIT_FAILURE);
 }
 

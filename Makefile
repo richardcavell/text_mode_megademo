@@ -78,7 +78,9 @@ $(PART1) $(PART2):
 	@echo "... Done"
 
 $(SIN_TABLE): $(SIN_GENERATOR)
+	@echo "Generating sine table ..."
 	./$< $@
+	@echo "... Done"
 
 $(PLUCK_SOUND): $(PLUCK_SOUND_RES)
 $(RJFC_SOUND): $(RJFC_SOUND_RES)
@@ -96,17 +98,17 @@ $(PLUCK_SOUND_RES): $(PLUCK_SOUND_SRC)
 $(RJFC_SOUND_RES) $(PLUCK_SOUND_RES):
 	@rm -v -f $@
 	@echo "Resampling" $@ ...
-	ffmpeg -i $< -v warning -af "acrusher=bits=6,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
+	ffmpeg -i $< -v warning -af "lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@echo "... Done"
 
 $(SOUND_STR): $(SOUND_STR_SRC)
 	@echo "Compiling" $@ ...
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 	@echo "... Done"
 
 $(SIN_GENERATOR): $(SIN_GEN_SRC)
 	@echo "Compiling" $@ ...
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -lm
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@ -lm
 	@echo "... Done"
 
 help: info
@@ -127,12 +129,13 @@ license:
 	@cat LICENSE
 
 clean:
+	@echo "Removing all generated files ..."
 	@rm -f -v $(DISK) $(PART1) $(PART2)
 	@rm -f -v $(SIN_GENERATOR) $(SIN_TABLE)
 	@rm -f -v $(PLUCK_SOUND) $(RJFC_SOUND)
 	@rm -f -v $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
 	@rm -f -v $(SOUND_STR)
-
+	@echo "... Done"
 mame: $(DISK)
 	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"
 

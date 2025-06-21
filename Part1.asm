@@ -125,7 +125,8 @@ find_non_space:
 
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
-	lda	#$cf
+
+	lda	#$cf		; Blink it white for the duration of our sound
 	sta	,x
 
 	pshs	b,x
@@ -154,8 +155,8 @@ do_pluck:
 	tfr	x,d
 	andb	#0b00011111	; Is the address divisible by 32?
 
-	beq	check_text_screen_empty	; Yes, then we have reached the right side
-				; of the screen, so start another pluck
+	beq	check_text_screen_empty	; Yes, then we have reached the right
+				; side of the screen, so start another pluck
 
 move_character:
 	tfr	y,d		; Get the character being saved back in B
@@ -768,7 +769,7 @@ encase_text_loop:
 	pshs	b,x
 	lda	#5
 	ldx	#skip_title_screen
-	lbsr	check_space	; Space bar exits this
+	bsr	check_space	; Space bar exits this
 	puls	b,x
 
 	pshs	b,x

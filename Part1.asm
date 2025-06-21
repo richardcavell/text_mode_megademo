@@ -12,8 +12,6 @@
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by other authors. You can see it here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
-* Part of this code was written by Ciaran Anscomb
-* You can visit his website at https://6809.org.uk
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
@@ -166,10 +164,13 @@ move_character:
 
 screen_is_empty:
 	lbsr	clear_screen
+	bra	title_screen
 
 **************
 * Title screen
 **************
+
+save_y:	RZB 2
 
 title_screen:
 	ldy	#title_screen_text
@@ -179,9 +180,9 @@ print_text_loop:
 	ldb	,y+
 	tfr	y,x
 
-	pshs	y
+	sty	save_y
 	lbsr	text_appears
-	puls	y
+	ldy	save_y
 
 find_zero:
 	tst	,y+
@@ -193,10 +194,6 @@ find_zero:
 	bne	print_text_loop		; If not, then print the next line
 					; If yes, then fall through to the
 					;   next section
-
-        lda     #15
-        ldb     #3
-        lbsr    flash_text_white
 
 	ldx	#rjfc_presents_tmd_sound	; Start of sound
 	ldy	#rjfc_presents_tmd_sound_end	; End of sound
@@ -264,7 +261,18 @@ loading_screen:
 	ldx	#ascii_art_cat
 	lbsr	output_full_screen
 
+	ldx	#loading_text
+	lda	#15
+	ldb	#11
+	lbsr	text_appears
+
+	lda	#15
+	ldb	#3
+	lbsr	flash_text_white
+
 * This is the end of part 1!
+
+	lbsr	uninstall_irq_service_routine
 
 	clra
 	rts
@@ -288,11 +296,11 @@ ascii_art_cat:
 	FCV	"        ; '   : :'-:     ..'* ;",0
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0
-	FCV	"           LOADING...",0
 	FCB	255
 ascii_art1_end:
 
 loading_text:
+	FCV	"LOADING...",0
 
 *****************************************************************************
 *	Subroutines
@@ -317,6 +325,17 @@ install_irq_service_routine:
 	stx	IRQ_HANDLER		; Our own interrupt service routine is installed
 
 	bsr	switch_on_irq		; Switch IRQ interrupts back on
+
+	rts
+
+uninstall_irq_service_routine:
+
+	bsr	switch_off_irq
+
+	ldy	decb_irq_service_routine
+	sty	IRQ_HANDLER
+
+	bsr	switch_on_irq
 
 	rts
 

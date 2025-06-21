@@ -1512,5 +1512,4 @@ pluck_sound:
 pluck_sound_end:
 
 rjfc_presents_tmd_sound:
-	INCLUDEBIN "Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw"
 rjfc_presents_tmd_sound_end:

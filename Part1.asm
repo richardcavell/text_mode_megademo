@@ -5,6 +5,9 @@
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
 *
+* This code is intended to run on a TRS-80 Color Computer 1,2 or 3
+* with at least 32K of RAM
+*
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by other authors. You can see it here:
@@ -21,63 +24,8 @@
 * Zero the DP register
 **********************
 
-	clrb
-	tfr	b, dp
-
-*******************
-* Check for 64K RAM
-*******************
-
-	lbsr	switch_off_irq		; Switch off IRQ interrupts for now
-	lbsr	set_sam_ty		; Switch ROM out, upper 32K of RAM in
-
-	; This code was modified from some code written by Ciaran Anscomb
-
-	lda	$0062
-	ldb	$8063
-	coma
-	comb
-	std	$8062
-	cmpd	$8062
-	bne	ram_not_found
-	cmpd	$0062
-	beq	ram_not_found
-
-	; End code written by Ciaran Anscomb
-
-	lbsr	clear_sam_ty		; Switch upper 32K RAM out, ROM in
-	lbsr	switch_on_irq		; Switch IRQ interrupts back on
-	bra	ram_check_end
-
-ram_not_found:
-	lbsr	clear_sam_ty
-	lbsr	switch_on_irq
-
-	ldx	#ram_error_message
-	lbsr	display_message
-
-	lda	#$01
-	rts				; Return to the operating system
-
-ram_error_message:
-	FCV	"YOU"
-	FCB	$8f			; blank space
-	FCV	"NEED"
-	FCB	$8f
-	FCB	54			; '6'
-	FCB	52			; '4'
-	FCV	"K"
-	FCB	$8f
-	FCV	"RAM"
-	FCB	$8f
-	FCV	"FOR"
-	FCB	$8f
-	FCV	"THIS"
-	FCB	$8f
-	FCV	"DEMO"
-	FCB	$22			; A quotation mark ends the error message
-
-ram_check_end:
+	clra
+	tfr	a, dp
 
 *************************
 * Install our IRQ handler
@@ -114,7 +62,7 @@ count_chars_on_one_line:
 
 test_char:
 	lda	,x+
-	cmpa	#$60			; Is it a space?
+	cmpa	#$60			; Is it an empty green box?
 	beq	space_char
 
 	inc	,y			; Count another non-space character
@@ -156,7 +104,7 @@ choose_line:
 	ldy	#line_counts
 
 	clra
-	andb	#0b00001111	; Make it between 0 and 15
+	andb	#0b00001111	; Make the random number between 0 and 15
 
 	tst	b,y		; If there are no more characters on this line
 	beq	choose_line	; choose a different one
@@ -177,28 +125,27 @@ find_non_space:
 
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
+	lda	#$cf
+	sta	,x
 
 	pshs	b,x
 	ldx	#pluck_sound
 	ldy	#pluck_sound_end
 	lda	#1
-	lbsr	play_sound			; Play the pluck noise
+	lbsr	play_sound	; Play the pluck noise
 	puls	b,x
-
-POLCAT	EQU	$A000		; ROM routine
 
 pluck_loop:
 	pshs	b,x
-	jsr	[POLCAT]
-	cmpa	#' '		; Check for space bar being pressed
-	puls	b,x		; Does not affect CCs
-	bne	do_pluck	; If not, then continue plucking
 
-	lbsr	clear_screen	; If so, clear the screen
-	bra	screen_is_empty	; and skip this section
+	lda	#3
+	ldx	#screen_is_empty
+	lbsr	check_space
 
 do_pluck:
 	lbsr	wait_for_vblank	; This is how we time
+
+	puls	b,x
 
 	lda	#$60
 	sta	,x+		; Replace it with a space
@@ -217,6 +164,7 @@ move_character:
 	bra	pluck_loop
 
 screen_is_empty:
+	lbsr	clear_screen
 
 **************
 * Title screen
@@ -503,17 +451,37 @@ title_screen_text:
 * Assume that no registers are preserved
 
 *********************************
+* Install our IRQ service routine
+*********************************
+
+IRQ_HANDLER	EQU	$10d
+
+install_irq_service_routine:
+
+	bsr	switch_off_irq		; Switch off IRQ interrupts for now
+
+	ldy	IRQ_HANDLER		; Load the current vector into y
+	sty	decb_irq_service_routine	; We will call it at the end of our own handler
+
+	ldx	#irq_service_routine
+	stx	IRQ_HANDLER		; Our own interrupt service routine is installed
+
+	bsr	switch_on_irq		; Switch IRQ interrupts back on
+
+	rts
+
+*********************************
 * Switch IRQ interrupts on or off
 *********************************
 
 switch_off_irq:
 
-	orcc	#0b00010000	; Switch off IRQ interrupts
+	orcc	#0b00010000		; Switch off IRQ interrupts
 	rts
 
 switch_on_irq:
 
-	andcc	#0b11101111	; Switch IRQ interrupts back on
+	andcc	#0b11101111		; Switch IRQ interrupts back on
 	rts
 
 ******************************************
@@ -541,67 +509,9 @@ turn_off_disk_motor:
 	clr	DSKREG		; Turn off disk motor
 	rts
 
-**********************************
-* Switch SAM TY register on or off
-**********************************
-
-SAM_TY_SET	EQU	$FFDF
-SAM_TY_CLEAR	EQU	$FFDE
-
-set_sam_ty:
-
-	lda	#$ff
-	sta	SAM_TY_SET	; Switch ROM out, upper 32K of RAM in
-	rts
-
-clear_sam_ty:
-
-	lda	#$00
-	sta	SAM_TY_CLEAR	; Switch upper 32K of RAM out, ROM back in
-	rts
-
-************************************************************
-* Display a message using the operating system
-*
-* Input:
-* X = string containing the message (ended by double quotes)
-************************************************************
-
-DISPL		EQU	$B99C
-
-display_message:
-
-	clr	$6F			; Output to the screen
-	leax	-1,x			; The first character is skipped over
-	JSR	DISPL			; Put the string to the screen
-	rts
-
-*********************************
-* Install our IRQ service routine
-*********************************
-
-IRQ_HANDLER	EQU	$10d
-
-install_irq_service_routine:
-
-	bsr	switch_off_irq		; Switch off interrupts for now
-
-	ldy	IRQ_HANDLER			; Load the current vector into y
-	sty	decb_irq_service_routine	; We will call it at the end of our own handler
-
-	ldx	#irq_service_routine
-	stx	IRQ_HANDLER		; Our own interrupt service routine is installed
-
-	bsr	switch_on_irq		; Switch interrupts back on
-
-	rts
-
 **********************
 * Our IRQ handler
 **********************
-
-vblank_happened:
-	FCB	0
 
 irq_service_routine:
 	lda	#1
@@ -615,6 +525,43 @@ irq_service_routine:
 
 decb_irq_service_routine:
 	RZB 2
+
+vblank_happened:
+	FCB	0
+
+*****************
+* Wait for VBlank
+*****************
+
+wait_for_vblank:
+	clr	vblank_happened		; Put a zero in vblank_happened
+
+wait_loop:
+	tst	vblank_happened		; As soon as a 1 appears...
+	beq	wait_loop
+
+	rts				; ...return to caller
+
+**********************************************************
+* Returns a random-ish number from 0...65535
+*
+* Output:
+* D = the random number
+**********************************************************
+
+* I found these values through simple experimentation.
+* This RNG could be improved on.
+
+SEED:
+	FCB	0xBE
+	FCB	0xEF
+
+get_random:
+	ldd	SEED
+	mul
+	addd	#3037
+	std	SEED
+	rts
 
 *********************
 * Turn 6-bit audio on
@@ -651,24 +598,6 @@ turn_6bit_audio_on:
 
 	rts
 
-**********************************************************
-* Returns a random-ish number from 0...65535
-*
-* Output:
-* D = the random number
-**********************************************************
-
-SEED:
-	FCB	0xBE
-	FCB	0xEF
-
-get_random:
-	ldd	SEED
-	mul
-	addd	#3037
-	std	SEED
-	rts
-
 *******************************
 * Play a sound sample
 *
@@ -686,7 +615,7 @@ play_sound:
 send_value:
 	cmpx	,s			; Compare X with Y
 
-	beq	send_values_finished	; If we have no data, exit
+	beq	send_values_finished	; If we have no more samples, exit
 
 	ldb	,x+
 	stb	AUDIO_PORT
@@ -708,86 +637,6 @@ send_values_finished:
 
 	rts
 
-***********************************
-* Play a repeating sound sample
-*
-* Inputs:
-* X = The sound data
-* Y = The end of the sound data
-* U The repeat start point, then
-* (Pushed onto S)
-*   The repeat end point
-* A = The delay between samples
-* B = The number of times to repeat
-***********************************
-
-play_repeating_sound:
-
-	pshs	d			; Add 1 to the repeat end point
-	ldd	4,s
-	addd	#1
-	std	4,s
-	puls	d
-
-	pshs	y			; ,s is equal to y
-					; 4,s is equal to the repeat end point
-
-        lbsr	switch_off_irq_and_firq
-
-play_repeating_sound_loop:
-
-	cmpx	,s
-	beq	play_repeating_sound_finished
-
-	tstb
-	beq	play_repeating_no_rpta
-
-	cmpx	4,s
-	bne	play_repeating_no_rptb
-
-	tfr	u,x			; Send the marker back to the
-					;   repeat start
-
-	decb
-
-	bra play_repeating_no_rptb
-
-play_repeating_no_rpta:
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-
-play_repeating_no_rptb:
-
-	pshs	a
-	lda	,x+
-	sta	AUDIO_PORT		; Send the sample to the audio port
-	puls	a
-
-	pshs	a
-
-play_repeating_delay_loop:
-
-	deca
-	bne	play_repeating_delay_loop
-
-	puls	a
-
-	bra	play_repeating_sound_loop
-
-play_repeating_sound_finished:
-	leas	4,s			; Undo the pushes onto the stack
-					;   and throw away the values that
-					;   were there
-
-	lbsr	switch_on_irq_and_firq
-
-	rts
-
-
 ******************
 * Clear the screen
 ******************
@@ -806,19 +655,6 @@ clear_char:
 	bne	clear_char
 	rts
 
-*****************
-* Wait for VBlank
-*****************
-
-wait_for_vblank:
-	clr	vblank_happened		; Put a zero in vblank_happened
-
-wait_loop:
-	tst	vblank_happened		; As soon as a 1 appears...
-	beq	wait_loop
-
-	rts				; ...return to caller
-
 ********************************************************
 * Is space bar being pressed?
 *
@@ -826,6 +662,8 @@ wait_loop:
 * A = number of bytes on S stack that need to be removed
 * X = address to skip to if space bar is pressed
 ********************************************************
+
+POLCAT	EQU	$A000			; ROM routine
 
 check_space:
 	pshs	a,b,x,y,u		; Save all registers
@@ -870,7 +708,7 @@ buff_box:
 	puls	b,x,u
 
 	pshs	b,x,u
-	bsr	wait_for_vblank
+	lbsr	wait_for_vblank
 	puls	b,x,u
 
 	tstb			; If non-zero, we are not printing out

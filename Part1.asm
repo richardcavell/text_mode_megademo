@@ -484,10 +484,10 @@ clear_char:
 POLCAT	EQU	$A000			; ROM routine
 
 check_space:
-	pshs	a,b,x,y,u		; Save all registers
+	pshs	a,x			; Save all registers
 	jsr	[POLCAT]		; A ROM routine
 	cmpa	#' '
-	puls	a,b,x,y,u		; Does not affect CCs
+	puls	a,x			; Does not affect CCs
 	beq	skip
 
 	rts

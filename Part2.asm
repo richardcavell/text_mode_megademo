@@ -20,6 +20,11 @@
 
 		ORG $1800
 
+	ldx	#1024
+	lda	#'A'
+	sta	,x
+loop	bra	loop
+
 **********************
 * Zero the DP register
 **********************

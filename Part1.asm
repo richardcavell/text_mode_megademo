@@ -19,7 +19,7 @@
 * and the CLEAR command
 
 		ORG $1800
-	sts	s_should_equal
+
 **********************
 * Zero the DP register
 **********************
@@ -264,33 +264,10 @@ loading_screen:
 	ldx	#ascii_art_cat
 	lbsr	output_full_screen
 
-	lda	#15
-	ldb	#11
-	ldx	#loading_text
-	lbsr	text_appears
-
-	lda	#15
-	ldb	#3
-	lbsr	flash_text_white
-
 * This is the end of part 1!
-
-end:
-	cmps	s_should_equal
-	beq	yes
-
-	lda	#'N'
-	sta	1024
-	rts
-
-yes:	lda	#'Y'
-	sta	1024
 
 	clra
 	rts
-
-s_should_equal:
-	RZB	0
 
 * This art is modified from the original by Blazej Kozlowski
 * It's from https://www.asciiart.eu/animals/cats
@@ -311,11 +288,11 @@ ascii_art_cat:
 	FCV	"        ; '   : :'-:     ..'* ;",0
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0
+	FCV	"           LOADING...",0
 	FCB	255
 ascii_art1_end:
 
 loading_text:
-	FCV	"LOADING...",0
 
 *****************************************************************************
 *	Subroutines
@@ -390,9 +367,9 @@ irq_service_routine:
 	lda	#1
 	sta	vblank_happened
 
-					; In the interests of making our IRQ handler run fast,
-					; the routine assumes that decb_irq_service_routine
-					; has been correctly initialized
+		; In the interests of making our IRQ handler run fast,
+		; the routine assumes that decb_irq_service_routine
+		; has been correctly initialized
 
 	jmp	[decb_irq_service_routine]
 

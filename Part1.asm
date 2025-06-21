@@ -234,13 +234,6 @@ find_zero:
 * Drop the lines off the bottom end of the screen
 
 	lda	#11
-        lda     #15
-qt.qpa.wayland: Wayland does not support QWindow::requestActivate()
-        ldb     #3
-        lbsr    flash_text_white
-
-* This is the end of part 1!
-
 	lbsr	drop_screen_content
 
 	lda	#7

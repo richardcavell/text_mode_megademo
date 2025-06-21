@@ -19,7 +19,7 @@
 * and the CLEAR command
 
 		ORG $1800
-
+	sts	s_should_equal
 **********************
 * Zero the DP register
 **********************
@@ -194,6 +194,10 @@ find_zero:
 					; If yes, then fall through to the
 					;   next section
 
+        lda     #15
+        ldb     #3
+        lbsr    flash_text_white
+
 	ldx	#rjfc_presents_tmd_sound	; Start of sound
 	ldy	#rjfc_presents_tmd_sound_end	; End of sound
 	lda	#8
@@ -230,6 +234,13 @@ find_zero:
 * Drop the lines off the bottom end of the screen
 
 	lda	#11
+        lda     #15
+qt.qpa.wayland: Wayland does not support QWindow::requestActivate()
+        ldb     #3
+        lbsr    flash_text_white
+
+* This is the end of part 1!
+
 	lbsr	drop_screen_content
 
 	lda	#7
@@ -257,10 +268,61 @@ title_screen_text:
 	FCB 255		; The end
 
 loading_screen:
-	ldx	#1024
-	lda	#'A'
-	sta	,x
-	bra	loading_screen
+	ldx	#ascii_art_cat
+	lbsr	output_full_screen
+
+	lda	#15
+	ldb	#11
+	ldx	#loading_text
+	lbsr	text_appears
+
+	lda	#15
+	ldb	#3
+	lbsr	flash_text_white
+
+* This is the end of part 1!
+
+end:
+	cmps	s_should_equal
+	beq	yes
+
+	lda	#'N'
+	sta	1024
+	rts
+
+yes:	lda	#'Y'
+	sta	1024
+
+	clra
+	rts
+
+s_should_equal:
+	RZB	0
+
+* This art is modified from the original by Blazej Kozlowski
+* It's from https://www.asciiart.eu/animals/cats
+
+ascii_art_cat:
+	FCV	"      .",0
+	FCV	"      \\'*-.",0
+	FCV	"       )  .'-.",0
+	FCV	"      .  : '. .",0
+	FCV	"      : .   '  \\",0
+	FCV	"      ; *' ..   '*-..",0
+	FCV	"      '-.-'          '-.",0
+	FCV	"        ;       '       '.",0
+	FCV	"        :.       .        \\",0
+	FCV	"        . \\  .   :   .-'   .",0
+	FCV	"        '  '+.;  ;  '      :",0
+	FCV	"        :  '  I    ;       ;-.",0
+	FCV	"        ; '   : :'-:     ..'* ;",0
+	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
+	FCV	"     '*-*   '*-*  '*-*'",0
+	FCB	255
+ascii_art1_end:
+
+loading_text:
+	FCV	"LOADING...",0
 
 *****************************************************************************
 *	Subroutines
@@ -949,6 +1011,37 @@ clear_loop:
 	decb
 	bne	clear_loop
 
+	rts
+
+**************************************
+* Output full screen
+*
+* Inputs:
+* X = the text to be put on the screen
+**************************************
+
+output_full_screen:
+	tfr	x,y			; Y = beginning of our data
+	ldx	#TEXTBUF		; X = beginning of the screen
+
+	tfr	x,u			; U = beginning of the screen
+
+keep_outputting:
+	lda	,y+			; What's the next thing to draw?
+	cmpa	#255
+	beq	output_full_screen_end	; If the end, finish
+	tsta				; If it's a character
+	bne	output_char		; go and draw it
+
+	leau	32,u			; If 0, go to the next line
+	tfr	u,x
+	bra	keep_outputting
+
+output_char:
+	sta	,x+
+	bra	keep_outputting
+
+output_full_screen_end:
 	rts
 
 *************************************

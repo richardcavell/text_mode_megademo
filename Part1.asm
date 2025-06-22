@@ -16,6 +16,10 @@
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
+* DEBUG_MODE means you press T to toggle frame-by-frame mode.  In frame-by-frame mode, you press F to see the next frame
+
+DEBUG_MODE	EQU	1
+
 		ORG $1800
 
 **********************
@@ -151,9 +155,13 @@ do_pluck:
 	tfr	x,d
 	andb	#0b00011111	; Is the address divisible by 32?
 
-	beq	check_text_screen_empty	; Yes, then we have reached the right
+	bne	not_divisible
+
+	lbsr	wait_for_vblank
+	bra	check_text_screen_empty	; Yes, then we have reached the right
 				; side of the screen, so start another pluck
 
+not_divisible:
 	tfr	y,d		; Get the character being saved back in B
 
 	stb	,x		; Put the character one position to the right
@@ -289,6 +297,8 @@ loading_screen:
 	lda	#15
 	ldb	#11
 	lbsr	text_appears		; Ignore the return value
+
+	lbsr	wait_for_vblank		; Display it for one frame
 
 	lda	#15
 	ldb	#3
@@ -433,7 +443,25 @@ wait_loop:
 	tst	vblank_happened,PCR	; As soon as a 1 appears...
 	beq	wait_loop
 
+	lda	#DEBUG_MODE
+	beq	exit_wait_for_vblank
+
+	jsr	[POLCAT]
+	cmpa	#'T'
+	bne	not_t
+
+	com	toggle
+
+not_t:
+	tst	toggle
+	beq	exit_wait_for_vblank
+	cmpa	#'F'
+	bne	wait_loop
+
+exit_wait_for_vblank:
 	rts				; ...return to caller
+
+toggle:	RZB	1
 
 **********************************************************
 * Returns a random-ish number from 0...65535
@@ -725,6 +753,7 @@ encase_are_we_done:
 	tfr	y,d
 	bne	encase_text_loop
 
+	lbsr	wait_for_vblank	; The final showing
 	clra
 	rts			; we are finished
 
@@ -734,6 +763,8 @@ encase_right:
 	andb	#0b00011111	; If X is evenly divisible
 	tfr	y,d
 	bne	encase_text_loop	;   by 32, then
+
+	lbsr	wait_for_vblank	; The final showing
 
 	clra
 	rts			; we are finished
@@ -747,6 +778,7 @@ encase_right:
 **************************************
 
 flash_text_white:
+	decb			; We test at the bottom
 	pshs	b
 
 	ldb	#32

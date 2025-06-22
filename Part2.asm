@@ -508,11 +508,13 @@ install_irq_service_routine:
 
 	bsr	switch_off_irq		; Switch off interrupts for now
 
-	ldy	IRQ_HANDLER			; Load the current vector into y
-	sty	decb_irq_service_routine, PCR	; We will call it at the end of our own handler
+	ldy	IRQ_HANDLER		; Load the current vector into y
+	sty	decb_irq_service_routine, PCR	; We will call it at the
+						; end of our own handler
 
 	leax	irq_service_routine, PCR
-	stx	IRQ_HANDLER		; Our own interrupt service routine is installed
+	stx	IRQ_HANDLER		; Our own interrupt service routine
+					;  is installed
 
 	bsr	switch_on_irq		; Switch interrupts back on
 
@@ -626,6 +628,8 @@ POLCAT	EQU	$A000			; ROM routine
 check_for_space:
 	jsr	[POLCAT]		; A ROM routine
 	cmpa	#' '
+	beq	skip
+	cmpa	#3			; break key
 	beq	skip
 	clra
 	rts

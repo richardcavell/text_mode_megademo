@@ -4,26 +4,3 @@ by Richard Cavell
 
 Add BREAK recognition to skip parts
 
-The top part becomes a scrolltext:
-Welcome to Name of Demo. Blah blah blah.
-
-A 14-long line appears from middle out. It is made of asterisks.
-
-It rotates 180 degrees. Then pauses. Then rotates another 180 degrees
-and pauses. Then it rotates 90 degrees.  Another line is made.
-The whole thing rotates 720 degrees.
-
-A cube appears by zooming onto the screen.
-Scrolltext: It is a square.
-
-Scrolltext: It rotates!
-
-Scrolltext: Now it is 3D.
-Once it has gone through 90 degrees, it rotates about the vertical axis.
-It then spins in 3 dimensions. It's made of asterisks.
-Scrolltext: Now begone!
-The cube then zooms off the screen.
-
-black rises up from the bottom and goes to line 2.
-It then drops down, revealing blue.
-

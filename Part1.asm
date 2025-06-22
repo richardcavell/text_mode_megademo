@@ -656,6 +656,8 @@ check_for_space:
 	jsr	[POLCAT]		; A ROM routine
 	cmpa	#' '
 	beq	skip
+	cmpa	#3			; break key
+	beq	skip
 	clra
 	rts
 

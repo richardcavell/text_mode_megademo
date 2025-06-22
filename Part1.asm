@@ -53,7 +53,7 @@ TEXTBUFSIZE	EQU	$200		; so there's only one text screen
 ; First, count the number of characters on each line of the screen
 
 	ldx	#TEXTBUF
-	ldy	#line_counts		; There are 16 of these
+	leay	line_counts,PCR		; There are 16 of these
 
 count_chars_on_one_line:
 	ldb	#32			; There are 32 characters per line
@@ -61,10 +61,10 @@ count_chars_on_one_line:
 test_char:
 	lda	,x+
 	cmpa	#$60			; Is it an empty green box?
-	beq	space_char
+	beq	space_char		; Yes
 
-	inc	,y			; Count another non-space character
-
+	inc	,y			; No, so count another
+					; non-space character
 space_char:
 	decb
 	bne	test_char
@@ -84,7 +84,7 @@ count_chars_end:
 ; Now, check to see if the screen is empty yet
 
 check_text_screen_empty:
-	ldy	#line_counts
+	leay	line_counts,PCR
 
 test_line:
 	tst	,y+
@@ -92,16 +92,14 @@ test_line:
 	cmpy	#line_counts_end
 	bne	test_line
 
-empty:
 	bra	screen_is_empty	; Go to the next piece of this demo
 
 not_empty:
 
 choose_line:
 	lbsr	get_random 	; Get a random number in D
-	ldy	#line_counts
+	leay	line_counts,PCR
 
-	clra
 	andb	#0b00001111	; Make the random number between 0 and 15
 
 	tst	b,y		; If there are no more characters on this line
@@ -136,14 +134,14 @@ find_non_space:
 
 pluck_loop:
 	pshs	b,x
-
-	lda	#3
-	ldx	#screen_is_empty
-	lbsr	check_space
+	lbsr	check_for_space
+	puls	b,x
+	tsta
+	bne	screen_is_empty
 
 do_pluck:
+	pshs	b,x
 	lbsr	wait_for_vblank	; This is how we time
-
 	puls	b,x
 
 	lda	#$60
@@ -527,27 +525,23 @@ clear_char:
 ********************************************************
 * Is space bar being pressed?
 *
-* Inputs:
-* A = number of bytes on S stack that need to be removed
-* X = address to skip to if space bar is pressed
+* Outputs:
+* A = 0 if space bar is not pressed
+* A = non-zero if space bar is being pressed
 ********************************************************
 
 POLCAT	EQU	$A000			; ROM routine
 
-check_space:
-	pshs	a,x			; Save all registers
+check_for_space:
 	jsr	[POLCAT]		; A ROM routine
 	cmpa	#' '
-	puls	a,x			; Does not affect CCs
 	beq	skip
-
+	clra
 	rts
 
 skip:
-	leas	2,s			; Remove the return address
-	leas	a,s			; And any other return addresses
-					;   and stack contents
-	jmp	,x			; Skip to next section
+	lda	#1
+	rts
 
 ************************************************
 * Brings text onto the screen using an animation
@@ -571,10 +565,10 @@ buff_box:
 	sta	,x		; Put it on the screen
 
 	pshs	b,x,u
-	lda	#7
-	ldx	#skip_title_screen
-	bsr	check_space	; Space bar skips this section
+	bsr	check_for_space	; Space bar skips this section
 	puls	b,x,u
+	tsta
+	lbne	#skip_title_screen
 
 	pshs	b,x,u
 	lbsr	wait_for_vblank
@@ -635,10 +629,10 @@ encase_text:
 
 encase_text_loop:
 	pshs	b,x
-	lda	#5
-	ldx	#skip_title_screen
-	bsr	check_space	; Space bar exits this
+	bsr	check_for_space	; Space bar exits this
 	puls	b,x
+	tsta
+	lbne	skip_title_screen
 
 	pshs	b,x
 	lbsr	wait_for_vblank	; Start on the next frame
@@ -738,10 +732,10 @@ flash_chars_loop:
 	puls	b,x
 
 	pshs	b,x
-	lda	#5
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
 	puls	b,x
+	tsta
+	lbne	skip_title_screen
 
 	pshs	b,x
 	lbsr	wait_for_vblank
@@ -752,10 +746,10 @@ flash_chars_loop:
 	puls	b,x
 
 	pshs	b,x
-	lda	#5
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
 	puls	b,x
+	tsta
+	lbne	skip_title_screen
 
 	pshs	b,x
 	lbsr	wait_for_vblank
@@ -838,9 +832,9 @@ flash_screen_copy_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_copy_loop
 
-	lda	#2
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
+	tsta
+	lbne	skip_title_screen
 
 	lbsr	wait_for_vblank
 
@@ -856,14 +850,16 @@ flash_screen_white_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_white_loop
 
-	lda	#2
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
+	tsta
+	lbne	skip_title_screen
+
 	lbsr	wait_for_vblank
 
-	lda	#2
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
+	tsta
+	lbne	skip_title_screen
+
 	lbsr	wait_for_vblank
 
 	ldx	#TEXTBUF
@@ -882,15 +878,15 @@ flash_screen_restore_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_restore_loop
 
-	lda	#2
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
+	tsta
+	lbne	skip_title_screen
 
 	lbsr	wait_for_vblank
 
-	lda	#2
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
+	tsta
+	lbne	skip_title_screen
 
 	lbsr	wait_for_vblank
 
@@ -925,20 +921,20 @@ drop_screen_content:
 
 
 	pshs	a
-	lda	#3
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
+	tsta
 	puls	a
+	lbne	skip_title_screen
 
 	pshs	a
 	lbsr	wait_for_vblank
 	puls	a
 
 	pshs	a
-	lda	#3
-	ldx	#skip_title_screen
-	lbsr	check_space
+	lbsr	check_for_space
+	tsta
 	puls	a
+	lbne	skip_title_screen
 
 	pshs	a
 	lbsr	wait_for_vblank

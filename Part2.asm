@@ -36,14 +36,52 @@ DEBUG_MODE	EQU	1
 
 	lbsr	clear_screen
 
+        leay    birds_graphic, PCR
+
+        ldx     #TEXTBUF+5*32+8
+
+display_bird_graphic:
+        lda     ,y+
+        beq     bird_new_line
+        cmpa    #255
+        beq	scroll_text
+        sta     ,x+
+        bra     display_bird_graphic
+
+bird_new_line:
+        tfr     x,d
+        andb    #0b11100000
+        addd    #32 + 8
+        tfr     d,x
+	bra	display_bird_graphic
+
+birds_graphic:
+	FCV	"   ---     ---",0
+	FCV	"  (O O)   (O O)",0
+	FCV	" (  V  ) (  V  ) ",0
+	FCV	"/--M-M- /--M-M-",0
+	FCB	255
+
+scroll_text:
+
+	ldx	#scroll_text_1
+	lda	#15
+	ldb	#20
+	lbsr	display_scroll_text
+
+	bra	create_dot
+
 **************
 * Create a dot
 **************
+create_dot:
 
 TEXTBUF		EQU	$400		; We're not double-buffering
 TEXTBUFSIZE	EQU	$200		; so there's only one text screen
 
 DOT_START	EQU	(TEXTBUF+8*32+16)
+
+	lbsr	clear_screen
 
 	ldx	#DOT_START	; in the middle of the screen
 
@@ -53,8 +91,6 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 ******
 * Wait
 ******
-	ldb	#50		; Wait this number of frames
-
 	leay	dot_graphic,PCR
 
 	ldx	#TEXTBUF+24
@@ -63,7 +99,7 @@ display_graphic:
 	lda	,y+
 	beq	new_line
 	cmpa	#255
-	beq	dot_wait
+	beq	wait_on_dot
 	sta	,x+
 	bra	display_graphic
 
@@ -73,6 +109,9 @@ new_line:
 	addd	#32+24
 	tfr	d,x
 	bra	display_graphic
+
+wait_on_dot:
+	ldb	#50		; Wait this number of frames
 
 dot_wait:
 	pshs	b
@@ -638,6 +677,40 @@ skip:
 	lda	#1
 	rts
 
+************************
+* Display scroll text
+*
+* Inputs:
+* A = Line number
+* B = Slowness of scroll
+* X = Scrolltext
+************************
+
+display_scroll_text:
+	pshs	b
+	ldb	#32
+	mul
+	ldy	#TEXTBUF
+	leay	d,y
+	puls	b
+
+	pshs	b, x, y
+	jsr	check_for_space, PCR
+	tsta
+	puls	b, x, y
+	beq	_scroll_wait
+
+	rts
+
+_scroll_wait:
+	pshs	b, x, y
+	jsr	wait_for_vblank
+	puls	b, x, y
+
+	decb
+	bne	_scroll_wait
+	rts
+
 **********************************************************
 * Returns a random-ish number from 0...65535
 *
@@ -980,4 +1053,13 @@ forward_slash:
 	sta	31,x
 	sta	62,x
 	rts
+
+**************
+* Scroll texts
+**************
+
+scroll_text_1:
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ",0
+
+
 

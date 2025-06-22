@@ -47,12 +47,36 @@ DEBUG_MODE	EQU	0
 
 	lbsr	turn_6bit_audio_on
 
+****************************************
+* Display message using operating system
+****************************************
+
+	leax	message, PCR
+	lbsr	display_message
+	bra	pluck
+
+message:
+	FCV	"PRESS"
+	FCB	$8f			; blank space
+	FCV	"SPACE"
+	FCB	$8f
+	FCV	"TO"
+	FCB	$8f
+	FCV	"SKIP"
+	FCB	$8f
+	FCV	"ANY"
+	FCB	$8f
+	FCV	"PART"
+	FCB	$22			; A quotation mark ends the error message
+
 ***********************************************************
 * Pluck routine - make characters disappear from the screen
 ***********************************************************
 
 TEXTBUF		EQU	$400		; We're not double-buffering
 TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+
+pluck:
 
 ; First, count the number of characters on each line of the screen
 
@@ -462,6 +486,21 @@ exit_wait_for_vblank:
 	rts				; ...return to caller
 
 toggle:	RZB	1
+
+************************************************************
+* Display a message using the operating system
+*
+* Input:
+* X = string containing the message (ended by double quotes)
+************************************************************
+
+DISPL		EQU	$B99C
+
+display_message:
+	clr	$6F			; Output to the screen
+	leax	-1,x			; The first character is skipped over
+	JSR	DISPL			; Put the string to the screen
+	rts
 
 **********************************************************
 * Returns a random-ish number from 0...65535

@@ -14,7 +14,7 @@
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 		ORG $1800
 
@@ -254,11 +254,11 @@ _test_for_2:
 	cmpa	#2
 	bne	_test_for_3
 	lda	#':' + 64
-	sta	-1,x
+	sta	1,x
 	lda	#'-' + 64
 	sta	,x
-	lda	#')' + 64
-	sta	1,x
+	lda	#'(' + 64
+	sta	-1,x
 	bra	phase_finished
 
 _test_for_3:
@@ -302,7 +302,7 @@ dot_expands:
 				; Phase 0 is 3-asterisks
 				; Phase 1 is 5-asterisks
 				; Phase 2 is 5 spinning
-				; Phase 3 is up and down too
+				; Phase 3 is back to an asterisk
 
 expand_dot:
 	clra			; A is really don't care
@@ -371,34 +371,14 @@ not_phase_1_expands:
 	std	dot_frames
 
 not_phase_2_expands:
-	lda	phase
-	cmpa	#3
-	bne	not_phase_3_expands
+
+; Must be phase 3
 
 	ldd	dot_frames
-	cmpd	#50
+	cmpd	#200
 	bne	abort_phase_change_expands
 
-	lda	#4
-	sta	phase
-	clra
-	clrb
-	std	dot_frames
-
-not_phase_3_expands:
-	lda	phase
-	cmpa	#4
-	lbne	dot_expands
-
-	ldd	dot_frames
-	cmpd	#50
-	bne	abort_phase_change_expands
-
-	lda	#5
-	sta	phase
-	clra
-	clrb
-	std	dot_frames
+	bra	skip_dot
 
 abort_phase_change_expands:
 	lda	displacement
@@ -442,7 +422,7 @@ _test_for_2_expands:
 
 	lda	phase
 	cmpa	#2
-	bne	_test_for_3_expands
+	bne	_phase_3
 
 	lda	#'*' + 64
 	ldb	internal_angle
@@ -450,20 +430,19 @@ _test_for_2_expands:
 
 	bra	phase_finished_expands
 
-_test_for_3_expands:
-	lda	phase
-	cmpa	#3
-	bne	_test_for_4_expands
+_phase_3:
 	lda	#'*' + 64
 	sta	,x
-	bra	phase_finished_expands
 
-_test_for_4_expands:
-	lda	phase
-	cmpa	#4
-	bne	skip_dot
-	lda	#'*' + 64
-	sta	,x
+	ldd	scale_factor
+	subd	#100
+	bpl	_store_sf
+	clra		; Clamp D at zero
+	clrb
+
+_store_sf:
+	std	scale_factor
+
 	bra	phase_finished_expands
 
 phase_finished_expands:
@@ -481,6 +460,8 @@ skip_dot:
 
 end:
 	bsr	uninstall_irq_service_routine
+
+loop:	bra	loop
 	rts
 
 *****************************************************************************
@@ -590,10 +571,10 @@ wait_loop:
 	cmpa	#'T'
 	bne	not_t
 
-	com	toggle
+	com	toggle, PCR
 
 not_t:
-	tst	toggle
+	tst	toggle, PCR
 	beq	exit_wait_for_vblank
 	cmpa	#'F'
 	bne	wait_loop
@@ -948,23 +929,21 @@ more_green:
 
 draw_32:
 	sta	,x
-	cmpb	#16
+	cmpb	#32
 	blo	horizontal
-	cmpb	#48
+	cmpb	#64
 	blo	forward_slash
-	cmpb	#80
+	cmpb	#96
 	blo	vertical
-	cmpb	#112
+	cmpb	#128
 	blo	backward_slash
-	cmpb	#144
+	cmpb	#160
 	blo	horizontal
-	cmpb	#176
+	cmpb	#192
 	blo	forward_slash
-	cmpb	#208
+	cmpb	#228
 	blo	vertical
-	cmpb	#240
-	blo	backward_slash
-	bra	horizontal
+	bra	backward_slash
 
 vertical:
 	sta	-64,x

@@ -259,9 +259,12 @@ find_zero:
 
 	lda	#4
 	lbsr	drop_screen_content
+	bra	screen_is_clear
 
 skip_title_screen:		; If space was pressed
 	lbsr	clear_screen	; Just clear the screen
+
+screen_is_clear:
 	bra	loading_screen
 
 title_screen_text:
@@ -721,7 +724,9 @@ encase_are_we_done:
 	cmpb	#0b00011111	; If X mod 32 == 31
 	tfr	y,d
 	bne	encase_text_loop
-	rts
+
+	clra
+	rts			; we are finished
 
 encase_right:
 	tfr	d,y
@@ -749,7 +754,7 @@ flash_text_white:
 	ldx	#TEXTBUF
 	leax	d,x		; X = starting position
 
-	ldy	#flash_text_storage
+	leay	flash_text_storage, PCR
 
 flash_copy_line:
 	ldd	,x++		; Save the whole line
@@ -774,8 +779,10 @@ flash_chars_loop:
 	lbsr	check_for_space
 	puls	b,x
 	tsta
-	lbne	skip_title_screen
+	beq	skip_flash_chars
+	rts
 
+skip_flash_chars:
 	pshs	b,x
 	lbsr	wait_for_vblank
 	puls	b,x
@@ -788,8 +795,10 @@ flash_chars_loop:
 	lbsr	check_for_space
 	puls	b,x
 	tsta
-	lbne	skip_title_screen
+	beq	skip_flash_chars_2
+	rts
 
+skip_flash_chars_2:
 	pshs	b,x
 	lbsr	wait_for_vblank
 	puls	b,x
@@ -801,6 +810,7 @@ flash_chars_loop:
 	bra	flash_chars_loop
 
 flash_finished:
+	clra
 	rts			; Done, go away now
 
 *********************************
@@ -827,6 +837,7 @@ not_flashable:
 	andb	#0b00011111	; Calculate x mod 32
 	bne	flash_chars_white	; If more, go back
 
+	clra
 	rts
 
 *****************************************
@@ -846,12 +857,12 @@ flash_restore_chars:
 	cmpy	#flash_text_storage_end
 	bne	flash_restore_chars
 
+	clra
 	rts
 
 flash_text_storage:
 	RZB	32
 flash_text_storage_end:
-
 
 **************************
 * Flashes the screen white
@@ -873,8 +884,10 @@ flash_screen_copy_loop:
 
 	lbsr	check_for_space
 	tsta
-	lbne	skip_title_screen
+	beq	skip_flash_screen_copy
+	rts
 
+skip_flash_screen_copy:
 	lbsr	wait_for_vblank
 
 	ldx	#TEXTBUF
@@ -889,16 +902,20 @@ flash_screen_white_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_white_loop
 
-	lbsr	check_for_space
+	lbsr	check_for_space		; If space was pressed
 	tsta
-	lbne	skip_title_screen
+	beq	skip_flash_screen_2
+	rts				; return to caller
 
+skip_flash_screen_2:
 	lbsr	wait_for_vblank
 
-	lbsr	check_for_space
+	lbsr	check_for_space		; If space was pressed
 	tsta
-	lbne	skip_title_screen
+	beq	skip_flash_screen_3
+	rts				; return to caller
 
+skip_flash_screen_3:
 	lbsr	wait_for_vblank
 
 	ldx	#TEXTBUF
@@ -919,16 +936,21 @@ flash_screen_restore_loop:
 
 	lbsr	check_for_space
 	tsta
-	lbne	skip_title_screen
+	beq	skip_flash_screen_4
+	rts
 
+skip_flash_screen_4:
 	lbsr	wait_for_vblank
 
 	lbsr	check_for_space
 	tsta
-	lbne	skip_title_screen
+	beq	skip_flash_screen_5
+	rts
 
+skip_flash_screen_5:
 	lbsr	wait_for_vblank
 
+	clra
 	rts
 
 ********************************
@@ -962,8 +984,12 @@ drop_screen_content:
 	pshs	a
 	lbsr	check_for_space
 	tsta
+	beq	skip_drop_screen
+	leas	1,s
+	rts
+
+skip_drop_screen:
 	puls	a
-	lbne	skip_title_screen
 
 	pshs	a
 	lbsr	wait_for_vblank
@@ -972,8 +998,12 @@ drop_screen_content:
 	pshs	a
 	lbsr	check_for_space
 	tsta
+	beq	skip_drop_screen_2
+	leas	1,s
+	rts
+
+skip_drop_screen_2:
 	puls	a
-	lbne	skip_title_screen
 
 	pshs	a
 	lbsr	wait_for_vblank
@@ -984,12 +1014,14 @@ drop_screen_content:
 	cmpa	#16			; until the starting position is off
 					; the screen
 	bne	drop_screen_content
+	clra
 	rts
 
 drop_line:
 	cmpa	#15
 	blo	do_drop
 
+	clra
 	rts				; Off the bottom end of the screen
 
 do_drop:
@@ -1008,12 +1040,14 @@ move_line_down:
 	decb
 	bne	move_line_down
 
+	clra
 	rts
 
 clear_line:
 	cmpa	#16
 	blo	do_clear
 
+	clra
 	rts				; Off the bottom end
 
 do_clear:
@@ -1035,6 +1069,7 @@ clear_loop:
 	decb
 	bne	clear_loop
 
+	clra
 	rts
 
 **************************************
@@ -1066,6 +1101,7 @@ output_char:
 	bra	keep_outputting
 
 output_full_screen_end:
+	clra
 	rts
 
 *************************************

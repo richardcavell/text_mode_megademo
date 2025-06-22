@@ -930,20 +930,20 @@ more_green:
 draw_32:
 	sta	,x
 	cmpb	#32
-	blo	horizontal
+	blo	vertical
 	cmpb	#64
-	blo	forward_slash
-	cmpb	#96
-	blo	vertical
-	cmpb	#128
 	blo	backward_slash
-	cmpb	#160
+	cmpb	#96
 	blo	horizontal
-	cmpb	#192
+	cmpb	#128
 	blo	forward_slash
-	cmpb	#228
+	cmpb	#160
 	blo	vertical
-	bra	backward_slash
+	cmpb	#192
+	blo	backward_slash
+	cmpb	#228
+	blo	horizontal
+	bra	forward_slash
 
 vertical:
 	sta	-64,x

@@ -11,6 +11,11 @@
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
+* DEBUG_MODE means you press T to toggle frame-by-frame mode.
+* In frame-by-frame mode, you press F to see the next frame
+
+DEBUG_MODE	EQU	0
+
 		ORG $1800
 
 *************************
@@ -304,7 +309,7 @@ expand_dot:
 	sta	phase
 	clra
 	clrb
-	std	dot_frames
+	std	dot_frames		; and restart the framecount
 
 	bra	abort_phase_change_expands
 
@@ -370,13 +375,13 @@ not_phase_3_expands:
 
 abort_phase_change_expands:
 
-	pshs	x
-	lbsr	clear_area
-	puls	x
-
 	lda	displacement
 	ldx	#DOT_START
 	leax	a,x		; X is now the position of the new dot
+
+	pshs	x
+	lbsr	clear_area
+	puls	x
 
 	lda	phase
 	bne	_test_for_1_expands
@@ -546,13 +551,31 @@ vblank_happened:
 *****************
 
 wait_for_vblank:
-	clr	vblank_happened, PCR	; Put a zero in vblank_happened
+	clr	vblank_happened,PCR	; Put a zero in vblank_happened
 
 wait_loop:
-	tst	vblank_happened, PCR	; As soon as a 1 appears...
+	tst	vblank_happened,PCR	; As soon as a 1 appears...
 	beq	wait_loop
 
+	lda	#DEBUG_MODE
+	beq	exit_wait_for_vblank
+
+	jsr	[POLCAT]
+	cmpa	#'T'
+	bne	not_t
+
+	com	toggle
+
+not_t:
+	tst	toggle
+	beq	exit_wait_for_vblank
+	cmpa	#'F'
+	bne	wait_loop
+
+exit_wait_for_vblank:
 	rts				; ...return to caller
+
+toggle:	RZB	1
 
 *********************
 * Turn off disk motor
@@ -634,7 +657,7 @@ get_random:
 AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
 
 play_sound:
-	bsr	switch_off_irq_and_firq
+	lbsr	switch_off_irq_and_firq
 
 	pshs	y
 

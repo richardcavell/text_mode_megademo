@@ -318,6 +318,8 @@ skip_title_screen:		; If space was pressed
 screen_is_clear:
 	bra	loading_screen
 
+; This graphic was made by Microsoft Copilot and modified by me
+
 title_screen_graphic:
 	FCV	"(\\/)",0
 	FCV	"(O-O)",0

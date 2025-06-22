@@ -76,7 +76,7 @@ space_char:
 	bra	count_chars_on_one_line
 
 line_counts:
-	RZB 16			; 16 zeroes
+	RZB 16				; 16 zeroes
 line_counts_end:
 
 count_chars_end:
@@ -125,8 +125,8 @@ find_non_space:
 	lda	#$cf		; Blink it white for the duration of our sound
 	sta	,x
 
-	pshs	b,x
-	ldx	#pluck_sound
+	pshs	b,x		; We don't have time to check for space while
+	ldx	#pluck_sound	; playing the sound
 	ldy	#pluck_sound_end
 	lda	#1
 	lbsr	play_sound	; Play the pluck noise
@@ -137,7 +137,7 @@ pluck_loop:
 	lbsr	check_for_space
 	puls	b,x
 	tsta
-	bne	screen_is_empty
+	bne	empty_the_screen
 
 do_pluck:
 	pshs	b,x
@@ -160,27 +160,29 @@ move_character:
 	stb	,x		; Put the character one position to the right
 	bra	pluck_loop
 
-screen_is_empty:
+empty_the_screen:
 	lbsr	clear_screen
+
+screen_is_empty:
 	bra	title_screen
 
 **************
 * Title screen
 **************
 
-save_y:	RZB 2
-
 title_screen:
-	ldy	#title_screen_text
+	leay	title_screen_text,PCR
 
 print_text_loop:
 	lda	,y+
 	ldb	,y+
 	tfr	y,x
 
-	sty	save_y
+	pshs	y
 	lbsr	text_appears
-	ldy	save_y
+	puls	y
+	tsta
+	bne	skip_title_screen
 
 find_zero:
 	tst	,y+

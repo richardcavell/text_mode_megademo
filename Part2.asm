@@ -55,6 +55,25 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 ******
 	ldb	#50		; Wait this number of frames
 
+	leay	dot_graphic,PCR
+
+	ldx	#TEXTBUF+24
+
+display_graphic:
+	lda	,y+
+	beq	new_line
+	cmpa	#255
+	beq	dot_wait
+	sta	,x+
+	bra	display_graphic
+
+new_line:
+	tfr	x,d
+	andb	#0b11100000
+	addd	#32+24
+	tfr	d,x
+	bra	display_graphic
+
 dot_wait:
 	pshs	b
 	jsr	check_for_space
@@ -73,6 +92,14 @@ dot_wait:
 ***************
 
 	bra	move_dot
+
+; Made by Microsoft Copilot and modified by me
+
+dot_graphic:
+	FCV	" /\\-/\\",0
+	FCV	"( O.O )",0
+	FCV	" > ' <",0
+	FCB	255
 
 dot_frames:
 	RZB	2
@@ -334,7 +361,7 @@ not_phase_1_expands:
 	bne	not_phase_2_expands
 
 	ldd	dot_frames
-	cmpd	#50			; After 50 frames...
+	cmpd	#200			; After 50 frames...
 	bne	abort_phase_change_expands
 
 	lda	#3
@@ -374,7 +401,6 @@ not_phase_3_expands:
 	std	dot_frames
 
 abort_phase_change_expands:
-
 	lda	displacement
 	ldx	#DOT_START
 	leax	a,x		; X is now the position of the new dot
@@ -891,7 +917,7 @@ round_to_neg_inf:
 
 clear_area:
 	tfr	x,d
-	andb	#0b11111
+	andb	#0b11100000
 	subd	#64
 	tfr	d,x
 	leay	160,x

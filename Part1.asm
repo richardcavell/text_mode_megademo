@@ -154,7 +154,6 @@ do_pluck:
 	beq	check_text_screen_empty	; Yes, then we have reached the right
 				; side of the screen, so start another pluck
 
-move_character:
 	tfr	y,d		; Get the character being saved back in B
 
 	stb	,x		; Put the character one position to the right
@@ -203,38 +202,60 @@ find_zero:
 	lda	#5
 	ldb	#0
 	lbsr	encase_text		; "Encase" the three text items
+	tsta
+	bne	skip_title_screen
 
 	lda	#8
 	ldb	#1
 	lbsr	encase_text
+	tsta
+	bne	skip_title_screen
 
 	lda	#12
 	ldb	#0
 	lbsr	encase_text
+	tsta
+	bne	skip_title_screen
 
 	lda	#5
 	ldb	#3
 	lbsr	flash_text_white
+	tsta
+	bne	skip_title_screen
 
 	lda	#8
 	ldb	#3
 	lbsr	flash_text_white
+	tsta
+	bne	skip_title_screen
 
 	lda	#12
 	ldb	#3
 	lbsr	flash_text_white
+	tsta
+	bne	skip_title_screen
 
 	lbsr	flash_screen
+	tsta
+	bne	skip_title_screen
 	lbsr	flash_screen
+	tsta
+	bne	skip_title_screen
 	lbsr	flash_screen
+	tsta
+	bne	skip_title_screen
 
 * Drop the lines off the bottom end of the screen
 
 	lda	#11
 	lbsr	drop_screen_content
+	tsta
+	bne	skip_title_screen
 
 	lda	#7
 	lbsr	drop_screen_content
+	tsta
+	bne	skip_title_screen
 
 	lda	#4
 	lbsr	drop_screen_content
@@ -264,11 +285,11 @@ loading_screen:
 	ldx	#loading_text
 	lda	#15
 	ldb	#11
-	lbsr	text_appears
+	lbsr	text_appears		; Ignore the return value
 
 	lda	#15
 	ldb	#3
-	lbsr	flash_text_white
+	lbsr	flash_text_white	; Ignore the return value
 
 * This is the end of part 1!
 

@@ -306,7 +306,7 @@ ascii_art_cat:
 	FCV	"      \\'*-.",0
 	FCV	"       )  .'-.",0
 	FCV	"      .  : '. .",0
-	FCV	"      : .   '  \\",0
+	FCV	"      : -   '  \\",0
 	FCV	"      ; *' ..   '*-..",0
 	FCV	"      '-.-'          '-.",0
 	FCV	"        ;       '       '.",0
@@ -595,8 +595,11 @@ buff_box:
 	bsr	check_for_space	; Space bar skips this section
 	puls	b,x,u
 	tsta
-	lbne	#skip_title_screen
+	beq	no_skip
 
+	rts			; Return what's in A
+
+no_skip:
 	pshs	b,x,u
 	lbsr	wait_for_vblank
 	puls	b,x,u
@@ -623,12 +626,14 @@ store_char:
 	sta	,x+		; Put the relevant character (green box or char) into
 				;   the relevant position
 
-	stx	test_area
-	lda	#0b11111
-	anda	test_area+1	; Is the character position divisible by 32?
+	stx	test_area,PCR
+	lda	#0b00011111
+	anda	test_area+1,PCR	; Is the character position divisible by 32?
 
 	bne	buff_box	; If no, then go back and do it again
-	rts
+
+	clra			; Space was not pressed
+	rts			; Return to the main code
 
 test_area:
 	RZB	2

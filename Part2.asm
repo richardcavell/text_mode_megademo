@@ -53,7 +53,7 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 dot_wait:
 	pshs	b
 	jsr	check_for_space
-	puls	b
+	puls	b		; Doesn't affect condition codes
 	tsta
 	lbne	skip_dot
 
@@ -81,8 +81,6 @@ scale_factor:
 	RZB	2		; Fixed point scale factor
 angle:
 	RZB	1		; 0-255 out of 256
-sine_of_angle:
-	RZB	2		; 256 to -256
 dot_previous:
 	RZB	2		; Previously drawn location of dot
 displacement:
@@ -94,7 +92,6 @@ move_dot:
 	clra			; A is really don't care
 	ldb	angle		; D is our angle in fixed point
 	lbsr	sin		; D is now the sine of our angle
-	std	sine_of_angle
 
 	ldx	scale_factor		; X = scale factor, D is sine
 	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
@@ -128,7 +125,7 @@ move_dot:
 	sta	phase
 	clra
 	clrb
-	std	dot_frames
+	std	dot_frames		; And start counting frames from 0
 
 	bra	abort_phase_change
 
@@ -193,7 +190,6 @@ not_phase_3:
 	std	dot_frames
 
 abort_phase_change:
-
 	lda	#$60		; Green box
 	ldx	dot_previous
 	sta	,x		; Erase previous dot
@@ -269,22 +265,17 @@ d_is_clamped:
 
 	lbra	move_dot
 
-counter:
-	RZB	1
-
 dot_expands:
-	clra
-	sta	phase
+	clr	phase
 				; Phase 0 is 3-asterisks
 				; Phase 1 is 5-asterisks
-				; Phase 2 is them spinning
+				; Phase 2 is 5 spinning
 				; Phase 3 is up and down too
 
 expand_dot:
 	clra			; A is really don't care
 	ldb	angle		; D is our angle in fixed point
 	lbsr	sin		; D is now the sine of our angle
-	std	sine_of_angle
 
 	ldx	scale_factor		; X = scale factor, D is sine
 	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
@@ -379,13 +370,9 @@ not_phase_3_expands:
 
 abort_phase_change_expands:
 
-	lda	#$60		; Green box
-	ldx	dot_previous
-	sta	,x		; Erase previous dot
-	sta	-64,x
-	sta	-32,x
-	sta	32,x
-	sta	64,x
+	pshs	x
+	lbsr	clear_area
+	puls	x
 
 	lda	displacement
 	ldx	#DOT_START
@@ -425,10 +412,6 @@ _test_for_2_expands:
 	lda	phase
 	cmpa	#2
 	bne	_test_for_3_expands
-
-	pshs	x
-	lbsr	clear_area
-	puls	x
 
 	lda	#'*' + 64
 	ldb	internal_angle
@@ -917,21 +900,21 @@ more_green:
 draw_32:
 	sta	,x
 	cmpb	#16
-	blt	horizontal
+	blo	horizontal
 	cmpb	#48
-	blt	forward_slash
+	blo	forward_slash
 	cmpb	#80
-	blt	vertical
+	blo	vertical
 	cmpb	#112
-	blt	backward_slash
+	blo	backward_slash
 	cmpb	#144
-	blt	horizontal
+	blo	horizontal
 	cmpb	#176
-	blt	forward_slash
+	blo	forward_slash
 	cmpb	#208
-	blt	vertical
+	blo	vertical
 	cmpb	#240
-	blt	backward_slash
+	blo	backward_slash
 	bra	horizontal
 
 vertical:

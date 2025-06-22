@@ -595,11 +595,11 @@ buff_box:
 	bsr	check_for_space	; Space bar skips this section
 	puls	b,x,u
 	tsta
-	beq	no_skip
+	beq	no_skip_text_appears
 
 	rts			; Return what's in A
 
-no_skip:
+no_skip_text_appears:
 	pshs	b,x,u
 	lbsr	wait_for_vblank
 	puls	b,x,u
@@ -642,6 +642,10 @@ test_area:
 * Encases text on the screen
 * A = line number
 * B = direction (0 = right, 1 = left)
+*
+* Outputs:
+* A = 0 Everything is okay
+* A = non-zero Space was pressed
 *************************************
 
 encase_text:
@@ -664,8 +668,10 @@ encase_text_loop:
 	bsr	check_for_space	; Space bar exits this
 	puls	b,x
 	tsta
-	lbne	skip_title_screen
+	beq	no_skip_encase
+	rts			; Simply return a
 
+no_skip_encase:
 	pshs	b,x
 	lbsr	wait_for_vblank	; Start on the next frame
 	puls	b,x
@@ -724,6 +730,7 @@ encase_right:
 	tfr	y,d
 	bne	encase_text_loop	;   by 32, then
 
+	clra
 	rts			; we are finished
 
 **************************************

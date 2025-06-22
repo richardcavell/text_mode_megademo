@@ -18,7 +18,7 @@
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.  In frame-by-frame mode, you press F to see the next frame
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 		ORG $1800
 

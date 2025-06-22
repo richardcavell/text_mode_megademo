@@ -307,7 +307,7 @@ expand_dot:
 ; Phase 0
 	ldd	dot_frames
 	cmpd	#50
-	lblo	abort_phase_change_expands
+	blo	abort_phase_change_expands
 
 	lda	#1			; ...go to phase 1
 	sta	phase
@@ -335,7 +335,7 @@ not_phase_0_expands:
 not_phase_1_expands:
 	lda	phase
 	cmpa	#2
-	lbne	not_phase_2_expands
+	bne	not_phase_2_expands
 
 	ldd	dot_frames
 	cmpd	#50			; After 50 frames...
@@ -466,6 +466,7 @@ skip_dot:
 	bsr	clear_screen
 
 end:
+	bsr	uninstall_irq_service_routine
 	rts
 
 *****************************************************************************
@@ -521,6 +522,21 @@ install_irq_service_routine:
 	bsr	switch_on_irq		; Switch interrupts back on
 
 	rts
+
+***********************************
+* Uninstall our IRQ service routine
+***********************************
+
+uninstall_irq_service_routine:
+
+        bsr     switch_off_irq
+
+        ldy     decb_irq_service_routine, PCR
+        sty     IRQ_HANDLER
+
+        bsr     switch_on_irq
+
+        rts
 
 **********************
 * Our IRQ handler
@@ -660,7 +676,7 @@ send_values_finished:
 
 	puls	y
 
-	bsr	switch_on_irq_and_firq
+	lbsr	switch_on_irq_and_firq
 
 	rts
 

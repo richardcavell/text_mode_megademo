@@ -550,6 +550,10 @@ skip:
 * X = string to print
 * A = line number (0 to 15)
 * B = character position (0 to 31)
+*
+* Outputs:
+* A = 0 Everything is okay
+* A = non-zero Space was pressed
 ************************************************
 
 text_appears:

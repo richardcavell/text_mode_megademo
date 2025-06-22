@@ -279,10 +279,10 @@ title_screen_text:
 	FCB 255		; The end
 
 loading_screen:
-	ldx	#ascii_art_cat
+	leax	ascii_art_cat, PCR
 	lbsr	output_full_screen
 
-	ldx	#loading_text
+	leax	loading_text, PCR
 	lda	#15
 	ldb	#11
 	lbsr	text_appears		; Ignore the return value
@@ -340,9 +340,9 @@ install_irq_service_routine:
 	bsr	switch_off_irq		; Switch off IRQ interrupts for now
 
 	ldy	IRQ_HANDLER		; Load the current vector into y
-	sty	decb_irq_service_routine	; We will call it at the end of our own handler
+	sty	decb_irq_service_routine,PCR	; We will call it at the end of our own handler
 
-	ldx	#irq_service_routine
+	leax	irq_service_routine,PCR
 	stx	IRQ_HANDLER		; Our own interrupt service routine is installed
 
 	bsr	switch_on_irq		; Switch IRQ interrupts back on
@@ -353,7 +353,7 @@ uninstall_irq_service_routine:
 
 	bsr	switch_off_irq
 
-	ldy	decb_irq_service_routine
+	ldy	decb_irq_service_routine, PCR
 	sty	IRQ_HANDLER
 
 	bsr	switch_on_irq
@@ -405,16 +405,16 @@ turn_off_disk_motor:
 
 irq_service_routine:
 	lda	#1
-	sta	vblank_happened
+	sta	vblank_happened, PCR
 
 		; In the interests of making our IRQ handler run fast,
 		; the routine assumes that decb_irq_service_routine
 		; has been correctly initialized
 
-	jmp	[decb_irq_service_routine]
+	jmp	[decb_irq_service_routine, PCR]
 
 decb_irq_service_routine:
-	RZB 2
+	RZB	2
 
 vblank_happened:
 	FCB	0
@@ -424,10 +424,10 @@ vblank_happened:
 *****************
 
 wait_for_vblank:
-	clr	vblank_happened		; Put a zero in vblank_happened
+	clr	vblank_happened,PCR	; Put a zero in vblank_happened
 
 wait_loop:
-	tst	vblank_happened		; As soon as a 1 appears...
+	tst	vblank_happened,PCR	; As soon as a 1 appears...
 	beq	wait_loop
 
 	rts				; ...return to caller
@@ -447,7 +447,7 @@ SEED:
 	FCB	0xEF
 
 get_random:
-	ldd	SEED
+	ldd	SEED, PCR
 	mul
 	addd	#3037
 	std	SEED

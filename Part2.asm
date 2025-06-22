@@ -48,7 +48,7 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 ******
 * Wait
 ******
-	ldb	#150		; Wait this number of frames
+	ldb	#50		; Wait this number of frames
 
 dot_wait:
 	pshs	b
@@ -306,13 +306,8 @@ expand_dot:
 
 ; Phase 0
 	ldd	dot_frames
-	cmpd	#150
+	cmpd	#50
 	lblo	abort_phase_change_expands
-	ldd	scale_factor
-	cmpd	#2000			; once we're at full speed...
-	blo	abort_phase_change_expands
-	lda	angle			; and angle is 0...
-	bne	abort_phase_change_expands
 
 	lda	#1			; ...go to phase 1
 	sta	phase
@@ -410,7 +405,7 @@ _test_for_1_expands:
 	cmpa	#1
 	bne	_test_for_2_expands
 
-	lda	#'X'		; In phase 1
+	lda	#'*' + 64	; In phase 1
 	sta	-64,x
 	sta	-32,x
 	sta	,x
@@ -419,23 +414,33 @@ _test_for_1_expands:
 
 	bra	phase_finished_expands
 
+internal_angle:
+	RZB	1
+
 _test_for_2_expands:
+	lda	internal_angle
+	adda	#2
+	sta	internal_angle
+
 	lda	phase
 	cmpa	#2
 	bne	_test_for_3_expands
-	lda	#':' + 64
-	sta	-1,x
-	lda	#'-' + 64
-	sta	,x
-	lda	#')' + 64
-	sta	1,x
+
+	pshs	x
+	lbsr	clear_area
+	puls	x
+
+	lda	#'*' + 64
+	ldb	internal_angle
+	lbsr	draw_32
+
 	bra	phase_finished_expands
 
 _test_for_3_expands:
 	lda	phase
 	cmpa	#3
 	bne	_test_for_4_expands
-	lda	#'!' + 64
+	lda	#'*' + 64
 	sta	,x
 	bra	phase_finished_expands
 
@@ -855,17 +860,93 @@ round_to_neg_inf:
 	clrb
 	rts
 
-*************************************
-* Here is our raw data for our sounds
-*************************************
+*****************************
+* Clear area
+*
+* Inputs:
+* X = fulcrum screen position
+*****************************
 
-flash_screen_storage:			; Use the area of memory reserved for
-					; the pluck sound, because we're not
-					; using it again
+clear_area:
+	tfr	x,d
+	andb	#0b11111
+	subd	#64
+	tfr	d,x
+	leay	160,x
+	pshs	y
 
-pluck_sound:
-	INCLUDEBIN "Sounds/Pluck/Pluck.raw"
-pluck_sound_end:
+	ldd	#$6060
 
-rjfc_presents_tmd_sound:
-rjfc_presents_tmd_sound_end:
+more_green:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+
+	cmpx	,s
+	bne	more_green
+
+	puls	y
+	rts
+
+*********************************
+* Draw 32
+*
+* Inputs:
+* A = the symbol to be drawn
+* B = the input angle
+* X = the fulcrum screen position
+*********************************
+
+draw_32:
+	sta	,x
+	cmpb	#16
+	blt	horizontal
+	cmpb	#48
+	blt	forward_slash
+	cmpb	#80
+	blt	vertical
+	cmpb	#112
+	blt	backward_slash
+	cmpb	#144
+	blt	horizontal
+	cmpb	#176
+	blt	forward_slash
+	cmpb	#208
+	blt	vertical
+	cmpb	#240
+	blt	backward_slash
+	bra	horizontal
+
+vertical:
+	sta	-64,x
+	sta	-32,x
+	sta	,x
+	sta	32,x
+	sta	64,x
+	rts
+
+horizontal:
+	sta	-2,x
+	sta	-1,x
+	sta	,x
+	sta	1,x
+	sta	2,x
+	rts
+
+backward_slash:
+	sta	-66,x
+	sta	-33,x
+	sta	,x
+	sta	33,x
+	sta	66,x
+	rts
+
+forward_slash:
+	sta	-62,x
+	sta	-31,x
+	sta	,x
+	sta	31,x
+	sta	62,x
+	rts
+

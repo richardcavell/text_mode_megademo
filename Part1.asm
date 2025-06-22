@@ -202,6 +202,25 @@ screen_is_empty:
 **************
 
 title_screen:
+	ldx	#TEXTBUF
+	leay	title_screen_graphic,PCR
+
+display_graphic:
+	lda	,y+
+	beq	new_line
+	cmpa	#255
+	beq	display_text
+	sta	,x+
+	bra	display_graphic
+
+new_line:
+	tfr	x,d
+	andb	#0b11100000
+	addd	#32
+	tfr	d,x
+	bra	display_graphic
+
+display_text:
 	leay	title_screen_text,PCR
 
 print_text_loop:
@@ -299,19 +318,25 @@ skip_title_screen:		; If space was pressed
 screen_is_clear:
 	bra	loading_screen
 
+title_screen_graphic:
+	FCV	"(\\/)",0
+	FCV	"(O-O)",0
+	FCV	"/> >\\",0
+	FCB	255
+
 title_screen_text:
-	FCB 5, 6
-	FCN "RJFC"	; Each string ends with a zero when you use FCN
-	FCB 8, 10
-	FCN "PRESENTS"
-	FCB 12, 12
-	FCC "TEXT"
-	FCB $8F
-	FCC "MODE"
-	FCB $8F
-	FCC "DEMO"
-	FCB 0
-	FCB 255		; The end
+	FCB	5, 6
+	FCN	"RJFC"		; Each string ends with a zero when you use FCN
+	FCB	8, 10
+	FCN	"PRESENTS"
+	FCB	12, 12
+	FCC	"TEXT"
+	FCB	$8F
+	FCC	"MODE"
+	FCB	$8F
+	FCC	"DEMO"
+	FCB	0
+	FCB	255		; The end
 
 loading_screen:
 	leax	ascii_art_cat, PCR

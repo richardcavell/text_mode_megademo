@@ -53,7 +53,7 @@ DEBUG_MODE	EQU	0
 ****************************************
 
 	leax	message, PCR
-	lbsr	display_message
+	lbsr	display_message_using_decb
 	bra	pluck
 
 message:
@@ -68,7 +68,7 @@ message:
 	FCV	"ANY"
 	FCB	$8f
 	FCV	"PART"
-	FCB	$22			; A quotation mark ends the error message
+	FCB	$22			; A quotation mark ends the message
 
 ***********************************************************
 * Pluck routine - make characters disappear from the screen
@@ -491,10 +491,10 @@ vblank_happened:
 *****************
 
 wait_for_vblank:
-	clr	vblank_happened,PCR	; Put a zero in vblank_happened
+	clr	vblank_happened, PCR	; Put a zero in vblank_happened
 
 wait_vblank_loop:
-	tst	vblank_happened,PCR	; As soon as a 1 appears...
+	tst	vblank_happened, PCR	; As soon as a 1 appears...
 	beq	wait_vblank_loop
 
 	lda	#DEBUG_MODE
@@ -527,7 +527,8 @@ debug_mode_toggle:
 
 DISPL		EQU	$B99C
 
-display_message:
+display_message_using_decb:
+
 	clr	$6F			; Output to the screen
 	leax	-1,x			; The first character is skipped over
 	JSR	DISPL			; Put the string to the screen
@@ -662,6 +663,7 @@ check_for_space:
 	beq	skip
 	cmpa	#3			; break key
 	beq	skip
+	
 	clra
 	rts
 

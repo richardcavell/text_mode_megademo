@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	{
 		double angle = (double) i / 256.0 * 2 * pi;
 		double f = sin(angle) * 256;
-		long int j = 0;
+		int j = 0;
 
 /*		f = round(f);		This is C99 */
 
@@ -72,14 +72,14 @@ main(int argc, char *argv[])
 			f -= 0.5;
 
 		if (f >= 0)	/* If positive, then simply assign the value */
-			 j = (long int) f;
+			 j = (int) f;
 		else	/* Make sure that we round to zero */
 		{
-			long int k = (long int) -f;
+			int k = (int) -f;
 			j = -k;
 		}
 
-		ret = fprintf(fp, "%s%li%s%i%s",
+		ret = fprintf(fp, "%s%i%s%i%s",
 				  "\tFDB\t",
 				   j,
 				  "\t; ",

@@ -19,12 +19,12 @@ RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav
 RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
 RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw
 
-SOUND_STR_SRC	=	sound_stripper.c
 SOUND_STR	=	sound_stripper
+SOUND_STR_SRC	=	sound_stripper.c
 
-SIN_GEN_SRC	=	sin_table_generator.c
-SIN_GENERATOR	=	sin_table_generator
 SIN_TABLE	=	sin_table.asm
+SIN_GENERATOR	=	sin_table_generator
+SIN_GEN_SRC	=	sin_table_generator.c
 
 # asm6809 is by Ciaran Anscomb
 ASM		=	asm6809
@@ -136,6 +136,7 @@ clean:
 	@rm -f -v $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
 	@rm -f -v $(SOUND_STR)
 	@echo "... Done"
+
 mame: $(DISK)
 	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"
 

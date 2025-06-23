@@ -52,7 +52,7 @@ main(int argc, char *argv[])
             "* This file was automatically generated"
 		" by sin_table_generator.c\n"
 	    "* by Richard Cavell\n"
-	    "* https://github.com/richardcavell\n"
+	    "* https://github.com/richardcavell/text-mode-demo\n"
 	    "\n");
 
 	if (ret < 0)

@@ -57,6 +57,7 @@ DEBUG_MODE	EQU	0
 	bra	pluck
 
 message:
+
 	FCV	"PRESS"
 	FCB	$8f			; blank space
 	FCV	"SPACE"
@@ -82,54 +83,56 @@ pluck:
 ; First, count the number of characters on each line of the screen
 
 	ldx	#TEXTBUF
-	leay	line_counts,PCR		; There are 16 of these
+	leay	line_counts, PCR	; There are 16 of these
 
-count_chars_on_one_line:
+_count_chars_on_one_line:
 	ldb	#32			; There are 32 characters per line
 
-test_char:
+_test_char:
 	lda	,x+
 	cmpa	#$60			; Is it an empty green box?
-	beq	space_char		; Yes
+	beq	_space_char		; Yes
 
 	inc	,y			; No, so count another
 					; non-space character
-space_char:
+_space_char:
 	decb
-	bne	test_char
+	bne	_test_char
 
 	cmpx	#TEXTBUF+TEXTBUFSIZE
-	beq	count_chars_end
+	beq	_count_chars_end
 
 	leay	1,y			; Start counting the next line
-	bra	count_chars_on_one_line
+	bra	_count_chars_on_one_line
 
 line_counts:
 	RZB 16				; 16 zeroes
 line_counts_end:
 
-count_chars_end:
+_count_chars_end:
 
 ; Now, check to see if the screen is empty yet
 
-check_text_screen_empty:
-	leay	line_counts,PCR
+_check_text_screen_empty:
+	leay	line_counts, PCR
 
 test_line:
 	tst	,y+
-	bne	not_empty
+	bne	_not_empty
 	cmpy	#line_counts_end
 	bne	test_line
 
 	bra	screen_is_empty	; Go to the next piece of this demo
 
-not_empty:
+_not_empty:
+
+; Screen is not empty
 
 choose_line:
 	lbsr	get_random 	; Get a random number in D
-	leay	line_counts,PCR
-
 	andb	#0b00001111	; Make the random number between 0 and 15
+
+	leay	line_counts, PCR
 
 	tst	b,y		; If there are no more characters on this line
 	beq	choose_line	; choose a different one
@@ -163,32 +166,31 @@ find_non_space:
 
 pluck_loop:
 	pshs	b,x
-	lbsr	check_for_space
+	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
 	bne	empty_the_screen
 
-do_pluck:
-	pshs	b,x
-	lbsr	wait_for_vblank	; This is how we time
-	puls	b,x
-
 	lda	#$60
 	sta	,x+		; Replace it with a space
 
-	tfr	d,y		; Save the character in the lower byte of Y
+	pshs	b, x
 	tfr	x,d
 	andb	#0b00011111	; Is the address divisible by 32?
-
+	puls	b, x
 	bne	not_divisible
 
-	lbsr	wait_for_vblank
-	bra	check_text_screen_empty	; Yes, then we have reached the right
+	pshs	b, x
+	lbsr	wait_for_vblank_and_check_for_skip
+	puls	b,x
+	tsta
+	bne	empty_the_screen
+
+	bra	_check_text_screen_empty
+				; Yes, then we have reached the right
 				; side of the screen, so start another pluck
 
 not_divisible:
-	tfr	y,d		; Get the character being saved back in B
-
 	stb	,x		; Put the character one position to the right
 	bra	pluck_loop
 
@@ -484,38 +486,59 @@ decb_irq_service_routine:
 	RZB	2
 
 vblank_happened:
-	FCB	0
+	RZB	1
 
-*****************
-* Wait for VBlank
-*****************
+****************************************
+* Wait for VBlank and check for skip
+*
+* Inputs: None
+* Output:
+* A = zero if user is not trying to skip
+* A = non-zero if user is trying to skip
+****************************************
 
-wait_for_vblank:
-	clr	vblank_happened, PCR	; Put a zero in vblank_happened
+POLCAT	EQU	$A000
 
-wait_vblank_loop:
-	tst	vblank_happened, PCR	; As soon as a 1 appears...
-	beq	wait_vblank_loop
+wait_for_vblank_and_check_for_skip:
 
-	lda	#DEBUG_MODE
-	beq	exit_wait_for_vblank
+	clr	vblank_happened, PCR
+
+_wait_for_vblank_and_check_for_skip_loop:
 
 	jsr	[POLCAT]
+	cmpa	#' '			; Space bar
+	beq	_wait_for_vblank_skip
+	cmpa	#3			; Break key
+	beq	_wait_for_vblank_skip
+	lda	#DEBUG_MODE
+	beq	_no_debug_mode
+
 	cmpa	#'T'
-	bne	not_t
+	beq	_skip_invert_toggle
 
-	com	debug_mode_toggle
+	com	debug_mode_toggle, PCR
 
-not_t:
-	tst	debug_mode_toggle
-	beq	exit_wait_for_vblank
+_skip_invert_toggle:
+	ldb	debug_mode_toggle, PCR
+	beq	_toggle_is_off
+
 	cmpa	#'F'
-	bne	wait_vblank_loop
+	bne	_wait_for_vblank_and_check_for_skip_loop
 
-exit_wait_for_vblank:
-	rts				; ...return to caller
+_toggle_is_off:
+_no_debug_mode:
+	tst	vblank_happened, PCR
+	beq	_wait_for_vblank_and_check_for_skip_loop
+
+	clra		; A VBlank happened
+	rts
+
+_wait_for_vblank_skip:
+	lda	#1	; User wants to skip
+	rts
 
 debug_mode_toggle:
+
 	RZB	1
 
 ************************************************************
@@ -545,10 +568,12 @@ display_message_using_decb:
 * This RNG could be improved on.
 
 SEED:
+
 	FCB	0xBE
 	FCB	0xEF
 
 get_random:
+
 	ldd	SEED, PCR
 	mul
 	addd	#3037
@@ -645,30 +670,6 @@ clear_char:
 
 	cmpx	#TEXTBUF+TEXTBUFSIZE	; Finish in the lower-right corner
 	bne	clear_char
-	rts
-
-********************************************************
-* Is space bar being pressed?
-*
-* Outputs:
-* A = 0 if space bar is not pressed
-* A = non-zero if space bar is being pressed
-********************************************************
-
-POLCAT	EQU	$A000			; ROM routine
-
-check_for_space:
-	jsr	[POLCAT]		; A ROM routine
-	cmpa	#' '
-	beq	skip
-	cmpa	#3			; break key
-	beq	skip
-	
-	clra
-	rts
-
-skip:
-	lda	#1
 	rts
 
 ************************************************

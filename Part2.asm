@@ -36,24 +36,20 @@ DEBUG_MODE	EQU	1
 
 	lbsr	clear_screen
 
-        leay    birds_graphic, PCR
+***********************
+* Output a bird graphic
+***********************
 
-        ldx     #TEXTBUF+5*32+8
+	lda	#5
+	ldb	#8
+        leax    birds_graphic, PCR
 
-display_bird_graphic:
-        lda     ,y+
-        beq     bird_new_line
-        cmpa    #255
-        beq	scroll_text
-        sta     ,x+
-        bra     display_bird_graphic
+	lbsr	display_text_graphic
+	bra	scroll_text
 
-bird_new_line:
-        tfr     x,d
-        andb    #0b11100000
-        addd    #32 + 8
-        tfr     d,x
-	bra	display_bird_graphic
+; This came from https://www.asciiart.eu/animals/birds-land
+; Original artist unknown
+; I have modified the graphic a little bit
 
 birds_graphic:
 	FCV	"   ---     ---",0
@@ -63,7 +59,6 @@ birds_graphic:
 	FCB	255
 
 scroll_text:
-
 	ldx	#scroll_text_1
 	lda	#15
 	ldb	#20
@@ -91,24 +86,10 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 ******
 * Wait
 ******
-	leay	dot_graphic,PCR
-
-	ldx	#TEXTBUF+24
-
-display_graphic:
-	lda	,y+
-	beq	new_line
-	cmpa	#255
-	beq	wait_on_dot
-	sta	,x+
-	bra	display_graphic
-
-new_line:
-	tfr	x,d
-	andb	#0b11100000
-	addd	#32+24
-	tfr	d,x
-	bra	display_graphic
+	lda	#0
+	ldb	#24
+	leax	dot_graphic,PCR
+	lbsr	display_text_graphic
 
 wait_on_dot:
 	ldb	#50		; Wait this number of frames
@@ -770,6 +751,47 @@ send_values_finished:
 
 	rts
 
+*******************
+* Output a graphic
+*
+* Inputs:
+* A = Line number
+* B = Column number
+* X = Graphic data
+*******************
+
+display_text_graphic:
+	tfr	x,y
+
+	pshs	b
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x
+	puls	b
+	leax	b,x
+
+display_text_graphic_loop:
+        lda     ,y+
+        beq     text_graphic_new_line
+        cmpa    #255
+        beq	display_text_graphic_finished
+        sta     ,x+
+        bra     display_text_graphic_loop
+
+text_graphic_new_line:
+	tfr	d,u		; Save register b
+        tfr     x,d
+        andb    #0b11100000
+        addd    #32
+        tfr     d,x
+	tfr	u,d		; Get b back
+	leax	b,x
+	bra	display_text_graphic_loop
+
+display_text_graphic_finished:
+	rts
+
 *************************************************************
 * sine function
 *
@@ -1053,6 +1075,99 @@ forward_slash:
 	sta	31,x
 	sta	62,x
 	rts
+
+***************
+* Text graphics
+***************
+
+* Art by Joan Stark
+
+face_graphic:
+	FCV	"      ..-'''''-..",0
+	FCV	"    .'  .     .  '.",0
+	FCV	"   /   (.)   (.)   \\",0
+	FCV	"  !  ,           ,  !",0
+	FCV	"  !  \\`.       .`/  !",0
+	FCV	"   \\  '.`'\"\"'\"`.'  /",0
+	FCV	"    '.  `'---'`  .'",0
+	FCV	"JGS   '-.......-'",0
+	FCB	255
+
+happy_face_graphic:
+
+* Art by Joan Stark
+
+	FCV	"      ..-'''''-..",0
+	FCV	"    .'  .     .  '.",0
+	FCV	"   /   (o)   (o)   \\",0
+	FCV	"  !                 !",0
+	FCV	"  !  \\           /  !",0
+	FCV	"   \\  '.       .'  /",0
+	FCV	"    '.  `'---'`  .'",0
+	FCV	"JGS   '-.......-'",0
+	FCB	255
+
+	FCV	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",0
+	FCV	"8                                                   8",0
+	FCV	"8  a---------------a                                8",0
+	FCV	"8  !               !                                8",0
+	FCV	"8  !               !                                8",0
+	FCV	"8  !               !                               8\"",0
+	FCV	"8  \"---------------\"                               8a",0
+	FCV	"8                                                   8",0
+	FCV	"8                                                   8",0
+	FCV	"8                      ,aaaaa,                      8",0
+	FCV	"8                    ad\":::::\"ba                    8",0
+	FCV	"8                  ,d::;gPPRg;::b,                  8",0
+	FCV	"8                  d::dP'   'Yb::b                  8",0
+	FCV	"8                  8::8)     (8::8                  8",0
+	FCV	"8                  Y;:Yb     dP:;P  O               8",0
+	FCV	"8                  'Y;:\"8ggg8\":;P'                  8",0
+	FCV	"8                    \"Yaa:::aaP\"                    8",0
+	FCV	"8                       \"\"\"\"\"                       8",0
+	FCV	"8                                                   8",0
+	FCV	"8                       ,d\"b,                       8",0
+	FCV	"8                       d:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                  aaa  'bad'  aaa                  8",0
+	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
+	FCV	"                                   Normand  Veilleux",0
+	FCV	255
+
+* Art by Matzec
+
+cartman_graphic:
+	FCV	"                       ..-**-..",0
+	FCV	"                    .,(        ),.",0
+	FCV	"                 .-\"   '-'----'   \"-.",0
+	FCV	"              .-'                    '-.",0
+	FCV	"            .'                          '.",0
+	FCV	"          .'    ...--**'\"\"\"\"\"\"'**--...    '.\\",0
+	FCV	"         /..-*\"'...--**'\"\"\"\"\"\"'**--...'\"*-..\\",0
+	FCV	"        /...-*\"'   .-*\"*-.  .-*\"*-.   '\"*-...",0
+	FCV	"       :          /       ;:       \\          ;",0
+	FCV	"       :         :     *  !!  *     :         ;",0
+	FCV	"        \        '.     .'  '.     .'        /",0
+	FCV	"         \         '-.-'      '-.-'         /",0
+	FCV	"      .-*''.                              .'-.",0
+	FCV	"   .-'      '.                          .'    '.",0
+	FCV	"  :           '-.        ....        .-'        '..",0
+	FCV	" ;\"*-..          '-..  --... `   ..-'        ..*'  '*.",0
+	FCV	":      '.            `\"*-....-*\"`           (        :",0
+	FCV	" ;      ;                 *!                 '-.     ;",0
+	FCV	"  '...*'                   !                    \"\"--'",0
+	FCV	"   :                      *!                      :",0
+	FCV	"   '.                      !                     .'",0
+	FCV	"     '...                 *!        ....----...-'",0
+	FCV	"      \  \"\"\"----.....------'-----\"\"\"         /",0
+	FCV	"       \  ....-------...        .....---..  /",0
+	FCV	"       :'\"              '-..--''          \"';",0
+	FCV	"        '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"'",0
+	FCV	"              C A R T M A N by Matzec",0
+cartman_graphic_end:
 
 **************
 * Scroll texts

@@ -667,29 +667,35 @@ skip:
 * X = Scrolltext
 ************************
 
+slowness:
+	RZB	1
+
 display_scroll_text:
-	pshs	b
+	stb	slowness, PCR
+
+display_scroll_loop:
 	ldb	#32
 	mul
 	ldy	#TEXTBUF
-	leay	d,y
-	puls	b
+	leay	d,y		; Y = Starting screen memory location
 
-	pshs	b, x, y
+	pshs	x, y
 	jsr	check_for_space, PCR
 	tsta
-	puls	b, x, y
-	beq	_scroll_wait
+	puls	x, y
+	bne	skip_scroll
 
-	rts
-
-_scroll_wait:
+	ldb	slowness
+_slowness:
 	pshs	b, x, y
 	jsr	wait_for_vblank
 	puls	b, x, y
 
 	decb
-	bne	_scroll_wait
+	bne	_slowness
+	bra	display_scroll_loop
+
+skip_scroll:
 	rts
 
 **********************************************************

@@ -16,7 +16,8 @@
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
-* DEBUG_MODE means you press T to toggle frame-by-frame mode.  In frame-by-frame mode, you press F to see the next frame
+* DEBUG_MODE means you press T to toggle frame-by-frame mode.
+* In frame-by-frame mode, you press F to see the next frame
 
 DEBUG_MODE	EQU	0
 
@@ -404,10 +405,12 @@ install_irq_service_routine:
 	bsr	switch_off_irq		; Switch off IRQ interrupts for now
 
 	ldy	IRQ_HANDLER		; Load the current vector into y
-	sty	decb_irq_service_routine,PCR	; We will call it at the end of our own handler
+	sty	decb_irq_service_routine, PCR	; We will call it at the end
+						; of our own handler
 
-	leax	irq_service_routine,PCR
-	stx	IRQ_HANDLER		; Our own interrupt service routine is installed
+	leax	irq_service_routine, PCR
+	stx	IRQ_HANDLER		; Our own interrupt service routine
+					; is installed
 
 	bsr	switch_on_irq		; Switch IRQ interrupts back on
 
@@ -490,9 +493,9 @@ vblank_happened:
 wait_for_vblank:
 	clr	vblank_happened,PCR	; Put a zero in vblank_happened
 
-wait_loop:
+wait_vblank_loop:
 	tst	vblank_happened,PCR	; As soon as a 1 appears...
-	beq	wait_loop
+	beq	wait_vblank_loop
 
 	lda	#DEBUG_MODE
 	beq	exit_wait_for_vblank
@@ -501,18 +504,19 @@ wait_loop:
 	cmpa	#'T'
 	bne	not_t
 
-	com	toggle
+	com	debug_mode_toggle
 
 not_t:
-	tst	toggle
+	tst	debug_mode_toggle
 	beq	exit_wait_for_vblank
 	cmpa	#'F'
-	bne	wait_loop
+	bne	wait_vblank_loop
 
 exit_wait_for_vblank:
 	rts				; ...return to caller
 
-toggle:	RZB	1
+debug_mode_toggle:
+	RZB	1
 
 ************************************************************
 * Display a message using the operating system

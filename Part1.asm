@@ -47,18 +47,6 @@ DEBUG_MODE	EQU	0
 
 	lbsr	turn_6bit_audio_on
 
-*************************************************************
-* Display "space to skip" message at the bottom of the screen
-*************************************************************
-
-	lda	#15
-	leax	startup_message, PCR
-	lbsr	display_message
-	bra	pluck
-
-startup_message:
-	FCV	"  PRESS SPACE TO SKIP ANY PART  ",0
-
 *************************
 * Text buffer information
 *************************
@@ -70,12 +58,24 @@ TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
+*************************************************************
+* Display "space to skip" message at the bottom of the screen
+*************************************************************
+
+	lda	#TEXT_LINES-1
+	leax	startup_message, PCR
+	lbsr	display_message
+	bra	pluck
+
+startup_message:
+	FCV	"  PRESS SPACE TO SKIP ANY PART  "
+	FCB	0
+
 ***********************************************************
 * Pluck routine - make characters disappear from the screen
 ***********************************************************
 
 pluck:
-
 PLUCK_LINES	EQU	TEXT_LINES-1	; The bottom line of
 					; the screen is for
 					; our skip message
@@ -92,8 +92,7 @@ pluck_line_counts:
 	RZB PLUCK_LINES			; 15 zeroes
 pluck_line_counts_end:
 
-
-; Structure is phase (1 byte), character (1 byte), position (2 bytes)
+; Structcure is phase (1 byte), character (1 byte), position (2 bytes)
 
 SIMULTANEOUS_PLUCKS	EQU	3
 
@@ -103,13 +102,14 @@ PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
 plucks_data:
-	RZB	4 * SIMULTANEOUS_PLUCKS		; Reserve 3 bytes per pluck
+	RZB	4 * SIMULTANEOUS_PLUCKS		; Reserve 4 bytes per pluck
 plucks_data_end:
 
 pluck_loop:
 	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
-	bne	skip_pluck			; If the user wants to skip, go here
+	bne	skip_pluck			; If the user wants to skip,
+						; go here
 
 	lbsr	pluck_do_frame			; Do one frame
 
@@ -484,11 +484,6 @@ display_message:
 _display_message_loop:
 	lda	,y+
 	beq	_display_message_finished
-	cmpa	#' '	; If ASCII space character
-	bne	_display_message_not_a_space
-	lda	#$8f	; then use a green box
-
-_display_message_not_a_space:
 	sta	,x+
 	cmpx	#TEXTBUFEND
 	blo	_display_message_loop
@@ -523,7 +518,7 @@ _pluck_space_char:
 	decb
 	bne	_pluck_test_char
 
-	cmpx	#TEXTBUFSIZE+PLUCK_LINES*COLS_PER_LINE
+	cmpx	#TEXTBUF+PLUCK_LINES*COLS_PER_LINE
 	beq	_pluck_count_chars_end
 
 	leay	1,y			; Start counting the next line
@@ -543,7 +538,8 @@ _pluck_count_chars_end:
 * A = non-zero if user is trying to skip
 ****************************************
 
-POLCAT	EQU	$A000
+POLCAT		EQU	$A000
+BREAK_KEY	EQU	3
 
 wait_for_vblank_and_check_for_skip:
 
@@ -554,7 +550,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	jsr	[POLCAT]
 	cmpa	#' '			; Space bar
 	beq	_wait_for_vblank_skip
-	cmpa	#3			; Break key
+	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
 	lda	#DEBUG_MODE
 	beq	_wait_for_vblank_no_debug_mode
@@ -602,6 +598,7 @@ debug_mode_toggle:
 pluck_do_frame:
 	ldy	#plucks_data
 
+_pluck_do_each_pluck:
 	lda	,y
 	ldb	1,y
 	ldx	2,y
@@ -610,7 +607,7 @@ pluck_do_frame:
 
 	leay	4,y
 	cmpy	#plucks_data_end
-	bne	pluck_do_frame
+	bne	_pluck_do_each_pluck
 
 	rts
 

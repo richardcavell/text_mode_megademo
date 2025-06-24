@@ -216,92 +216,6 @@ pluck_finished:
 
 	bra	title_screen
 
-***************************
-* Count characters per line
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-pluck_count_chars_per_line:
-
-	ldx	#TEXTBUF
-	leay	pluck_line_counts, PCR	; There are 15 of these
-
-_pluck_count_chars_on_one_line:
-	ldb	#COLS_PER_LINE		; There are 32 characters per line
-
-_pluck_test_char:
-	lda	,x+
-	cmpa	#GREEN_BOX		; Is it an empty green box?
-	beq	_pluck_space_char	; Yes
-
-	inc	,y			; No, so count another
-					; non-space character
-_pluck_space_char:
-	decb
-	bne	_pluck_test_char
-
-	cmpx	#TEXTBUFSIZE+PLUCK_LINES*COLS_PER_LINE
-	beq	_pluck_count_chars_end
-
-	leay	1,y			; Start counting the next line
-	bra	_pluck_count_chars_on_one_line
-
-_pluck_count_chars_end:
-	rts
-
-***************
-* Do a frame
-*
-* Inputs: None
-* Outputs: None
-***************
-
-pluck_do_frame:
-
-	rts
-
-***************************
-* Is there a spare slot?
-*
-* Inputs: None
-*
-* Output:
-* A = there is a spare slot
-***************************
-
-pluck_is_there_a_spare_slot:
-	clra
-	rts
-
-**********************************************
-* Now, check to see if the screen is empty yet
-*
-* Inputs: None
-*
-* Outputs:
-* A = 1 if empty
-* A = 0 if not empty
-**********************************************
-
-pluck_check_empty_screen:
-
-	leay	pluck_line_counts, PCR
-
-_pluck_check_empty_test_line:
-	tst	,y+
-	bne	_pluck_check_empty_not_empty
-	cmpy	#pluck_line_counts_end
-	bne	_pluck_check_empty_test_line
-
-	lda	#1			; Screen is now clear
-	rts
-
-_pluck_check_empty_not_empty:
-	clra				; Screen is not clear
-	rts
-
 **************
 * Title screen
 **************
@@ -668,6 +582,106 @@ _display_message_finished:
 
 ; BELOW IS UNCHECKED
 
+***********************************
+* Pluck - Count characters per line
+*
+* Inputs: None
+* Outputs: None
+***********************************
+
+pluck_count_chars_per_line:
+
+	ldx	#TEXTBUF
+	leay	pluck_line_counts, PCR	; There are 15 of these
+
+_pluck_count_chars_on_one_line:
+	ldb	#COLS_PER_LINE		; There are 32 characters per line
+
+_pluck_test_char:
+	lda	,x+
+	cmpa	#GREEN_BOX		; Is it an empty green box?
+	beq	_pluck_space_char	; Yes
+
+	inc	,y			; No, so count another
+					; non-space character
+_pluck_space_char:
+	decb
+	bne	_pluck_test_char
+
+	cmpx	#TEXTBUFSIZE+PLUCK_LINES*COLS_PER_LINE
+	beq	_pluck_count_chars_end
+
+	leay	1,y			; Start counting the next line
+	bra	_pluck_count_chars_on_one_line
+
+_pluck_count_chars_end:
+
+	rts
+
+********************
+* Pluck - Do a frame
+*
+* Inputs: None
+* Outputs: None
+********************
+
+pluck_do_frame:
+
+	rts
+
+********************************
+* Pluck - Is there a spare slot?
+*
+* Inputs: None
+*
+* Output:
+* A = there is a spare slot
+********************************
+
+pluck_is_there_a_spare_slot:
+
+	clra
+
+	rts
+
+*************************************************
+* Pluck - check to see if the screen is empty yet
+*
+* Inputs: None
+*
+* Outputs:
+* A = 1 if empty
+* A = 0 if not empty
+*************************************************
+
+pluck_check_empty_screen:
+
+	leay	pluck_line_counts, PCR
+
+_pluck_check_empty_test_line:
+	tst	,y+
+	bne	_pluck_check_empty_not_empty
+	cmpy	#pluck_line_counts_end
+	bne	_pluck_check_empty_test_line
+
+	lda	#1			; Screen is now clear
+	rts
+
+_pluck_check_empty_not_empty:
+	clra				; Screen is not clear
+	rts
+
+***************************
+* Pluck - Pluck a character
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+pluck_a_char:
+
+	rts
+
 ****************************************
 * Wait for VBlank and check for skip
 *
@@ -724,6 +738,8 @@ _wait_for_vblank_skip:
 debug_mode_toggle:
 
 	RZB	1
+
+; UNCHECKED
 
 ******************************************
 * Switch IRQ and FIRQ interrupts on or off
@@ -1370,12 +1386,12 @@ _display_text_graphic_finished:
 
 uninstall_irq_service_routine:
 
-	bsr	switch_off_irq
+	lbsr	switch_off_irq
 
 	ldy	decb_irq_service_routine, PCR
 	sty	IRQ_HANDLER
 
-	bsr	switch_on_irq
+	lbsr	switch_on_irq
 
 	rts
 

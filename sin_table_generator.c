@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 				   j,
 				  "\t; ",
 				   i,
-				  " 256ths of a circle\n");
+				  "/256ths of a circle\n");
 
 		if (ret < 0)
 			fprintf_error();

@@ -50,7 +50,7 @@ LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro
 
 .DEFAULT: all
 
-.PHONY:	all clean disk help info license mame mame-debug xroar
+.PHONY:	all clean disk help info license mame mame-debug version xroar xroar-coco3 xroar-ntsc
 
 all:	$(DISK) $(PART1) $(PART2)
 all:	$(SIN_GENERATOR) $(SIN_TABLE)
@@ -123,7 +123,10 @@ info:
 	@echo "make license"
 	@echo "make mame"
 	@echo "make mame-debug"
+	@echo "make version"
 	@echo "make xroar"
+	@echo "make xroar-coco3"
+	@echo "make xroar-ntsc"
 
 license:
 	@cat LICENSE
@@ -137,6 +140,14 @@ clean:
 	@rm -f -v $(SOUND_STR)
 	@echo "... Done"
 
+version:
+	@echo "Text Mode Demo"
+	@echo ".............."
+	@echo "TMD source: version alpha"
+	@$(CC) --version | head --lines=1
+	@$(ASM) --version | head --lines=1
+	@$(DECB) 2>&1 >/dev/null | head --lines=1
+
 mame: $(DISK)
 	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"
 
@@ -145,3 +156,9 @@ mame-debug: $(DISK)
 
 xroar: $(DISK)
 	xroar -m coco2b -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"
+
+xroar-coco3: $(DISK)
+	xroar -m coco3p -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"
+
+xroar-ntsc: $(DISK)
+	xroar -m coco2bus -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"

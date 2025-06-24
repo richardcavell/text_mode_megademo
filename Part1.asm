@@ -52,12 +52,15 @@ DEBUG_MODE	EQU	0
 * Display message using operating system
 ****************************************
 
-	leax	message, PCR
-	lbsr	display_message_using_decb
+	lda	#15
+	leax	startup_message, PCR
+	lbsr	display_message
 	bra	pluck
 
-message:
+startup_message:
 
+	FCB	$8f
+	FCB	$8f
 	FCV	"PRESS"
 	FCB	$8f			; blank space
 	FCV	"SPACE"
@@ -69,7 +72,7 @@ message:
 	FCV	"ANY"
 	FCB	$8f
 	FCV	"PART"
-	FCB	$22			; A quotation mark ends the message
+	FCB	0			; A zero ends the message
 
 ***********************************************************
 * Pluck routine - make characters disappear from the screen
@@ -116,11 +119,11 @@ _count_chars_end:
 _check_text_screen_empty:
 	leay	line_counts, PCR
 
-test_line:
+_test_line:
 	tst	,y+
 	bne	_not_empty
 	cmpy	#line_counts_end
-	bne	test_line
+	bne	_test_line
 
 	bra	screen_is_empty	; Go to the next piece of this demo
 
@@ -128,14 +131,14 @@ _not_empty:
 
 ; Screen is not empty
 
-choose_line:
+_choose_line:
 	lbsr	get_random 	; Get a random number in D
 	andb	#0b00001111	; Make the random number between 0 and 15
 
 	leay	line_counts, PCR
 
 	tst	b,y		; If there are no more characters on this line
-	beq	choose_line	; choose a different one
+	beq	_choose_line	; choose a different one
 
 	dec	b,y		; There'll be one less character now
 
@@ -147,9 +150,9 @@ choose_line:
 
 	lda	#$60		; Green box (space)
 
-find_non_space:
+_find_non_space:
 	cmpa	,-x		; Go backwards until we find a non-space
-	beq	find_non_space
+	beq	_find_non_space
 
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
@@ -164,7 +167,7 @@ find_non_space:
 	lbsr	play_sound	; Play the pluck noise
 	puls	b,x
 
-pluck_loop:
+_pluck_loop:
 	pshs	b,x
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
@@ -178,11 +181,11 @@ pluck_loop:
 	tfr	x,d
 	andb	#0b00011111	; Is the address divisible by 32?
 	puls	b, x
-	bne	not_divisible
+	bne	_not_divisible
 
 	pshs	b, x
 	lbsr	wait_for_vblank_and_check_for_skip
-	puls	b,x
+	puls	b, x
 	tsta
 	bne	empty_the_screen
 
@@ -190,9 +193,9 @@ pluck_loop:
 				; Yes, then we have reached the right
 				; side of the screen, so start another pluck
 
-not_divisible:
+_not_divisible:
 	stb	,x		; Put the character one position to the right
-	bra	pluck_loop
+	bra	_pluck_loop
 
 empty_the_screen:
 	lbsr	clear_screen
@@ -205,28 +208,38 @@ screen_is_empty:
 **************
 
 title_screen:
-	ldx	#TEXTBUF
-	leay	title_screen_graphic,PCR
+	lda	#0
+	ldb	#0
+	leax	title_screen_graphic, PCR
+	lbsr	display_text_graphic
+	bra	display_text
 
-display_graphic:
-	lda	,y+
-	beq	new_line
-	cmpa	#255
-	beq	display_text
-	sta	,x+
-	bra	display_graphic
+; This graphic was made by Microsoft Copilot and modified by me
 
-new_line:
-	tfr	x,d
-	andb	#0b11100000
-	addd	#32
-	tfr	d,x
-	bra	display_graphic
+title_screen_graphic:
+	FCV	"(\\/)",0
+	FCV	"(O-O)",0
+	FCV	"/> >\\",0
+	FCB	255
+
+title_screen_text:
+	FCB	5, 6
+	FCN	"RJFC"	; Each string ends with a zero when you use FCN
+	FCB	8, 10
+	FCN	"PRESENTS"
+	FCB	12, 12
+	FCC	"TEXT"
+	FCB	$8F
+	FCC	"MODE"
+	FCB	$8F
+	FCC	"DEMO"
+	FCB	0
+	FCB	255		; The end
 
 display_text:
-	leay	title_screen_text,PCR
+	leay	title_screen_text, PCR
 
-print_text_loop:
+_print_text_loop:
 	lda	,y+
 	ldb	,y+
 	tfr	y,x
@@ -237,14 +250,14 @@ print_text_loop:
 	tsta
 	bne	skip_title_screen
 
-find_zero:
+_find_zero:
 	tst	,y+
-	bne	find_zero
+	bne	_find_zero
 
 	lda	#255			; This marks the end of the text
 					;   lines
 	cmpa	,y			; Is that what we have?
-	bne	print_text_loop		; If not, then print the next line
+	bne	_print_text_loop	; If not, then print the next line
 					; If yes, then fall through to the
 					;   next section
 
@@ -321,44 +334,28 @@ skip_title_screen:		; If space was pressed
 screen_is_clear:
 	bra	loading_screen
 
-; This graphic was made by Microsoft Copilot and modified by me
-
-title_screen_graphic:
-	FCV	"(\\/)",0
-	FCV	"(O-O)",0
-	FCV	"/> >\\",0
-	FCB	255
-
-title_screen_text:
-	FCB	5, 6
-	FCN	"RJFC"		; Each string ends with a zero when you use FCN
-	FCB	8, 10
-	FCN	"PRESENTS"
-	FCB	12, 12
-	FCC	"TEXT"
-	FCB	$8F
-	FCC	"MODE"
-	FCB	$8F
-	FCC	"DEMO"
-	FCB	0
-	FCB	255		; The end
-
 loading_screen:
+	lda	#0
+	ldb	#0
 	leax	ascii_art_cat, PCR
-	lbsr	output_full_screen
+	lbsr	display_text_graphic
 
 	leax	loading_text, PCR
 	lda	#15
 	ldb	#11
 	lbsr	text_appears		; Ignore the return value
 
-	lbsr	wait_for_vblank		; Display it for one frame
+	lbsr	wait_for_vblank_and_check_for_skip
+					; Display it for one frame
+	tsta
+	bne	_part_1_end
 
 	lda	#15
 	ldb	#3
 	lbsr	flash_text_white	; Ignore the return value
 
 * This is the end of part 1!
+_part_1_end:
 
 	lbsr	uninstall_irq_service_routine
 
@@ -541,20 +538,31 @@ debug_mode_toggle:
 
 	RZB	1
 
-************************************************************
-* Display a message using the operating system
+*****************************************************
+* Display a message on the screen
 *
-* Input:
-* X = string containing the message (ended by double quotes)
-************************************************************
+* Inputs:
+* A = line to put it on
+* X = string containing the message (ended by a zero)
+*
+* Outputs: None
+*****************************************************
 
-DISPL		EQU	$B99C
+display_message:
 
-display_message_using_decb:
+	ldb	#32
+	mul
+	tfr	x,y	; Y = message
+	ldx	#TEXTBUF
+	leax	d,x
 
-	clr	$6F			; Output to the screen
-	leax	-1,x			; The first character is skipped over
-	JSR	DISPL			; Put the string to the screen
+_display_message_loop:
+	lda	,y+
+	beq	_display_message_finished
+	sta	,x+
+	bra	_display_message_loop
+
+_display_message_finished:
 	rts
 
 **********************************************************
@@ -650,7 +658,7 @@ send_values_finished:
 
 	puls	y
 
-	bsr	switch_on_irq_and_firq
+	lbsr	switch_on_irq_and_firq
 
 	rts
 
@@ -698,18 +706,13 @@ buff_box:
 	sta	,x		; Put it on the screen
 
 	pshs	b,x,u
-	bsr	check_for_space	; Space bar skips this section
+	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x,u
 	tsta
-	beq	no_skip_text_appears
+	beq	_skip
+	rts			; Just return a
 
-	rts			; Return what's in A
-
-no_skip_text_appears:
-	pshs	b,x,u
-	lbsr	wait_for_vblank
-	puls	b,x,u
-
+_skip:
 	tstb			; If non-zero, we are not printing out
 	bne	green_box	; yet
 
@@ -751,7 +754,7 @@ test_area:
 *
 * Outputs:
 * A = 0 Everything is okay
-* A = non-zero Space was pressed
+* A = non-zero User wants to skip
 *************************************
 
 encase_text:
@@ -771,17 +774,13 @@ encase_text:
 
 encase_text_loop:
 	pshs	b,x
-	bsr	check_for_space	; Space bar exits this
+	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	no_skip_encase
+	beq	_no_skip_encase
 	rts			; Simply return a
 
-no_skip_encase:
-	pshs	b,x
-	lbsr	wait_for_vblank	; Start on the next frame
-	puls	b,x
-
+_no_skip_encase:
 encase_text_more:
 	lda	#$60		; Green box (space)
 
@@ -828,9 +827,8 @@ encase_are_we_done:
 	tfr	y,d
 	bne	encase_text_loop
 
-	lbsr	wait_for_vblank	; The final showing
-	clra
-	rts			; we are finished
+	lbsr	wait_for_vblank_and_check_for_skip	; The final showing
+	rts			; we are finished. Return a
 
 encase_right:
 	tfr	d,y
@@ -839,9 +837,7 @@ encase_right:
 	tfr	y,d
 	bne	encase_text_loop	;   by 32, then
 
-	lbsr	wait_for_vblank	; The final showing
-
-	clra
+	lbsr	wait_for_vblank_and_check_for_skip	; The final showing
 	rts			; we are finished
 
 **************************************
@@ -883,7 +879,7 @@ flash_chars_loop:
 	puls	b,x
 
 	pshs	b,x
-	lbsr	check_for_space
+	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
 	beq	skip_flash_chars
@@ -891,25 +887,17 @@ flash_chars_loop:
 
 skip_flash_chars:
 	pshs	b,x
-	lbsr	wait_for_vblank
-	puls	b,x
-
-	pshs	b,x
 	bsr	restore_chars
 	puls	b,x
 
 	pshs	b,x
-	lbsr	check_for_space
+	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
 	beq	skip_flash_chars_2
 	rts
 
 skip_flash_chars_2:
-	pshs	b,x
-	lbsr	wait_for_vblank
-	puls	b,x
-
 	tstb			; We do this routine b times
 	beq	flash_finished
 
@@ -989,14 +977,17 @@ flash_screen_copy_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_copy_loop
 
-	lbsr	check_for_space
+	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	skip_flash_screen_copy
 	rts
 
 skip_flash_screen_copy:
-	lbsr	wait_for_vblank
+	lbsr	wait_for_vblank_and_check_for_skip
+	tsta
+	beq	_skip_flash_screen_5
 
+_skip_flash_screen_5:
 	ldx	#TEXTBUF
 	ldd	#$cfcf
 
@@ -1009,22 +1000,24 @@ flash_screen_white_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_white_loop
 
-	lbsr	check_for_space		; If space was pressed
+	lbsr	wait_for_vblank_and_check_for_skip	; If space was pressed
 	tsta
 	beq	skip_flash_screen_2
 	rts				; return to caller
 
 skip_flash_screen_2:
-	lbsr	wait_for_vblank
-
-	lbsr	check_for_space		; If space was pressed
+	lbsr	wait_for_vblank_and_check_for_skip	; If space was pressed
 	tsta
 	beq	skip_flash_screen_3
 	rts				; return to caller
 
 skip_flash_screen_3:
-	lbsr	wait_for_vblank
+	lbsr	wait_for_vblank_and_check_for_skip
+	tsta
+	beq	_skip_flash_screen_4
+	rts
 
+_skip_flash_screen_4
 	ldx	#TEXTBUF
 	ldy	#flash_screen_storage
 
@@ -1041,23 +1034,14 @@ flash_screen_restore_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_restore_loop
 
-	lbsr	check_for_space
+	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	skip_flash_screen_4
 	rts
 
 skip_flash_screen_4:
-	lbsr	wait_for_vblank
+	lbsr	wait_for_vblank_and_check_for_skip
 
-	lbsr	check_for_space
-	tsta
-	beq	skip_flash_screen_5
-	rts
-
-skip_flash_screen_5:
-	lbsr	wait_for_vblank
-
-	clra
 	rts
 
 ********************************
@@ -1089,7 +1073,7 @@ drop_screen_content:
 
 
 	pshs	a
-	lbsr	check_for_space
+	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	skip_drop_screen
 	leas	1,s
@@ -1098,22 +1082,10 @@ drop_screen_content:
 skip_drop_screen:
 	puls	a
 
-	pshs	a
-	lbsr	wait_for_vblank
-	puls	a
-
-	pshs	a
-	lbsr	check_for_space
-	tsta
-	beq	skip_drop_screen_2
-	leas	1,s
-	rts
-
 skip_drop_screen_2:
 	puls	a
 
 	pshs	a
-	lbsr	wait_for_vblank
 	puls	a
 
 	inca				; Next time, start a line lower
@@ -1179,36 +1151,46 @@ clear_loop:
 	clra
 	rts
 
-**************************************
-* Output full screen
+**************************
+*******************
+* Output a graphic
 *
 * Inputs:
-* X = the text to be put on the screen
-**************************************
+* A = Line number
+* B = Column number
+* X = Graphic data
+*******************
 
-output_full_screen:
-	tfr	x,y			; Y = beginning of our data
-	ldx	#TEXTBUF		; X = beginning of the screen
+display_text_graphic:
+	tfr	x,y
 
-	tfr	x,u			; U = beginning of the screen
+	pshs	b
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x
+	puls	b
+	leax	b,x
 
-keep_outputting:
-	lda	,y+			; What's the next thing to draw?
-	cmpa	#255
-	beq	output_full_screen_end	; If the end, finish
-	tsta				; If it's a character
-	bne	output_char		; go and draw it
+_display_text_graphic_loop:
+        lda     ,y+
+        beq     _text_graphic_new_line
+        cmpa    #255
+        beq	_display_text_graphic_finished
+        sta     ,x+
+        bra     _display_text_graphic_loop
 
-	leau	32,u			; If 0, go to the next line
-	tfr	u,x
-	bra	keep_outputting
+_text_graphic_new_line:
+	tfr	d,u		; Save register b
+        tfr     x,d
+        andb    #0b11100000
+        addd    #32
+        tfr     d,x
+	tfr	u,d		; Get b back
+	leax	b,x
+	bra	_display_text_graphic_loop
 
-output_char:
-	sta	,x+
-	bra	keep_outputting
-
-output_full_screen_end:
-	clra
+_display_text_graphic_finished:
 	rts
 
 *************************************

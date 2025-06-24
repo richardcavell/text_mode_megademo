@@ -27,8 +27,7 @@ DEBUG_MODE	EQU	0
 * Zero the DP register
 **********************
 
-	clra
-	tfr	a, dp
+	lbsr	zero_dp_register
 
 *************************
 * Install our IRQ handler
@@ -48,9 +47,9 @@ DEBUG_MODE	EQU	0
 
 	lbsr	turn_6bit_audio_on
 
-****************************************
-* Display message using operating system
-****************************************
+*************************************************************
+* Display "space to skip" message at the bottom of the screen
+*************************************************************
 
 	lda	#15
 	leax	startup_message, PCR
@@ -77,59 +76,62 @@ TEXT_LINES	EQU	16
 
 pluck:
 
-PLUCK_LINES	EQU	TEXT_LINES-1	; The bottom line is for our skip
-					; message
+PLUCK_LINES	EQU	TEXT_LINES-1	; The bottom line of
+					; the screen is for
+					; our skip message
 
 GREEN_BOX	EQU	$60
 WHITE_BOX	EQU	$cf
 
 ; First, count the number of characters on each line of the screen
 
-	ldx	#TEXTBUF
-	leay	pluck_line_counts, PCR	; There are 15 of these
-
-_pluck_count_chars_on_one_line:
-	ldb	#COLS_PER_LINE		; There are 32 characters per line
-
-_pluck_test_char:
-	lda	,x+
-	cmpa	#GREEN_BOX		; Is it an empty green box?
-	beq	_pluck_space_char	; Yes
-
-	inc	,y			; No, so count another
-					; non-space character
-_pluck_space_char:
-	decb
-	bne	_pluck_test_char
-
-	cmpx	#TEXTBUFSIZE+PLUCK_LINES*COLS_PER_LINE
-	beq	_pluck_count_chars_end
-
-	leay	1,y			; Start counting the next line
-	bra	_pluck_count_chars_on_one_line
+	lbsr	pluck_count_chars_per_line
+	bra	pluck_loop
 
 pluck_line_counts:
 	RZB PLUCK_LINES			; 15 zeroes
 pluck_line_counts_end:
 
-_pluck_count_chars_end:
 
-; Now, check to see if the screen is empty yet
+; Structure is phase, position
 
-_check_empty_screen:
-	leay	pluck_line_counts, PCR
+SIMULTANEOUS_PLUCKS	EQU	3
 
-_check_empty_test_line:
-	tst	,y+
-	bne	_check_empty_not_empty
-	cmpy	#pluck_line_counts_end
-	bne	_check_empty_test_line
+PLUCK_PHASE_NOTHING	EQU	0
+PLUCK_PHASE_TURN_WHITE	EQU	1
+PLUCK_PHASE_PLAIN	EQU	2
+PLUCK_PHASE_PULLING	EQU	3
 
-	bra	pluck_finished	; Go to the next piece of this demo
+plucks_data:
+	RZB	3 * SIMULTANEOUS_PLUCKS		; Reserve 3 bytes per pluck
+plucks_data_end:
 
-_check_empty_not_empty:
+pluck_loop:
+	lbsr	pluck_do_frame			; Do one frame
 
-; Screen is not empty
+	lbsr	pluck_is_there_a_spare_slot	; Is there a spare slot?
+	tsta
+	beq	_pluck_no_spare_slot		; No, just keep processing
+
+	lbsr	pluck_check_empty_screen
+	tsta
+	beq	_pluck_no_more_chars
+
+	lbsr	pluck_a_char			; Yes, pluck a character
+
+_pluck_no_spare_slot:
+_pluck_no_more_chars:
+	lbsr	wait_for_vblank_and_check_for_skip
+	tsta
+	bne	skip_pluck
+	bra	_pluck_loop
+
+
+
+
+; UNCHECKED
+
+
 
 _check_empty_choose_line:
 	lbsr	get_random 	; Get a random number in D
@@ -158,6 +160,11 @@ _check_empty_find_non_space:
 
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
+
+
+
+
+
 
 	lda	#WHITE_BOX	; Blink it white for the duration of our sound
 	sta	,x
@@ -199,12 +206,101 @@ _not_divisible:
 	stb	,x		; Put the character one position to the right
 	bra	_pluck_loop
 
+skip_pluck:
 empty_the_screen:
+
 	lbsr	clear_screen
 
 pluck_finished:
-screen_is_empty:
+				; Screen is empty
+
 	bra	title_screen
+
+***************************
+* Count characters per line
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+pluck_count_chars_per_line:
+
+	ldx	#TEXTBUF
+	leay	pluck_line_counts, PCR	; There are 15 of these
+
+_pluck_count_chars_on_one_line:
+	ldb	#COLS_PER_LINE		; There are 32 characters per line
+
+_pluck_test_char:
+	lda	,x+
+	cmpa	#GREEN_BOX		; Is it an empty green box?
+	beq	_pluck_space_char	; Yes
+
+	inc	,y			; No, so count another
+					; non-space character
+_pluck_space_char:
+	decb
+	bne	_pluck_test_char
+
+	cmpx	#TEXTBUFSIZE+PLUCK_LINES*COLS_PER_LINE
+	beq	_pluck_count_chars_end
+
+	leay	1,y			; Start counting the next line
+	bra	_pluck_count_chars_on_one_line
+
+_pluck_count_chars_end:
+	rts
+
+***************
+* Do a frame
+*
+* Inputs: None
+* Outputs: None
+***************
+
+pluck_do_frame:
+
+	rts
+
+***************************
+* Is there a spare slot?
+*
+* Inputs: None
+*
+* Output:
+* A = there is a spare slot
+***************************
+
+pluck_is_there_a_spare_slot:
+	clra
+	rts
+
+**********************************************
+* Now, check to see if the screen is empty yet
+*
+* Inputs: None
+*
+* Outputs:
+* A = 1 if empty
+* A = 0 if not empty
+**********************************************
+
+pluck_check_empty_screen:
+
+	leay	pluck_line_counts, PCR
+
+_pluck_check_empty_test_line:
+	tst	,y+
+	bne	_pluck_check_empty_not_empty
+	cmpy	#pluck_line_counts_end
+	bne	_pluck_check_empty_test_line
+
+	lda	#1			; Screen is now clear
+	rts
+
+_pluck_check_empty_not_empty:
+	clra				; Screen is not clear
+	rts
 
 **************
 * Title screen
@@ -396,6 +492,43 @@ loading_text:
 
 * Assume that no registers are preserved
 
+**********************
+* Zero the DP register
+**********************
+
+zero_dp_register:
+
+	clra
+	tfr	a, dp
+
+	rts
+
+***************************
+* Switch IRQ interrupts off
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+switch_off_irq:
+
+	orcc	#0b00010000		; Switch off IRQ interrupts
+
+	rts
+
+**************************
+* Switch IRQ interrupts on
+*
+* Inputs: None
+* Outputs: None
+**************************
+
+switch_on_irq:
+
+	andcc	#0b11101111		; Switch IRQ interrupts back on
+
+	rts
+
 *********************************
 * Install our IRQ service routine
 *
@@ -419,65 +552,6 @@ install_irq_service_routine:
 
 	bsr	switch_on_irq		; Switch IRQ interrupts back on
 
-	rts
-
-uninstall_irq_service_routine:
-
-	bsr	switch_off_irq
-
-	ldy	decb_irq_service_routine, PCR
-	sty	IRQ_HANDLER
-
-	bsr	switch_on_irq
-
-	rts
-
-*********************************
-* Switch IRQ interrupts on or off
-*
-* Inputs: None
-* Outputs: None
-*********************************
-
-switch_off_irq:
-
-	orcc	#0b00010000		; Switch off IRQ interrupts
-	rts
-
-switch_on_irq:
-
-	andcc	#0b11101111		; Switch IRQ interrupts back on
-	rts
-
-******************************************
-* Switch IRQ and FIRQ interrupts on or off
-*
-* Inputs: None
-* Outputs: None
-******************************************
-
-switch_off_irq_and_firq:
-
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-	rts
-
-switch_on_irq_and_firq:
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-	rts
-
-*********************
-* Turn off disk motor
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-DSKREG	EQU	$FF40
-
-turn_off_disk_motor:
-
-	clr	DSKREG		; Turn off disk motor
 	rts
 
 ***************************************************
@@ -506,6 +580,93 @@ decb_irq_service_routine:
 
 vblank_happened:
 	RZB	1
+
+*********************
+* Turn off disk motor
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+DSKREG	EQU	$FF40
+
+turn_off_disk_motor:
+
+	clr	DSKREG		; Turn off disk motor
+
+	rts
+
+*********************
+* Turn 6-bit audio on
+*********************
+
+AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
+DDRA		EQU	$FF20
+PIA2_CRA	EQU	$FF21
+AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
+
+turn_6bit_audio_on:
+
+* This code was modified from code written by Trey Tomes
+
+	lda	AUDIO_PORT_ON
+	ora	#0b00001000
+	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
+
+* End code modified from code written by Trey Tomes
+
+* This code was written by other people (see the top of this file)
+
+	ldb	PIA2_CRA
+	andb	#0b11111011
+	stb	PIA2_CRA
+
+	lda	#0b11111100
+	sta	DDRA
+
+	orb	#0b00000100
+	stb	PIA2_CRA
+
+* End of code written by other people
+
+	rts
+
+*****************************************************
+* Display a message on the screen
+*
+* Inputs:
+* A = line to put it on
+* X = string containing the message (ended by a zero)
+*
+* Outputs: None
+*****************************************************
+
+display_message:
+
+	tfr	x,y	; Y = message
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x	; X = starting point on the screen
+
+_display_message_loop:
+	lda	,y+
+	beq	_display_message_finished
+	cmpa	#' '	; If ASCII space character
+	bne	_display_message_not_a_space
+	lda	#$8f	; then use a green box
+
+_display_message_not_a_space:
+	sta	,x+
+	cmpx	#TEXTBUFEND
+	blo	_display_message_loop
+
+_display_message_finished:
+
+	rts
+
+
+; BELOW IS UNCHECKED
 
 ****************************************
 * Wait for VBlank and check for skip
@@ -564,37 +725,21 @@ debug_mode_toggle:
 
 	RZB	1
 
-*****************************************************
-* Display a message on the screen
+******************************************
+* Switch IRQ and FIRQ interrupts on or off
 *
-* Inputs:
-* A = line to put it on
-* X = string containing the message (ended by a zero)
-*
+* Inputs: None
 * Outputs: None
-*****************************************************
+******************************************
 
-display_message:
+switch_off_irq_and_firq:
 
-	tfr	x,y	; Y = message
-	ldb	#32
-	mul
-	ldx	#TEXTBUF
-	leax	d,x	; X = starting point on the screen
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+	rts
 
-_display_message_loop:
-	lda	,y+
-	beq	_display_message_finished
-	cmpa	#' '	; If ASCII space character
-	bne	_display_message_not_a_space
-	lda	#$8f	; then use a green box
+switch_on_irq_and_firq:
 
-_display_message_not_a_space:
-	sta	,x+
-	cmpx	#TEXTBUFEND
-	blo	_display_message_loop
-
-_display_message_finished:
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
 
 **********************************************************
@@ -642,41 +787,6 @@ nofeedback:
 
 	ENDIF
 
-*********************
-* Turn 6-bit audio on
-*********************
-
-AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
-DDRA		EQU	$FF20
-PIA2_CRA	EQU	$FF21
-AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
-
-turn_6bit_audio_on:
-
-* This code was modified from code written by Trey Tomes
-
-	lda	AUDIO_PORT_ON
-	ora	#0b00001000
-	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
-
-* End code modified from code written by Trey Tomes
-
-* This code was written by other people (see the top of this file)
-
-	ldb	PIA2_CRA
-	andb	#0b11111011
-	stb	PIA2_CRA
-
-	lda	#0b11111100
-	sta	DDRA
-
-	orb	#0b00000100
-	stb	PIA2_CRA
-
-* End of code written by other people
-
-	rts
-
 *******************************
 * Play a sound sample
 *
@@ -718,20 +828,24 @@ send_values_finished:
 
 ******************
 * Clear the screen
+*
+* Inputs: None
+*
+* Outputs: None
 ******************
 
 clear_screen:
 	ldx	#TEXTBUF
 	ldd	#$6060			; Two green boxes
 
-clear_char:
+_clear_screen_clear_char:
 	std	,x+			; Might as well do 8 bytes at a time
 	std	,x+
 	std	,x+
 	std	,x+
 
-	cmpx	#TEXTBUF+TEXTBUFSIZE	; Finish in the lower-right corner
-	bne	clear_char
+	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
+	bne	_clear_screen_clear_char
 	rts
 
 ************************************************
@@ -1245,6 +1359,24 @@ _text_graphic_new_line:
 	bra	_display_text_graphic_loop
 
 _display_text_graphic_finished:
+	rts
+
+***********************************
+* Uninstall our IRQ service routine
+*
+* Inputs: None
+* Outputs: None
+***********************************
+
+uninstall_irq_service_routine:
+
+	bsr	switch_off_irq
+
+	ldy	decb_irq_service_routine, PCR
+	sty	IRQ_HANDLER
+
+	bsr	switch_on_irq
+
 	rts
 
 *************************************

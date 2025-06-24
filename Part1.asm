@@ -578,9 +578,6 @@ _display_message_finished:
 
 	rts
 
-
-; BELOW IS UNCHECKED
-
 ***********************************
 * Pluck - Count characters per line
 *
@@ -614,70 +611,6 @@ _pluck_space_char:
 	bra	_pluck_count_chars_on_one_line
 
 _pluck_count_chars_end:
-
-	rts
-
-********************
-* Pluck - Do a frame
-*
-* Inputs: None
-* Outputs: None
-********************
-
-pluck_do_frame:
-
-	rts
-
-********************************
-* Pluck - Is there a spare slot?
-*
-* Inputs: None
-*
-* Output:
-* A = there is a spare slot
-********************************
-
-pluck_is_there_a_spare_slot:
-
-	clra
-
-	rts
-
-*************************************************
-* Pluck - check to see if the screen is empty yet
-*
-* Inputs: None
-*
-* Outputs:
-* A = 1 if empty
-* A = 0 if not empty
-*************************************************
-
-pluck_check_empty_screen:
-
-	leay	pluck_line_counts, PCR
-
-_pluck_check_empty_test_line:
-	tst	,y+
-	bne	_pluck_check_empty_not_empty
-	cmpy	#pluck_line_counts_end
-	bne	_pluck_check_empty_test_line
-
-	lda	#1			; Screen is now clear
-	rts
-
-_pluck_check_empty_not_empty:
-	clra				; Screen is not clear
-	rts
-
-***************************
-* Pluck - Pluck a character
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-pluck_a_char:
 
 	rts
 
@@ -737,6 +670,93 @@ _wait_for_vblank_skip:
 debug_mode_toggle:
 
 	RZB	1
+
+; BELOW IS UNCHECKED
+
+********************
+* Pluck - Do a frame
+*
+* Inputs: None
+* Outputs: None
+********************
+
+pluck_do_frame:
+
+	rts
+
+********************************
+* Pluck - Is there a spare slot?
+*
+* Inputs: None
+*
+* Output:
+* A = there is a spare slot
+********************************
+
+pluck_is_there_a_spare_slot:
+	lda	#SIMULTANEOUS_PLUCKS
+	ldx	#plucks_data
+
+_pluck_check_slot_loop:
+	deca
+	ldb	,x
+	cmpb	#PLUCK_PHASE_NOTHING
+	beq	_pluck_check_slot_found_empty
+
+	tsta
+	beq	_pluck_no_empty_slot
+	leax	3,x
+	bra	_pluck_check_slot_loop
+
+_pluck_no_empty_slot:
+
+	clra
+
+	rts
+
+_pluck_check_slot_found_empty:
+
+	lda	#1
+
+	rts
+
+*************************************************
+* Pluck - check to see if the screen is empty yet
+*
+* Inputs: None
+*
+* Outputs:
+* A = 1 if empty
+* A = 0 if not empty
+*************************************************
+
+pluck_check_empty_screen:
+
+	leay	pluck_line_counts, PCR
+
+_pluck_check_empty_test_line:
+	tst	,y+
+	bne	_pluck_check_empty_not_empty
+	cmpy	#pluck_line_counts_end
+	bne	_pluck_check_empty_test_line
+
+	lda	#1			; Screen is now clear
+	rts
+
+_pluck_check_empty_not_empty:
+	clra				; Screen is not clear
+	rts
+
+***************************
+* Pluck - Pluck a character
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+pluck_a_char:
+
+	rts
 
 ; UNCHECKED
 

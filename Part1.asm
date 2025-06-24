@@ -58,76 +58,75 @@ DEBUG_MODE	EQU	0
 	bra	pluck
 
 startup_message:
+	FCV	"  PRESS SPACE TO SKIP ANY PART  ",0
 
-	FCB	$8f
-	FCB	$8f
-	FCV	"PRESS"
-	FCB	$8f			; blank space
-	FCV	"SPACE"
-	FCB	$8f
-	FCV	"TO"
-	FCB	$8f
-	FCV	"SKIP"
-	FCB	$8f
-	FCV	"ANY"
-	FCB	$8f
-	FCV	"PART"
-	FCB	0			; A zero ends the message
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF		EQU	$400		; We're not double-buffering
+TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE	EQU	32
+TEXT_LINES	EQU	16
 
 ***********************************************************
 * Pluck routine - make characters disappear from the screen
 ***********************************************************
 
-TEXTBUF		EQU	$400		; We're not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
-
 pluck:
+
+PLUCK_LINES	EQU	TEXT_LINES-1	; The bottom line is for our skip
+					; message
+
+GREEN_BOX	EQU	$60
 
 ; First, count the number of characters on each line of the screen
 
 	ldx	#TEXTBUF
-	leay	line_counts, PCR	; There are 16 of these
+	leay	pluck_line_counts, PCR	; There are 15 of these
 
-_count_chars_on_one_line:
-	ldb	#32			; There are 32 characters per line
+_pluck_count_chars_on_one_line:
+	ldb	#COLS_PER_LINE		; There are 32 characters per line
 
-_test_char:
+_pluck_test_char:
 	lda	,x+
-	cmpa	#$60			; Is it an empty green box?
-	beq	_space_char		; Yes
+	cmpa	#GREEN_BOX		; Is it an empty green box?
+	beq	_pluck_space_char	; Yes
 
 	inc	,y			; No, so count another
 					; non-space character
-_space_char:
+_pluck_space_char:
 	decb
-	bne	_test_char
+	bne	_pluck_test_char
 
-	cmpx	#TEXTBUF+TEXTBUFSIZE
-	beq	_count_chars_end
+	cmpx	#TEXTBUFSIZE+PLUCK_LINES*COLS_PER_LINE
+	beq	_pluck_count_chars_end
 
 	leay	1,y			; Start counting the next line
-	bra	_count_chars_on_one_line
+	bra	_pluck_count_chars_on_one_line
 
-line_counts:
-	RZB 16				; 16 zeroes
-line_counts_end:
+pluck_line_counts:
+	RZB PLUCK_LINES			; 15 zeroes
+pluck_line_counts_end:
 
-_count_chars_end:
+_pluck_count_chars_end:
 
 ; Now, check to see if the screen is empty yet
 
-_check_text_screen_empty:
-	leay	line_counts, PCR
+_check_empty_screen:
+	leay	pluck_line_counts, PCR
 
-_test_line:
+_check_empty_test_line:
 	tst	,y+
-	bne	_not_empty
-	cmpy	#line_counts_end
-	bne	_test_line
+	bne	_check_empty_not_empty
+	cmpy	#pluck_line_counts_end
+	bne	_check_empty_test_line
 
-	bra	screen_is_empty	; Go to the next piece of this demo
+	bra	pluck_finished	; Go to the next piece of this demo
 
-_not_empty:
+_check_empty_not_empty:
 
 ; Screen is not empty
 
@@ -135,7 +134,7 @@ _choose_line:
 	lbsr	get_random 	; Get a random number in D
 	andb	#0b00001111	; Make the random number between 0 and 15
 
-	leay	line_counts, PCR
+	leay	pluck_line_counts, PCR
 
 	tst	b,y		; If there are no more characters on this line
 	beq	_choose_line	; choose a different one
@@ -189,7 +188,7 @@ _pluck_loop:
 	tsta
 	bne	empty_the_screen
 
-	bra	_check_text_screen_empty
+	bra	_check_empty_screen
 				; Yes, then we have reached the right
 				; side of the screen, so start another pluck
 
@@ -200,6 +199,7 @@ _not_divisible:
 empty_the_screen:
 	lbsr	clear_screen
 
+pluck_finished:
 screen_is_empty:
 	bra	title_screen
 
@@ -554,13 +554,19 @@ display_message:
 	mul
 	tfr	x,y	; Y = message
 	ldx	#TEXTBUF
-	leax	d,x
+	leax	d,x	; X = starting point on the screen
 
 _display_message_loop:
 	lda	,y+
 	beq	_display_message_finished
+	cmpa	#' '	; If ASCII space character
+	bne	_display_message_not_a_space
+	lda	#$8f	; then use a green box
+
+_display_message_not_a_space:
 	sta	,x+
-	bra	_display_message_loop
+	cmpx	#TEXTBUFEND
+	blo	_display_message_loop
 
 _display_message_finished:
 	rts
@@ -633,7 +639,7 @@ turn_6bit_audio_on:
 *******************************
 
 play_sound:
-	bsr	switch_off_irq_and_firq
+	lbsr	switch_off_irq_and_firq
 
 	pshs	y
 

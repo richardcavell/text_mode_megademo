@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-
 	if (fclose(input_fp) == EOF)
 	{
 		(void) fprintf(stderr, "%s%s%s%i%c",

@@ -600,6 +600,72 @@ debug_mode_toggle:
 ********************
 
 pluck_do_frame:
+	ldy	#plucks_data
+
+	lda	,y
+	ldb	1,y
+	ldx	2,y
+
+	bsr	_pluck_do_one_pluck
+
+	leay	4,y
+	cmpy	#plucks_data_end
+	bne	pluck_do_frame
+
+	rts
+
+_pluck_do_one_pluck:
+				; A = Phase
+				; B = Character
+				; X = Screen Position
+				; Y = Pluck Data
+
+	tsta
+	bne	_pluck_phase_at_least_1
+
+	rts			; Phase nothing, do nothing
+
+_pluck_phase_at_least_1:
+
+	cmpa	#1
+	bne	_pluck_phase_at_least_2
+				; We are white
+	lda	#2
+	sta	,y
+	rts
+
+_pluck_phase_at_least_2:
+
+	cmpa	#2
+	bne	_pluck_phase_3
+
+				; We are plain
+	stb	,x		; Show the plain character
+
+	lda	#3		; Go to phase 3
+	sta	,y
+
+	rts
+
+_pluck_phase_3:
+				; We are pulling
+	lda	#GREEN_BOX
+	sta	,x+
+
+	pshs	a,b,x,y
+	tfr	x,d
+	andb	#0b00011111
+	puls	a,b,x,y		; Does not affect condition codes
+	beq	_pluck_phase_3_divisible_by_32
+
+	stb	,x
+	stx	2,y
+
+	rts
+
+_pluck_phase_3_divisible_by_32:
+	clra			; Phase nothing
+	sta	,y		; Store it
 
 	rts
 

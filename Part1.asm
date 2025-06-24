@@ -125,55 +125,12 @@ pluck_loop:
 
 	bra	pluck_loop
 
-
-
-
-; UNCHECKED
-
-
-
-
-
-
-
-
-_pluck_loop:
-	pshs	b,x
-	lbsr	wait_for_vblank_and_check_for_skip
-	puls	b,x
-	tsta
-	bne	empty_the_screen
-
-	lda	#$60
-	sta	,x+		; Replace it with a space
-
-	pshs	b, x
-	tfr	x,d
-	andb	#0b00011111	; Is the address divisible by 32?
-	puls	b, x
-	bne	_not_divisible
-
-	pshs	b, x
-	lbsr	wait_for_vblank_and_check_for_skip
-	puls	b, x
-	tsta
-	bne	empty_the_screen
-
-*	bra	_check_empty_screen
-				; Yes, then we have reached the right
-				; side of the screen, so start another pluck
-
-_not_divisible:
-	stb	,x		; Put the character one position to the right
-	bra	_pluck_loop
-
 skip_pluck:
-empty_the_screen:
 
 	lbsr	clear_screen
 
 pluck_finished:
-				; Screen is empty
+				; Screen is empty either way
 
 	bra	title_screen
 

@@ -12,7 +12,7 @@
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by other authors. You can see it here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
-
+* Part of this code was written by Sean Conner.
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
@@ -133,6 +133,8 @@ _check_empty_not_empty:
 _choose_line:
 	lbsr	get_random 	; Get a random number in D
 	andb	#0b00001111	; Make the random number between 0 and 15
+	cmpb	#15
+	beq	_choose_line	; Don't choose line 15
 
 	leay	pluck_line_counts, PCR
 
@@ -395,6 +397,9 @@ loading_text:
 
 *********************************
 * Install our IRQ service routine
+*
+* Inputs: None
+* Outputs: None
 *********************************
 
 IRQ_HANDLER	EQU	$10d
@@ -428,6 +433,9 @@ uninstall_irq_service_routine:
 
 *********************************
 * Switch IRQ interrupts on or off
+*
+* Inputs: None
+* Outputs: None
 *********************************
 
 switch_off_irq:
@@ -442,6 +450,9 @@ switch_on_irq:
 
 ******************************************
 * Switch IRQ and FIRQ interrupts on or off
+*
+* Inputs: None
+* Outputs: None
 ******************************************
 
 switch_off_irq_and_firq:
@@ -456,6 +467,9 @@ switch_on_irq_and_firq:
 
 *********************
 * Turn off disk motor
+*
+* Inputs: None
+* Outputs: None
 *********************
 
 DSKREG	EQU	$FF40
@@ -465,13 +479,20 @@ turn_off_disk_motor:
 	clr	DSKREG		; Turn off disk motor
 	rts
 
-**********************
+***************************************************
 * Our IRQ handler
-**********************
+*
+* Make sure decb_irq_service_routine is initialized
+***************************************************
 
 irq_service_routine:
 	lda	#1
 	sta	vblank_happened, PCR
+
+; For debugging, this provides a visual indication that it is running
+
+	ldx	#TEXTBUFEND-1
+	inc	,x
 
 		; In the interests of making our IRQ handler run fast,
 		; the routine assumes that decb_irq_service_routine
@@ -489,6 +510,7 @@ vblank_happened:
 * Wait for VBlank and check for skip
 *
 * Inputs: None
+*
 * Output:
 * A = zero if user is not trying to skip
 * A = non-zero if user is trying to skip
@@ -508,22 +530,25 @@ _wait_for_vblank_and_check_for_skip_loop:
 	cmpa	#3			; Break key
 	beq	_wait_for_vblank_skip
 	lda	#DEBUG_MODE
-	beq	_no_debug_mode
+	beq	_wait_for_vblank_no_debug_mode
 
-	cmpa	#'T'
-	beq	_skip_invert_toggle
+	cmpa	#'T'			; T key
+	bne	_wait_for_vblank_skip_invert_toggle
 
 	com	debug_mode_toggle, PCR
+	bra	_wait_for_vblank_toggled
 
-_skip_invert_toggle:
+_wait_for_vblank_skip_invert_toggle:
 	ldb	debug_mode_toggle, PCR
-	beq	_toggle_is_off
+	beq	_wait_for_vblank_toggle_is_off
 
+; If toggle is on, require an F to go forward 1 frame
 	cmpa	#'F'
 	bne	_wait_for_vblank_and_check_for_skip_loop
 
-_toggle_is_off:
-_no_debug_mode:
+_wait_for_vblank_toggled:
+_wait_for_vblank_toggle_is_off:
+_wait_for_vblank_no_debug_mode:
 	tst	vblank_happened, PCR
 	beq	_wait_for_vblank_and_check_for_skip_loop
 
@@ -550,9 +575,9 @@ debug_mode_toggle:
 
 display_message:
 
+	tfr	x,y	; Y = message
 	ldb	#32
 	mul
-	tfr	x,y	; Y = message
 	ldx	#TEXTBUF
 	leax	d,x	; X = starting point on the screen
 
@@ -581,6 +606,10 @@ _display_message_finished:
 * I found these values through simple experimentation.
 * This RNG could be improved on.
 
+USE_DEEKS_CODE	EQU	0
+
+	IF	(USE_DEEKS_CODE==0)
+
 SEED:
 
 	FCB	0xBE
@@ -593,6 +622,24 @@ get_random:
 	addd	#3037
 	std	SEED
 	rts
+
+	ENDIF
+
+	IF	(USE_DEEKS_CODE)
+
+; This code was written by Sean Conner (Deek) and slightly modified
+; by me in June 2025 during a discussion on Discord
+
+	ldd	SEED
+	lsra
+	rorb
+	bcc	nofeedback
+	eora	#$b4
+nofeedback:
+	std	seed
+	rts
+
+	ENDIF
 
 *********************
 * Turn 6-bit audio on

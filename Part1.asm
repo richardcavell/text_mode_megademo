@@ -107,24 +107,23 @@ plucks_data:
 plucks_data_end:
 
 pluck_loop:
+	lbsr	wait_for_vblank_and_check_for_skip
+	tsta
+	bne	skip_pluck			; If the user wants to skip, go here
+
 	lbsr	pluck_do_frame			; Do one frame
 
 	lbsr	pluck_is_there_a_spare_slot	; Is there a spare slot?
 	tsta
-	beq	_pluck_no_spare_slot		; No, just keep processing
+	beq	pluck_loop			; No, just keep processing
 
-	lbsr	pluck_check_empty_screen
+	lbsr	pluck_check_empty_screen	; Yes, is the screen empty?
 	tsta
-	beq	_pluck_no_more_chars
+	bne	pluck_finished			; Yes, then we are finished
 
-	lbsr	pluck_a_char			; Yes, pluck a character
+	lbsr	pluck_a_char			; No, pluck a character
 
-_pluck_no_spare_slot:
-_pluck_no_more_chars:
-	lbsr	wait_for_vblank_and_check_for_skip
-	tsta
-	bne	skip_pluck
-	bra	_pluck_loop
+	bra	pluck_loop
 
 
 
@@ -198,7 +197,7 @@ _pluck_loop:
 	tsta
 	bne	empty_the_screen
 
-	bra	_check_empty_screen
+*	bra	_check_empty_screen
 				; Yes, then we have reached the right
 				; side of the screen, so start another pluck
 
@@ -813,7 +812,7 @@ nofeedback:
 *******************************
 
 play_sound:
-	lbsr	switch_off_irq_and_firq
+	bsr	switch_off_irq_and_firq
 
 	pshs	y
 
@@ -838,7 +837,7 @@ send_values_finished:
 
 	puls	y
 
-	lbsr	switch_on_irq_and_firq
+	bsr	switch_on_irq_and_firq
 
 	rts
 

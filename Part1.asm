@@ -81,6 +81,7 @@ PLUCK_LINES	EQU	TEXT_LINES-1	; The bottom line is for our skip
 					; message
 
 GREEN_BOX	EQU	$60
+WHITE_BOX	EQU	$cf
 
 ; First, count the number of characters on each line of the screen
 
@@ -130,35 +131,35 @@ _check_empty_not_empty:
 
 ; Screen is not empty
 
-_choose_line:
+_check_empty_choose_line:
 	lbsr	get_random 	; Get a random number in D
 	andb	#0b00001111	; Make the random number between 0 and 15
-	cmpb	#15
-	beq	_choose_line	; Don't choose line 15
+	cmpb	#PLUCK_LINES
+	beq	_check_empty_choose_line	; Don't choose line 15
 
 	leay	pluck_line_counts, PCR
 
 	tst	b,y		; If there are no more characters on this line
-	beq	_choose_line	; choose a different one
+	beq	_check_empty_choose_line	; choose a different one
 
 	dec	b,y		; There'll be one less character now
 
-	lda	#32
+	lda	#COLS_PER_LINE
 	mul 			; Multiply b by 32 and put the answer in D
 
-	ldx	#TEXTBUF+32	; Make X point to the end of the line
+	ldx	#TEXTBUF+COLS_PER_LINE	; Make X point to the end of the line
 	leax	d,x		; that we will pluck from
 
-	lda	#$60		; Green box (space)
+	lda	#GREEN_BOX	; Green box (space)
 
-_find_non_space:
+_check_empty_find_non_space:
 	cmpa	,-x		; Go backwards until we find a non-space
-	beq	_find_non_space
+	beq	_check_empty_find_non_space
 
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
 
-	lda	#$cf		; Blink it white for the duration of our sound
+	lda	#WHITE_BOX	; Blink it white for the duration of our sound
 	sta	,x
 
 	pshs	b,x		; We don't have time to check for space while

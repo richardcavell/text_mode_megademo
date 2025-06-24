@@ -93,7 +93,7 @@ pluck_line_counts:
 pluck_line_counts_end:
 
 
-; Structure is phase, position
+; Structure is phase (1 byte), character (1 byte), position (2 bytes)
 
 SIMULTANEOUS_PLUCKS	EQU	3
 
@@ -103,7 +103,7 @@ PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
 plucks_data:
-	RZB	3 * SIMULTANEOUS_PLUCKS		; Reserve 3 bytes per pluck
+	RZB	4 * SIMULTANEOUS_PLUCKS		; Reserve 3 bytes per pluck
 plucks_data_end:
 
 pluck_loop:
@@ -113,7 +113,7 @@ pluck_loop:
 
 	lbsr	pluck_do_frame			; Do one frame
 
-	lbsr	pluck_is_there_a_spare_slot	; Is there a spare slot?
+	lbsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	pluck_loop			; No, just keep processing
 
@@ -132,48 +132,10 @@ pluck_loop:
 
 
 
-_check_empty_choose_line:
-	lbsr	get_random 	; Get a random number in D
-	andb	#0b00001111	; Make the random number between 0 and 15
-	cmpb	#PLUCK_LINES
-	beq	_check_empty_choose_line	; Don't choose line 15
-
-	leay	pluck_line_counts, PCR
-
-	tst	b,y		; If there are no more characters on this line
-	beq	_check_empty_choose_line	; choose a different one
-
-	dec	b,y		; There'll be one less character now
-
-	lda	#COLS_PER_LINE
-	mul 			; Multiply b by 32 and put the answer in D
-
-	ldx	#TEXTBUF+COLS_PER_LINE	; Make X point to the end of the line
-	leax	d,x		; that we will pluck from
-
-	lda	#GREEN_BOX	; Green box (space)
-
-_check_empty_find_non_space:
-	cmpa	,-x		; Go backwards until we find a non-space
-	beq	_check_empty_find_non_space
-
-				; X = position of the character we're plucking
-	ldb	,x		; B = the character
 
 
 
 
-
-
-	lda	#WHITE_BOX	; Blink it white for the duration of our sound
-	sta	,x
-
-	pshs	b,x		; We don't have time to check for space while
-	ldx	#pluck_sound	; playing the sound
-	ldy	#pluck_sound_end
-	lda	#1
-	lbsr	play_sound	; Play the pluck noise
-	puls	b,x
 
 _pluck_loop:
 	pshs	b,x
@@ -684,16 +646,18 @@ pluck_do_frame:
 
 	rts
 
-********************************
-* Pluck - Is there a spare slot?
+*****************************************
+* Pluck - Find a spare slot
 *
 * Inputs: None
 *
-* Output:
-* A = there is a spare slot
-********************************
+* Outputs:
+* A = (non-zero) there is a spare slot
+* X = (if A is non-zero) the slot address
+*****************************************
 
-pluck_is_there_a_spare_slot:
+pluck_find_a_spare_slot:
+
 	lda	#SIMULTANEOUS_PLUCKS
 	ldx	#plucks_data
 
@@ -705,7 +669,7 @@ _pluck_check_slot_loop:
 
 	tsta
 	beq	_pluck_no_empty_slot
-	leax	3,x
+	leax	4,x
 	bra	_pluck_check_slot_loop
 
 _pluck_no_empty_slot:
@@ -716,7 +680,7 @@ _pluck_no_empty_slot:
 
 _pluck_check_slot_found_empty:
 
-	lda	#1
+	lda	#1		; We return x as well
 
 	rts
 
@@ -756,7 +720,65 @@ _pluck_check_empty_not_empty:
 
 pluck_a_char:
 
+	bsr	get_random 	; Get a random number in D
+	andb	#0b00001111	; Make the random number between 0 and 15
+	cmpb	#PLUCK_LINES
+	beq	pluck_a_char	; Don't choose line 15
+
+	leay	pluck_line_counts, PCR
+
+	tst	b,y		; If there are no more characters on this line
+	beq	pluck_a_char	; choose a different one
+
+	dec	b,y		; There'll be one less character now
+
+	lda	#COLS_PER_LINE
+	mul 			; Multiply b by 32 and put the answer in D
+
+	ldx	#TEXTBUF+COLS_PER_LINE	; Make X point to the end of the line
+	leax	d,x		; that we will pluck from
+
+	lda	#GREEN_BOX	; Green box (space)
+
+_pluck_a_char_find_non_space:
+	cmpa	,-x		; Go backwards until we find a non-space
+	beq	_pluck_a_char_find_non_space
+
+				; X = position of the character we're plucking
+	ldb	,x		; B = the character
+
+; Now register with pluck_data
+
+	tfr	x,y
+	pshs	b,y
+	bsr	pluck_find_a_spare_slot
+	tsta
+	beq	_pluck_a_char_impossible
+
+	puls	b,y		; X is the slot
+				; B is the character
+				; Y is the screen position
+	lda	#1
+	sta	,x+		; Store our new phase
+	stb	,x+		; the character
+	sty	,x		; And where it is
+
+; Now turn it into a white box
+
+	lda	#WHITE_BOX
+	sta	,y
+
+; Now play the pluck sound
+
+	ldx	#pluck_sound	; playing the sound
+	ldy	#pluck_sound_end
+	lda	#1
+	bsr	play_sound	; Play the pluck noise
+
 	rts
+
+_pluck_a_char_impossible:
+	bra	_pluck_a_char_impossible
 
 **********************************************************
 * Returns a random-ish number from 0...65535

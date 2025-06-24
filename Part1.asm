@@ -758,25 +758,6 @@ pluck_a_char:
 
 	rts
 
-; UNCHECKED
-
-******************************************
-* Switch IRQ and FIRQ interrupts on or off
-*
-* Inputs: None
-* Outputs: None
-******************************************
-
-switch_off_irq_and_firq:
-
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-	rts
-
-switch_on_irq_and_firq:
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-	rts
-
 **********************************************************
 * Returns a random-ish number from 0...65535
 *
@@ -821,6 +802,25 @@ nofeedback:
 	rts
 
 	ENDIF
+
+******************************************
+* Switch IRQ and FIRQ interrupts on or off
+*
+* Inputs: None
+* Outputs: None
+******************************************
+
+switch_off_irq_and_firq:
+
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+
+	rts
+
+switch_on_irq_and_firq:
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
+
+	rts
 
 *******************************
 * Play a sound sample

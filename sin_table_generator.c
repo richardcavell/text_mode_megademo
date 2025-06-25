@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 			j = -k;
 		}
 
-		ret = fprintf(fp, "%s%i%s%i%s",
+		ret = fprintf(fp, "%s%i%s%3i%s",
 				  "\tFDB\t",
 				   j,
 				  "\t; ",

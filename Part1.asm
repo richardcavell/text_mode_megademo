@@ -242,7 +242,6 @@ display_text:
 
 	lda	#4
 	lbsr	drop_screen_content
-	bra	screen_is_clear
 
 skip_title_screen:		; If space was pressed
 	lbsr	clear_screen	; Just clear the screen
@@ -1412,58 +1411,59 @@ skip_flash_screen_4:
 ********************************
 
 drop_screen_content:
-	pshs	a
-	inca
-	inca
-	bsr	drop_line		; Drop the bottom line
-	puls	a
 
 	pshs	a
-	inca
-	bsr	drop_line		; Drop the middle line
-	puls	a
-
-	pshs	a
-	bsr	drop_line		; Drop the top line
-	puls	a
-
-	pshs	a
-	bsr	_clear_line		; Clear the top line
-	puls	a
-
-
-	pshs	a
-	lbsr	wait_for_vblank_and_check_for_skip
+	bsr	_drop_each_line
 	tsta
-	beq	skip_drop_screen
-	leas	1,s
-	rts
-
-skip_drop_screen:
-	puls	a
-
-skip_drop_screen_2:
-	puls	a
-
-	pshs	a
+	bne	_skip_drop_each_line
 	puls	a
 
 	inca				; Next time, start a line lower
 
 	cmpa	#16			; until the starting position is off
 					; the screen
-	bne	drop_screen_content
+	blo	drop_screen_content
+
 	clra
 	rts
 
-drop_line:
+_skip_drop_each_line:
+	leas	1,s
+	rts
+
+_drop_each_line:
+	pshs	a
+	inca
+	inca
+	bsr	_drop_line		; Drop the bottom line
+	puls	a
+
+	pshs	a
+	inca
+	bsr	_drop_line		; Drop the middle line
+	puls	a
+
+	pshs	a
+	bsr	_drop_line		; Drop the top line
+	puls	a
+
+	pshs	a
+	lbsr	clear_line		; Clear the top line
+	puls	a
+
+	pshs	a
+	lbsr	wait_for_vblank_and_check_for_skip
+	puls	a
+	rts
+
+_drop_line:
 	cmpa	#15
-	blo	do_drop
+	blo	_do_drop
 
 	clra
 	rts				; Off the bottom end of the screen
 
-do_drop:
+_do_drop:
 	ldb	#32
 	mul
 	ldx	#TEXTBUF
@@ -1471,44 +1471,19 @@ do_drop:
 
 	ldb	#32
 
-move_line_down:
+_move_line_down:
 	lda	,x			; Retrieve the character
 	sta	32,x			; and store it one line below
 	leax	1,x
 
 	decb
-	bne	move_line_down
+	bne	_move_line_down
 
 	clra
 	rts
 
-_clear_line:
-	cmpa	#16
-	blo	do_clear
-
-	clra
-	rts				; Off the bottom end
-
-do_clear:
-	ldb	#32
-	mul
-	ldx	#TEXTBUF
-	leax	d,x
-
-	ldb	#8
-
-	lda	#$60
-
-clear_loop:
-	sta	,x+
-	sta	,x+
-	sta	,x+
-	sta	,x+
-
-	decb
-	bne	clear_loop
-
-	clra
+_skip_drop_screen:
+	lda	#1
 	rts
 
 **************************

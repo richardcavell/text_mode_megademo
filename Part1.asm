@@ -5,7 +5,7 @@
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
 *
-* This code is intended to run on a TRS-80 Color Computer 1,2 or 3
+* This demo part is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
 * Part of this code was written by Trey Tomes. You can see it here:
@@ -92,7 +92,7 @@ pluck_line_counts:
 	RZB PLUCK_LINES			; 15 zeroes
 pluck_line_counts_end:
 
-; Structcure is phase (1 byte), character (1 byte), position (2 bytes)
+; Structure is phase (1 byte), character (1 byte), position (2 bytes)
 
 SIMULTANEOUS_PLUCKS	EQU	3
 
@@ -102,7 +102,7 @@ PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
 plucks_data:
-	RZB	4 * SIMULTANEOUS_PLUCKS		; Reserve 4 bytes per pluck
+	RZB	SIMULTANEOUS_PLUCKS * 4		; Reserve 4 bytes per pluck
 plucks_data_end:
 
 pluck_loop:
@@ -396,11 +396,15 @@ irq_service_routine:
 	lda	#1
 	sta	vblank_happened, PCR
 
-; For debugging, this provides a visual indication that it is running
+	lda	#DEBUG_MODE
+	beq	_skip_debug_visual_indication
 
-	ldx	#TEXTBUFEND-1
-	inc	,x
+; For debugging, this provides a visual indication that
+; our handler is running
 
+	inc	TEXTBUFEND-1
+
+_skip_debug_visual_indication:
 		; In the interests of making our IRQ handler run fast,
 		; the routine assumes that decb_irq_service_routine
 		; has been correctly initialized
@@ -552,23 +556,26 @@ _wait_for_vblank_and_check_for_skip_loop:
 	beq	_wait_for_vblank_skip
 	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
-	lda	#DEBUG_MODE
-	beq	_wait_for_vblank_no_debug_mode
+	ldb	#DEBUG_MODE
+	beq	_wait_for_vblank_not_debug_mode
 	cmpa	#'t'			; T key
 	beq	_wait_for_vblank_invert_toggle
 	cmpa	#'T'
 	beq	_wait_for_vblank_invert_toggle
-
-_wait_for_vblank_skip_invert_toggle:
 	ldb	debug_mode_toggle, PCR
 	beq	_wait_for_vblank_toggle_is_off
 
 ; If toggle is on, require an F to go forward 1 frame
 	cmpa	#'f'
+	beq	_wait_for_vblank_f_pressed
+	cmpa	#'F'
+	beq	_wait_for_vblank_f_pressed
+	bra	_wait_for_vblank_and_check_for_skip_loop
 
 _wait_for_vblank_toggled:
+_wait_for_vblank_f_pressed:
 _wait_for_vblank_toggle_is_off:
-_wait_for_vblank_no_debug_mode:
+_wait_for_vblank_not_debug_mode:
 	tst	vblank_happened, PCR
 	beq	_wait_for_vblank_and_check_for_skip_loop
 
@@ -586,8 +593,6 @@ _wait_for_vblank_invert_toggle:
 debug_mode_toggle:
 
 	RZB	1
-
-; BELOW IS UNCHECKED
 
 ********************
 * Pluck - Do a frame

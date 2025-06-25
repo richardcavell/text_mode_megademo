@@ -46,11 +46,12 @@ CFLAGS   += -Wstrict-overflow -Wswitch-default -Wswitch-enum
 CFLAGS   += -Wundef -Wunreachable-code -Wunsafe-loop-optimizations
 CFLAGS   += -fstack-protector-strong
 CFLAGS   += -g -O2
-LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro
+LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro -Wl,-z,now
 
 .DEFAULT: all
 
-.PHONY:	all clean disk help info license mame mame-debug version xroar xroar-coco3 xroar-ntsc
+.PHONY:	all clean disk help info license
+.PHONY: mame mame-debug version xroar xroar-coco3 xroar-ntsc
 
 all:	$(DISK) $(PART1) $(PART2)
 all:	$(SIN_GENERATOR) $(SIN_TABLE)
@@ -111,6 +112,15 @@ $(SIN_GENERATOR): $(SIN_GEN_SRC)
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@ -lm
 	@echo "... Done"
 
+clean:
+	@echo "Removing all generated files ..."
+	@rm -f -v $(DISK) $(PART1) $(PART2)
+	@rm -f -v $(SIN_GENERATOR) $(SIN_TABLE)
+	@rm -f -v $(PLUCK_SOUND) $(RJFC_SOUND)
+	@rm -f -v $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
+	@rm -f -v $(SOUND_STR)
+	@echo "... Done"
+
 help: info
 
 info:
@@ -130,15 +140,6 @@ info:
 
 license:
 	@cat LICENSE
-
-clean:
-	@echo "Removing all generated files ..."
-	@rm -f -v $(DISK) $(PART1) $(PART2)
-	@rm -f -v $(SIN_GENERATOR) $(SIN_TABLE)
-	@rm -f -v $(PLUCK_SOUND) $(RJFC_SOUND)
-	@rm -f -v $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
-	@rm -f -v $(SOUND_STR)
-	@echo "... Done"
 
 version:
 	@echo "Text Mode Demo"

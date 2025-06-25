@@ -111,17 +111,18 @@ pluck_loop:
 	bne	skip_pluck			; If the user wants to skip,
 						; go here
 
+	lbsr	pluck_check_empty_screen	; Is the screen empty?
+	tsta
+	beq	pluck_finished			; Yes, we're finished
+						; No, just keep processsing
+
 	lbsr	pluck_do_frame			; Do one frame
 
 	lbsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	pluck_loop			; No, just keep processing
 
-	lbsr	pluck_check_empty_screen	; Yes, is the screen empty?
-	tsta
-	bne	pluck_finished			; Yes, then we are finished
-
-	lbsr	pluck_a_char			; No, pluck a character
+	lbsr	pluck_a_char			; Yes, pluck a character
 
 	bra	pluck_loop
 
@@ -685,7 +686,7 @@ _pluck_phase_3_divisible_by_32:
 pluck_find_a_spare_slot:
 
 	lda	#SIMULTANEOUS_PLUCKS
-	ldx	#plucks_data
+	leax	plucks_data, PCR
 
 _pluck_check_slot_loop:
 	deca
@@ -700,6 +701,7 @@ _pluck_check_slot_loop:
 
 _pluck_no_empty_slot:
 
+	ldx	#0
 	clra
 
 	rts
@@ -721,6 +723,14 @@ _pluck_check_slot_found_empty:
 *************************************************
 
 pluck_check_empty_screen:
+	leax	plucks_data, PCR
+
+_pluck_check_data:
+	lda	,x
+	bne	_pluck_check_empty_not_empty
+	leax	4,x
+	cmpx	#plucks_data_end
+	bne	_pluck_check_data
 
 	leay	pluck_line_counts, PCR
 

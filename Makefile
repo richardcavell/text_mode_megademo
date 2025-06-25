@@ -74,8 +74,8 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2)
 	$(DECB) copy -2 -b -r $(PART2) $(DISK),$(PART2)
 	@$(ECHO) "... Done"
 
-$(PART1): $(PART1_SRC) $(SIN_TABLE) $(PLUCK_SOUND) $(RJFC_SOUND)
-$(PART2): $(PART2_SRC)
+$(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)
+$(PART2): $(PART2_SRC) $(SIN_TABLE)
 
 $(PART1) $(PART2):
 	@$(ECHO) "Assembling" $@ ...
@@ -97,10 +97,10 @@ $(PLUCK_SOUND) $(RJFC_SOUND):
 	./$(SOUND_STR) $< $@
 	@$(ECHO) "... Done"
 
-$(RJFC_SOUND_RES): $(RJFC_SOUND_SRC)
 $(PLUCK_SOUND_RES): $(PLUCK_SOUND_SRC)
+$(RJFC_SOUND_RES): $(RJFC_SOUND_SRC)
 
-$(RJFC_SOUND_RES) $(PLUCK_SOUND_RES):
+$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES):
 	@$(RM) $@
 	@$(ECHO) "Resampling" $@ ...
 	ffmpeg -i $< -v warning -af "lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
@@ -128,7 +128,7 @@ clean:
 help: info
 
 info:
-	@$(ECHO) "Text Mode Demo v1.0"
+	@$(ECHO) "Text Mode Demo"
 	@$(ECHO) "by Richard Cavell"
 	@$(ECHO) "make all"
 	@$(ECHO) "make clean"
@@ -146,7 +146,7 @@ license:
 	@cat LICENSE
 
 version:
-	@$(ECHO) "Text Mode Demo source: version alpha"
+	@$(ECHO) "Text Mode Demo source: unversioned"
 	@$(ASM) --version | head --lines=1
 	@$(DECB) 2>&1 >/dev/null | head --lines=1
 	@$(CC) --version | head --lines=1

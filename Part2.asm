@@ -7,14 +7,16 @@
 *
 * This code is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
-
-* This starting location is found through experimentation with mame -debug
-* and the CLEAR command
-
+*
+* Some of this content was made by other people
+*
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame
 
 DEBUG_MODE	EQU	1
+
+* This starting location is found through experimentation with mame -debug
+* and the CLEAR command
 
 		ORG $1800
 

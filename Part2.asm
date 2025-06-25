@@ -45,8 +45,8 @@ DEBUG_MODE	EQU	1
 	lda	#5
 	ldb	#8
         leax    birds_graphic, PCR
-
 	lbsr	display_text_graphic
+
 	bra	scroll_text
 
 ; This came from https://www.asciiart.eu/animals/birds-land
@@ -61,10 +61,8 @@ birds_graphic:
 	FCB	255
 
 scroll_text:
-	ldx	#scroll_text_1
-	lda	#15
-	ldb	#20
-	lbsr	display_scroll_text
+
+	lbsr	display_scroll_texts
 
 	bra	create_dot
 
@@ -661,43 +659,84 @@ skip:
 	rts
 
 ************************
+* Display scroll texts
+*
+* Inputs: None
+* Outputs: None
+************************
+
+display_scroll_texts:
+	lbsr	check_for_space
+	tsta
+	bne	_display_scroll_texts_skip
+
+	lbsr	wait_for_vblank
+
+	ldx	#scroller_1
+	bsr	display_scroll_text
+	ldx	#scroller_2
+	bsr	display_scroll_text
+
+	bra	display_scroll_texts
+
+_display_scroll_texts_skip:
+	rts
+
+**********************
 * Display scroll text
 *
 * Inputs:
-* A = Line number
-* B = Slowness of scroll
-* X = Scrolltext
-************************
-
-slowness:
-	RZB	1
+* X = scroll text data
+*
+* Outputs: None
+**********************
 
 display_scroll_text:
-	stb	slowness, PCR
 
-display_scroll_loop:
-	ldb	#32
-	mul
-	ldy	#TEXTBUF
-	leay	d,y		; Y = Starting screen memory location
+	ldd	,x
+	beq	_display_scroll_is_active
+	bmi	_display_scroll_is_inactive
 
-	pshs	x, y
-	jsr	check_for_space, PCR
-	tsta
-	puls	x, y
-	bne	skip_scroll
+	subd	#1		; Countdown to scrolltext start
+	std	,x
+	rts
 
-	ldb	slowness
-_slowness:
-	pshs	b, x, y
-	jsr	wait_for_vblank
-	puls	b, x, y
+_display_scroll_is_inactive:
+	rts
 
-	decb
-	bne	_slowness
-	bra	display_scroll_loop
+_display_scroll_is_active:
+	lda	2,x
+	beq	_display_scroll_needs_update
 
-skip_scroll:
+	deca
+	sta	2,x
+	rts
+
+_display_scroll_needs_update:
+	lda	3,x
+	sta	2,x	; Reset the frame counter
+
+	ldy	4,x	; Pointer to the text
+	leay	1,y
+	sty	4,x
+
+	ldu	6,x	; U is where on the screen to start
+	lda	#32	; There are 32 columns per line
+
+_display_scroll_text_loop:
+
+	ldb	,y+
+	beq	_display_scroll_end
+	stb	,u+
+
+	deca
+	bne	_display_scroll_text_loop
+
+	rts
+
+_display_scroll_end:
+	ldd	#-1
+	std	,x
 	rts
 
 **********************************************************
@@ -1181,8 +1220,36 @@ cartman_graphic_end:
 * Scroll texts
 **************
 
+scroller_1:
+	FDB	0	; Starting frame
+	FCB	0	; Frame counter
+	FCB	5	; Frames to pause
+	FDB	scroll_text_1
+	FDB	TEXTBUF+15*32
+
 scroll_text_1:
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ",0
+
+	FCV	"                                "
+	FCV	"THIS IS A TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_2:
+	FDB	100	; Starting frame
+	FCB	0	; Frame counter
+	FCB	8	; Frames to pause
+	FDB	scroll_text_2
+	FDB	TEXTBUF+14*32
+
+scroll_text_2:
+
+	FCV	"                                "
+	FCV	"THIS IS ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
 
 
 

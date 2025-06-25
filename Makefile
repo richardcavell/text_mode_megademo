@@ -144,9 +144,9 @@ version:
 	@echo "Text Mode Demo"
 	@echo ".............."
 	@echo "TMD source: version alpha"
-	@$(CC) --version | head --lines=1
 	@$(ASM) --version | head --lines=1
 	@$(DECB) 2>&1 >/dev/null | head --lines=1
+	@$(CC) --version | head --lines=1
 
 mame: $(DISK)
 	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"

@@ -19,7 +19,7 @@
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 		ORG $1800
 
@@ -528,15 +528,15 @@ _pluck_count_chars_end:
 
 	rts
 
-****************************************
+******************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
 *
 * Output:
-* A = zero if user is not trying to skip
+* A = zero     return when VBlank happened
 * A = non-zero if user is trying to skip
-****************************************
+******************************************
 
 POLCAT		EQU	$A000
 BREAK_KEY	EQU	3
@@ -554,20 +554,17 @@ _wait_for_vblank_and_check_for_skip_loop:
 	beq	_wait_for_vblank_skip
 	lda	#DEBUG_MODE
 	beq	_wait_for_vblank_no_debug_mode
-
-	cmpa	#'T'			; T key
-	bne	_wait_for_vblank_skip_invert_toggle
-
-	com	debug_mode_toggle, PCR
-	bra	_wait_for_vblank_toggled
+	cmpa	#'t'			; T key
+	beq	_wait_for_vblank_invert_toggle
+	cmpa	#'T'
+	beq	_wait_for_vblank_invert_toggle
 
 _wait_for_vblank_skip_invert_toggle:
 	ldb	debug_mode_toggle, PCR
 	beq	_wait_for_vblank_toggle_is_off
 
 ; If toggle is on, require an F to go forward 1 frame
-	cmpa	#'F'
-	bne	_wait_for_vblank_and_check_for_skip_loop
+	cmpa	#'f'
 
 _wait_for_vblank_toggled:
 _wait_for_vblank_toggle_is_off:
@@ -581,6 +578,10 @@ _wait_for_vblank_no_debug_mode:
 _wait_for_vblank_skip:
 	lda	#1	; User wants to skip
 	rts
+
+_wait_for_vblank_invert_toggle:
+	com	debug_mode_toggle, PCR
+	bra	_wait_for_vblank_toggled
 
 debug_mode_toggle:
 

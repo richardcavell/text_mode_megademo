@@ -13,13 +13,15 @@
 * Part of this code was written by other authors. You can see it here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner.
-* This starting location is found through experimentation with mame -debug
-* and the CLEAR command
+* The ASCII art is by Microsoft Copilot
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame
 
 DEBUG_MODE	EQU	1
+
+* This starting location is found through experimentation with mame -debug
+* and the CLEAR command
 
 		ORG $1800
 
@@ -113,26 +115,29 @@ pluck_loop:
 
 	lbsr	pluck_check_empty_screen	; Is the screen empty?
 	tsta
-	beq	pluck_finished			; Yes, we're finished
-						; No, just keep processsing
-
-	lbsr	pluck_do_frame			; Do one frame
+	bne	pluck_finished			; Yes, we could be finished
 
 	lbsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
-	beq	pluck_loop			; No, just keep processing
+	beq	_pluck_do_a_frame		; No, just keep processing
 
 	lbsr	pluck_a_char			; Yes, pluck a character
+
+_pluck_do_a_frame:
+	lbsr	pluck_do_frame			; Do one frame
 
 	bra	pluck_loop
 
 skip_pluck:
 
 	lbsr	clear_screen
+	bra	_pluck_next_section
 
 pluck_finished:
+	lda	#15
+	lbsr	clear_line
 				; Screen is empty either way
-
+_pluck_next_section:
 	bra	title_screen
 
 **************
@@ -160,38 +165,17 @@ title_screen_text:
 	FCB	8, 10
 	FCN	"PRESENTS"
 	FCB	12, 12
-	FCC	"TEXT"
-	FCB	$8F
-	FCC	"MODE"
-	FCB	$8F
-	FCC	"DEMO"
+	FCV	"TEXT MODE DEMO"
 	FCB	0
 	FCB	255		; The end
 
 display_text:
-	leay	title_screen_text, PCR
 
-_print_text_loop:
-	lda	,y+
-	ldb	,y+
-	tfr	y,x
+	leax	title_screen_text, PCR
 
-	pshs	y
-	lbsr	text_appears
-	puls	y
+	lbsr	print_text
 	tsta
 	bne	skip_title_screen
-
-_find_zero:
-	tst	,y+
-	bne	_find_zero
-
-	lda	#255			; This marks the end of the text
-					;   lines
-	cmpa	,y			; Is that what we have?
-	bne	_print_text_loop	; If not, then print the next line
-					; If yes, then fall through to the
-					;   next section
 
 	ldx	#rjfc_presents_tmd_sound	; Start of sound
 	ldy	#rjfc_presents_tmd_sound_end	; End of sound
@@ -679,8 +663,8 @@ _pluck_phase_3_divisible_by_32:
 * Inputs: None
 *
 * Outputs:
-* A = (non-zero) there is a spare slot
-* X = (if A is non-zero) the slot address
+* A = (Non-zero) there is a spare slot
+* X = (If A is non-zero) the slot address
 *****************************************
 
 pluck_find_a_spare_slot:
@@ -723,28 +707,53 @@ _pluck_check_slot_found_empty:
 *************************************************
 
 pluck_check_empty_screen:
-	leax	plucks_data, PCR
 
-_pluck_check_data:
-	lda	,x
-	bne	_pluck_check_empty_not_empty
-	leax	4,x
-	cmpx	#plucks_data_end
-	bne	_pluck_check_data
+	bsr	pluck_check_empty_slots
+	tsta
+	beq	_pluck_check_empty_not_empty
 
-	leay	pluck_line_counts, PCR
-
-_pluck_check_empty_test_line:
-	tst	,y+
-	bne	_pluck_check_empty_not_empty
-	cmpy	#pluck_line_counts_end
-	bne	_pluck_check_empty_test_line
-
-	lda	#1			; Screen is now clear
+	bsr	pluck_check_empty_lines
 	rts
 
 _pluck_check_empty_not_empty:
 	clra				; Screen is not clear
+	rts
+
+pluck_check_empty_slots:
+
+	leax	plucks_data, PCR
+
+_pluck_check_data:
+	lda	,x
+	bne	_pluck_check_data_not_empty
+	leax	4,x
+	cmpx	#plucks_data_end
+	bne	_pluck_check_data
+
+	lda	#1
+	rts
+
+_pluck_check_data_not_empty:
+	clra				; Screen is not clear
+	rts
+
+pluck_check_empty_lines:
+
+	leay	pluck_line_counts, PCR
+	tsta
+	beq	_pluck_check_empty_line_not_empty
+
+_pluck_check_empty_test_line:
+	tst	,y+
+	bne	_pluck_check_empty_line_not_empty
+	cmpy	#pluck_line_counts_end
+	bne	_pluck_check_empty_test_line
+
+	lda	#1			; Lines are now clear
+	rts
+
+_pluck_check_empty_line_not_empty:
+	clra				; Lines are not clear
 	rts
 
 ***************************
@@ -755,6 +764,10 @@ _pluck_check_empty_not_empty:
 ***************************
 
 pluck_a_char:
+
+	bsr	pluck_check_empty_lines
+	tsta
+	bne	_pluck_a_char_no_more_chars
 
 	bsr	get_random 	; Get a random number in D
 	andb	#0b00001111	; Make the random number between 0 and 15
@@ -780,6 +793,15 @@ _pluck_a_char_find_non_space:
 	cmpa	,-x		; Go backwards until we find a non-space
 	beq	_pluck_a_char_find_non_space
 
+	leau	plucks_data, PCR
+	cmpx	2,u
+	beq	_pluck_a_char_find_non_space
+	cmpx	6,u
+	beq	_pluck_a_char_find_non_space
+	cmpx	10,u
+	beq	_pluck_a_char_find_non_space
+
+
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
 
@@ -787,7 +809,7 @@ _pluck_a_char_find_non_space:
 
 	tfr	x,y
 	pshs	b,y
-	bsr	pluck_find_a_spare_slot
+	lbsr	pluck_find_a_spare_slot
 	tsta
 	beq	_pluck_a_char_impossible
 
@@ -816,11 +838,14 @@ _pluck_a_char_find_non_space:
 _pluck_a_char_impossible:
 	bra	_pluck_a_char_impossible
 
+_pluck_a_char_no_more_chars:
+	rts
+
 **********************************************************
 * Returns a random-ish number from 0...65535
 *
 * Output:
-* D = the random number
+* D = The random number
 **********************************************************
 
 * I found these values through simple experimentation.
@@ -861,6 +886,46 @@ nofeedback:
 
 	ENDIF
 
+***************************
+* Print text
+*
+* Inputs:
+* X = Pointer to data block
+*
+* Outputs:
+* A = User wants to skip
+***************************
+
+print_text:
+	tfr	x,y
+
+_print_text_loop:
+	lda	,y+
+	ldb	,y+
+	tfr	y,x
+
+	pshs	y
+	bsr	text_appears
+	puls	y
+	tsta
+	beq	_find_zero
+
+	lda	#1
+	rts
+
+_find_zero:
+	tst	,y+
+	bne	_find_zero
+
+	lda	#255			; This marks the end of the text
+					;   lines
+	cmpa	,y			; Is that what we have?
+	bne	_print_text_loop	; If not, then print the next line
+					; If yes, then fall through to the
+					;   next section
+	clra
+	rts
+
 ******************************************
 * Switch IRQ and FIRQ interrupts on or off
 *
@@ -890,7 +955,9 @@ switch_on_irq_and_firq:
 *******************************
 
 play_sound:
+	pshs	a,x,y
 	bsr	switch_off_irq_and_firq
+	puls	a,x,y
 
 	pshs	y
 
@@ -909,6 +976,7 @@ sound_delay_loop:
 	beq	send_value		; Have we completed the delay?
 
 	decb				; If not, then wait some more
+
 	bra	sound_delay_loop
 
 send_values_finished:
@@ -929,16 +997,45 @@ send_values_finished:
 
 clear_screen:
 	ldx	#TEXTBUF
-	ldd	#$6060			; Two green boxes
+	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
 
 _clear_screen_clear_char:
-	std	,x+			; Might as well do 8 bytes at a time
-	std	,x+
-	std	,x+
-	std	,x+
+	std	,x++			; Might as well do 8 bytes at a time
+	std	,x++
+	std	,x++
+	std	,x++
 
 	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
 	bne	_clear_screen_clear_char
+	rts
+
+*******************
+* Clear a line
+*
+* Inputs:
+* A = line to clear
+*
+* Outputs: None
+*******************
+
+clear_line:
+	ldx	#TEXTBUF
+	ldb	#32
+	mul
+	leax	d,x
+
+	ldy	#GREEN_BOX << 8 | GREEN_BOX
+	lda	#4
+
+_clear_line_loop:
+	sty	,x++
+	sty	,x++
+	sty	,x++
+	sty	,x++
+
+	deca
+	bne	_clear_line_loop
+
 	rts
 
 ************************************************
@@ -1329,7 +1426,7 @@ drop_screen_content:
 	puls	a
 
 	pshs	a
-	bsr	clear_line		; Clear the top line
+	bsr	_clear_line		; Clear the top line
 	puls	a
 
 
@@ -1383,7 +1480,7 @@ move_line_down:
 	clra
 	rts
 
-clear_line:
+_clear_line:
 	cmpa	#16
 	blo	do_clear
 
@@ -1423,6 +1520,7 @@ clear_loop:
 *******************
 
 display_text_graphic:
+
 	tfr	x,y
 
 	pshs	b

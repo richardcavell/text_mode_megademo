@@ -659,22 +659,65 @@ skip:
 	lda	#1
 	rts
 
-************************
+***********************
 * Display scroll texts
 *
 * Inputs:
 * X = List of scrollers
 *
 * Outputs: None
-************************
+***********************
 
 display_scroll_texts:
+	pshs	x
+	bsr	check_for_space
+	puls	x
+	tsta
+	bne	_skip_section
+	pshs	x
+	bsr	wait_for_vblank
+	puls	x
+	pshs	x
+	bsr	_display_scroll_texts_all_scrollers
+	puls	x
 
-	ldx	,x
-	beq	_display_scroll_texts_done
+	bra	display_scroll_texts
+
+_skip_section:
+	lda	#1
+	rts
+
+_display_scroll_texts_all_scrollers:
+
+	ldx	#scroller_0
+	bsr	display_scroll_text
+	ldx	#scroller_1
+	bsr	display_scroll_text
+	ldx	#scroller_2
+	bsr	display_scroll_text
+	ldx	#scroller_3
+	bsr	display_scroll_text
+	ldx	#scroller_4
+	bsr	display_scroll_text
+	ldx	#scroller_9
+	bsr	display_scroll_text
+	ldx	#scroller_10
+	bsr	display_scroll_text
+	ldx	#scroller_11
+	bsr	display_scroll_text
+	ldx	#scroller_12
+	bsr	display_scroll_text
+	ldx	#scroller_13
+	bsr	display_scroll_text
+	ldx	#scroller_14
+	bsr	display_scroll_text
+	ldx	#scroller_15
 	bsr	display_scroll_text
 
+	rts
 
+_display_scroll_texts_end:
+	rts
 
 bird_scrollers:
 

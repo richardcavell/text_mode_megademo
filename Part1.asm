@@ -18,7 +18,7 @@
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
@@ -145,10 +145,15 @@ _pluck_next_section:
 **************
 
 title_screen:
+
 	lda	#0
 	ldb	#0
 	leax	title_screen_graphic, PCR
 	lbsr	display_text_graphic
+
+	lda	#1
+	sta	creature_blinks, PCR
+
 	bra	display_text
 
 ; This graphic was made by Microsoft Copilot and modified by me
@@ -244,9 +249,9 @@ display_text:
 	lbsr	drop_screen_content
 
 skip_title_screen:		; If space was pressed
+	clr	creature_blinks, PCR
 	lbsr	clear_screen	; Just clear the screen
 
-screen_is_clear:
 	bra	loading_screen
 
 loading_screen:
@@ -277,7 +282,7 @@ _part_1_end:
 	clra
 	rts
 
-* This art is modified from the original by Blazej Kozlowski
+* This art is modified by me from the original by Blazej Kozlowski
 * It's from https://www.asciiart.eu/animals/cats
 
 ascii_art_cat:
@@ -397,9 +402,6 @@ _skip_debug_visual_indication:
 
 decb_irq_service_routine:
 	RZB	2
-
-vblank_happened:
-	RZB	1
 
 *********************
 * Turn off disk motor
@@ -529,12 +531,17 @@ _pluck_count_chars_end:
 POLCAT		EQU	$A000
 BREAK_KEY	EQU	3
 
+vblank_happened:
+	RZB	1
+
+creature_blinks:
+	RZB	1
+
 wait_for_vblank_and_check_for_skip:
 
 	clr	vblank_happened, PCR
 
 _wait_for_vblank_and_check_for_skip_loop:
-
 	jsr	[POLCAT]
 	cmpa	#' '			; Space bar
 	beq	_wait_for_vblank_skip
@@ -563,6 +570,8 @@ _wait_for_vblank_not_debug_mode:
 	tst	vblank_happened, PCR
 	beq	_wait_for_vblank_and_check_for_skip_loop
 
+	bsr	_wait_for_vblank_creature_blink
+
 	clra		; A VBlank happened
 	rts
 
@@ -577,6 +586,66 @@ _wait_for_vblank_invert_toggle:
 debug_mode_toggle:
 
 	RZB	1
+
+_wait_for_vblank_creature_blink:
+	lda	creature_blinks, PCR
+	bne	_wait_for_vblank_blinks_on
+
+	rts		; creature is not blinking
+
+_wait_for_vblank_blinks_on:
+	ldd	_wait_for_vblank_creature_frames
+	addd	#1
+	std	_wait_for_vblank_creature_frames
+
+	lda	_wait_for_vblank_creature_is_blinking
+	beq	_wait_for_vblank_open_eyes
+
+	ldd	_wait_for_vblank_creature_frames
+	cmpd	#5
+	blo	_wait_for_vblank_take_no_action
+
+; Open the creature's eyes
+
+	clr	_wait_for_vblank_creature_is_blinking, PCR
+	ldd	#0
+	std	_wait_for_vblank_creature_frames, PCR
+
+	ldx	#TEXTBUF+32+1
+	lda	#'O'
+	sta	,x++
+	sta	,x
+
+	rts
+
+_wait_for_vblank_open_eyes:
+
+	ldd	_wait_for_vblank_creature_frames
+	cmpd	#85
+	blo	_wait_for_vblank_take_no_action
+
+; Close the creature's eyes
+
+	lda	#1
+	sta	_wait_for_vblank_creature_is_blinking, PCR
+	ldd	#0
+	std	_wait_for_vblank_creature_frames, PCR
+
+	ldx	#TEXTBUF+32+1
+	lda	#'-' + 64
+	sta	,x++
+	sta	,x
+
+	rts
+
+_wait_for_vblank_take_no_action:
+	rts
+
+_wait_for_vblank_creature_is_blinking:
+	RZB	1
+
+_wait_for_vblank_creature_frames:
+	RZB	2
 
 ********************
 * Pluck - Do a frame
@@ -948,43 +1017,47 @@ switch_on_irq_and_firq:
 * Play a sound sample
 *
 * Inputs:
+* A = The delay between samples
 * X = The sound data
 * Y = The end of the sound data
-* A = The delay between samples
 *******************************
 
 play_sound:
+
 	pshs	a,x,y
 	bsr	switch_off_irq_and_firq
 	puls	a,x,y
 
-	pshs	y
+	pshs	y	; _play_sound uses A, X and ,S
 
-send_value:
-	cmpx	,s			; Compare X with Y
-
-	beq	send_values_finished	; If we have no more samples, exit
-
-	ldb	,x+
-	stb	AUDIO_PORT
-
-	tfr	a,b
-
-sound_delay_loop:
-	tstb
-	beq	send_value		; Have we completed the delay?
-
-	decb				; If not, then wait some more
-
-	bra	sound_delay_loop
-
-send_values_finished:
+	bsr	_play_sound
 
 	puls	y
 
 	bsr	switch_on_irq_and_firq
 
 	rts
+
+_play_sound:
+	cmpx	2,s			; Compare X with Y
+
+	bne	_play_sound_more	; If we have no more samples, exit
+
+	rts
+
+_play_sound_more:
+	ldb	,x+
+	stb	AUDIO_PORT
+
+	tfr	a,b
+
+_sound_delay_loop:
+	tstb
+	beq	_play_sound		; Have we completed the delay?
+
+	decb				; If not, then wait some more
+
+	bra	_sound_delay_loop
 
 ******************
 * Clear the screen
@@ -1235,9 +1308,6 @@ _flash_copy_line:
 _flash_chars_loop:
 	pshs	b,x
 	bsr	_flash_chars_white
-	puls	b,x
-
-	pshs	b,x
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
@@ -1247,9 +1317,6 @@ _flash_chars_loop:
 _skip_flash_chars:
 	pshs	b,x
 	bsr	_restore_chars
-	puls	b,x
-
-	pshs	b,x
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
@@ -1272,26 +1339,27 @@ _flash_finished:
 *********************************
 
 _flash_chars_white:
+
+_flash_chars_white_loop:
 	lda	,x
 
 	cmpa	#125		; '='
-	beq	_not_flashable
+	beq	_flash_chars_not_flashable
 
 	cmpa	#65		; Is it from A to
-	blo	_not_flashable
+	blo	_flash_chars_not_flashable
 	cmpa	#127		; Question mark
-	bhi	_not_flashable
+	bhi	_flash_chars_not_flashable
 
 	lda	#WHITE_BOX	; a buff box
 	sta	,x		; store it, and fall through
 
-_not_flashable:
+_flash_chars_not_flashable:
 	leax	1,x
 	tfr	x,d
 	andb	#0b00011111	; Calculate x mod 32
-	bne	_flash_chars_white	; If more, go back
+	bne	_flash_chars_white_loop	; If more, go back
 
-	clra
 	rts
 
 *****************************************
@@ -1299,6 +1367,8 @@ _not_flashable:
 *
 * Inputs:
 * X = pointer to start of the line
+*
+* Outputs: None
 *****************************************
 
 _restore_chars:
@@ -1307,11 +1377,12 @@ _restore_chars:
 _flash_restore_chars:
 	ldd	,y++
 	std	,x++
+	ldd	,y++
+	std	,x++
 
 	cmpy	#flash_text_storage_end
 	bne	_flash_restore_chars
 
-	clra
 	rts
 
 flash_text_storage:
@@ -1321,66 +1392,70 @@ flash_text_storage_end:
 **************************
 * Flashes the screen white
 *
-* Inputs:
-*   none
+* Inputs: None
+* Outputs: None
 **************************
 
 flash_screen:
+
 	ldx	#TEXTBUF
 	ldy	#flash_screen_storage
 
-flash_screen_copy_loop:
+_flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
 	std	,y++			; on the screen
 
 	cmpx	#TEXTBUF+TEXTBUFSIZE
-	bne	flash_screen_copy_loop
+	blo	_flash_screen_copy_loop
 
 	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
-	beq	skip_flash_screen_copy
+	beq	_flash_screen_no_skip
+
 	rts
 
-skip_flash_screen_copy:
+_flash_screen_no_skip:
 	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
-	beq	_skip_flash_screen_5
+	beq	_flash_screen_skip_2
 
-_skip_flash_screen_5:
+	rts
+
+_flash_screen_skip_2:
 	ldx	#TEXTBUF
 	ldd	#WHITE_BOX << 8 | WHITE_BOX
 
-flash_screen_white_loop:
+_flash_screen_white_loop:
 	std	,x++			; Make the whole screen buff color
 	std	,x++
 	std	,x++
 	std	,x++
 
 	cmpx	#TEXTBUF+TEXTBUFSIZE
-	bne	flash_screen_white_loop
+	bne	_flash_screen_white_loop
 
 	lbsr	wait_for_vblank_and_check_for_skip	; If space was pressed
 	tsta
-	beq	skip_flash_screen_2
+	beq	_skip_flash_screen_2
 	rts				; return to caller
 
-skip_flash_screen_2:
+_skip_flash_screen_2:
 	lbsr	wait_for_vblank_and_check_for_skip	; If space was pressed
 	tsta
-	beq	skip_flash_screen_3
+	beq	_skip_flash_screen_3
 	rts				; return to caller
 
-skip_flash_screen_3:
+_skip_flash_screen_3:
 	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	_skip_flash_screen_4
 	rts
 
-_skip_flash_screen_4
+_skip_flash_screen_4:
 	ldx	#TEXTBUF
 	ldy	#flash_screen_storage
 
-flash_screen_restore_loop:
+_flash_screen_restore_loop:
 	ldd	,y++
 	std	,x++
 	ldd	,y++
@@ -1391,16 +1466,15 @@ flash_screen_restore_loop:
 	std	,x++
 
 	cmpx	#TEXTBUF+TEXTBUFSIZE
-	bne	flash_screen_restore_loop
+	bne	_flash_screen_restore_loop
 
 	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
-	beq	skip_flash_screen_4
+	beq	_flash_screen_skip_5
 	rts
 
-skip_flash_screen_4:
+_flash_screen_skip_5:
 	lbsr	wait_for_vblank_and_check_for_skip
-
 	rts
 
 ********************************
@@ -1447,9 +1521,7 @@ _drop_each_line:
 	bsr	_drop_line		; Drop the top line
 	puls	a
 
-	pshs	a
 	lbsr	clear_line		; Clear the top line
-	puls	a
 
 	lbsr	wait_for_vblank_and_check_for_skip
 	rts
@@ -1485,27 +1557,26 @@ _skip_drop_screen:
 	lda	#1
 	rts
 
-**************************
-*******************
-* Output a graphic
+************************
+* Display a text graphic
 *
 * Inputs:
 * A = Line number
 * B = Column number
 * X = Graphic data
-*******************
+************************
 
 display_text_graphic:
 
-	tfr	x,y
+	tfr	x,y	; Y = graphic data
 
-	pshs	b
+	tfr	d,u	; Save B
 	ldb	#32
 	mul
 	ldx	#TEXTBUF
 	leax	d,x
-	puls	b
-	leax	b,x
+	tfr	u,d	; B = column number
+	leax	b,x	; X = Screen memory to start at
 
 _display_text_graphic_loop:
         lda     ,y+
@@ -1516,12 +1587,12 @@ _display_text_graphic_loop:
         bra     _display_text_graphic_loop
 
 _text_graphic_new_line:
-	tfr	d,u		; Save register b
+	tfr	d,u		; Save register B
         tfr     x,d
         andb    #0b11100000
         addd    #32
         tfr     d,x
-	tfr	u,d		; Get b back
+	tfr	u,d		; Get B back
 	leax	b,x
 	bra	_display_text_graphic_loop
 
@@ -1550,9 +1621,9 @@ uninstall_irq_service_routine:
 * Here is our raw data for our sounds
 *************************************
 
-flash_screen_storage:			; Use the area of memory reserved for
-					; the pluck sound, because we're not
-					; using it again
+flash_screen_storage:		; Use the area of memory reserved for
+				; the pluck sound, because we're not
+				; using it again
 
 pluck_sound:
 	INCLUDEBIN "Sounds/Pluck/Pluck.raw"

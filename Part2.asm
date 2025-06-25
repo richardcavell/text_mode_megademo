@@ -565,9 +565,9 @@ irq_service_routine:
 	lda	#1
 	sta	vblank_happened, PCR
 
-					; In the interests of making our IRQ handler run fast,
-					; the routine assumes that decb_irq_service_routine
-					; has been correctly initialized
+		; In the interests of making our IRQ handler run fast,
+		; the routine assumes that decb_irq_service_routine
+		; has been correctly initialized
 
 	jmp	[decb_irq_service_routine, PCR]
 
@@ -582,11 +582,11 @@ vblank_happened:
 *****************
 
 wait_for_vblank:
-	clr	vblank_happened,PCR	; Put a zero in vblank_happened
+	clr	vblank_happened, PCR	; Put a zero in vblank_happened
 
-wait_loop:
-	tst	vblank_happened,PCR	; As soon as a 1 appears...
-	beq	wait_loop
+_wait_loop:
+	tst	vblank_happened, PCR	; As soon as a 1 appears...
+	beq	_wait_loop
 
 	lda	#DEBUG_MODE
 	beq	exit_wait_for_vblank
@@ -601,7 +601,7 @@ not_t:
 	tst	toggle, PCR
 	beq	exit_wait_for_vblank
 	cmpa	#'F'
-	bne	wait_loop
+	bne	_wait_loop
 
 exit_wait_for_vblank:
 	rts				; ...return to caller

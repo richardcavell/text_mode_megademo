@@ -1304,12 +1304,12 @@ _not_flashable:
 _restore_chars:
 	ldy	#flash_text_storage
 
-flash_restore_chars:
+_flash_restore_chars:
 	ldd	,y++
 	std	,x++
 
 	cmpy	#flash_text_storage_end
-	bne	flash_restore_chars
+	bne	_flash_restore_chars
 
 	clra
 	rts
@@ -1330,8 +1330,8 @@ flash_screen:
 	ldy	#flash_screen_storage
 
 flash_screen_copy_loop:
-	ldd	,x++			; Make a copy of everything on the screen
-	std	,y++
+	ldd	,x++			; Make a copy of everything
+	std	,y++			; on the screen
 
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	flash_screen_copy_loop
@@ -1348,7 +1348,7 @@ skip_flash_screen_copy:
 
 _skip_flash_screen_5:
 	ldx	#TEXTBUF
-	ldd	#$cfcf
+	ldd	#WHITE_BOX << 8 | WHITE_BOX
 
 flash_screen_white_loop:
 	std	,x++			; Make the whole screen buff color
@@ -1451,9 +1451,7 @@ _drop_each_line:
 	lbsr	clear_line		; Clear the top line
 	puls	a
 
-	pshs	a
 	lbsr	wait_for_vblank_and_check_for_skip
-	puls	a
 	rts
 
 _drop_line:
@@ -1462,6 +1460,7 @@ _drop_line:
 
 	clra
 	rts				; Off the bottom end of the screen
+
 
 _do_drop:
 	ldb	#32

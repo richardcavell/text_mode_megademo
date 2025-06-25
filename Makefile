@@ -142,9 +142,7 @@ license:
 	@cat LICENSE
 
 version:
-	@echo "Text Mode Demo"
-	@echo ".............."
-	@echo "TMD source: version alpha"
+	@echo "Text Mode Demo source: version alpha"
 	@$(ASM) --version | head --lines=1
 	@$(DECB) 2>&1 >/dev/null | head --lines=1
 	@$(CC) --version | head --lines=1

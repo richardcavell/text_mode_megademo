@@ -1,6 +1,6 @@
 # Makefile
 # Part of Text Mode Demo by Richard Cavell
-# v1.0
+# Still being written
 # June 2025
 
 DISK		=	TMDEMO.DSK

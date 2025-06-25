@@ -58,10 +58,19 @@ ECHO		=	echo
 .PHONY: mame mame-debug version xroar xroar-coco3 xroar-ntsc
 
 all:	$(DISK) $(PART1) $(PART2)
-all:	$(SIN_GENERATOR) $(SIN_TABLE)
+all:	$(SIN_TABLE) $(SIN_GENERATOR)
 all:	$(PLUCK_SOUND) $(RJFC_SOUND)
 all:	$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
 all:	$(SOUND_STR)
+
+clean:
+	@$(ECHO) "Removing all generated files ..."
+	@$(RM) $(DISK) $(PART1) $(PART2)
+	@$(RM) $(SIN_TABLE) $(SIN_GENERATOR)
+	@$(RM) $(PLUCK_SOUND) $(RJFC_SOUND)
+	@$(RM) $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
+	@$(RM) $(SOUND_STR)
+	@$(ECHO) "... Done"
 
 disk:	$(DISK)
 
@@ -114,15 +123,6 @@ $(SOUND_STR): $(SOUND_STR_SRC)
 $(SIN_GENERATOR): $(SIN_GEN_SRC)
 	@$(ECHO) "Compiling" $@ ...
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@ -lm
-	@$(ECHO) "... Done"
-
-clean:
-	@$(ECHO) "Removing all generated files ..."
-	@$(RM) $(DISK) $(PART1) $(PART2)
-	@$(RM) $(SIN_GENERATOR) $(SIN_TABLE)
-	@$(RM) $(PLUCK_SOUND) $(RJFC_SOUND)
-	@$(RM) $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
-	@$(RM) $(SOUND_STR)
 	@$(ECHO) "... Done"
 
 help: info

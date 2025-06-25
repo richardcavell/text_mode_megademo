@@ -897,6 +897,7 @@ nofeedback:
 ***************************
 
 print_text:
+
 	tfr	x,y
 
 _print_text_loop:
@@ -921,8 +922,7 @@ _find_zero:
 					;   lines
 	cmpa	,y			; Is that what we have?
 	bne	_print_text_loop	; If not, then print the next line
-					; If yes, then fall through to the
-					;   next section
+					; If yes, then fall through
 	clra
 	rts
 
@@ -1116,6 +1116,7 @@ test_area:
 *************************************
 
 encase_text:
+
 	tfr	d,y		; Y (lower 8 bits) is direction
 
 	ldb	#32
@@ -1125,12 +1126,12 @@ encase_text:
 
 	tfr	y,d		; B is direction
 	tstb			; If 0, start on the left side
-	beq	encase_text_loop
+	beq	_encase_text_loop
 
 	leax	31,x		; If 1, start on the right side
 				; and fallthrough
 
-encase_text_loop:
+_encase_text_loop:
 	pshs	b,x
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
@@ -1139,64 +1140,64 @@ encase_text_loop:
 	rts			; Simply return a
 
 _no_skip_encase:
-encase_text_more:
+_encase_text_more:
 	lda	#$60		; Green box (space)
 
 	cmpa	,x		; If x points to a green box...
-	bne	encase_char_found
+	bne	_encase_char_found
 
 	lda	#125		; then put a '=' in it
 
 	tstb
-	bne	encase_backwards
+	bne	_encase_backwards
 
 	sta	,x+		; and increment
-	bra	encase_finished_storing
+	bra	_encase_finished_storing
 
-encase_backwards:
+_encase_backwards:
 	sta	,x
 	leax	-1,x		; and decrement
 
-encase_finished_storing:
-	bra	encase_are_we_done	; Go back and do the next one
+_encase_finished_storing:
+	bra	_encase_are_we_done	; Go back and do the next one
 
-encase_char_found:
+_encase_char_found:
 	lda	#125		; This is '='
 	sta	-32,x		; add '=' above
 	sta	32,x		;   and below
 
 	tstb
-	bne	encase_chars_found_backwards
+	bne	_encase_chars_found_backwards
 
 	leax	1,x		; fallthrough
-	bra	encase_are_we_done
+	bra	_encase_are_we_done
 
-encase_chars_found_backwards:
+_encase_chars_found_backwards:
 	leax	-1,x
 				; fallthrough
-encase_are_we_done:
+_encase_are_we_done:
 	tstb
-	beq	encase_right	; If we're going right
+	beq	_encase_right	; If we're going right
 
 	tfr	d,y
 	tfr	x,d
 	andb	#0b00011111
 	cmpb	#0b00011111	; If X mod 32 == 31
 	tfr	y,d
-	bne	encase_text_loop
+	bne	_encase_text_loop
 
 	lbsr	wait_for_vblank_and_check_for_skip	; The final showing
 	rts			; we are finished. Return a
 
-encase_right:
+_encase_right:
 	tfr	d,y
 	tfr	x,d
 	andb	#0b00011111	; If X is evenly divisible
 	tfr	y,d
-	bne	encase_text_loop	;   by 32, then
+	bne	_encase_text_loop	;   by 32, then
 
 	lbsr	wait_for_vblank_and_check_for_skip	; The final showing
-	rts			; we are finished
+	rts			; we are finished. Return a
 
 **************************************
 * Flashes text with white (buff) boxes
@@ -1207,6 +1208,7 @@ encase_right:
 **************************************
 
 flash_text_white:
+
 	decb			; We test at the bottom
 	pshs	b
 
@@ -1217,12 +1219,12 @@ flash_text_white:
 
 	leay	flash_text_storage, PCR
 
-flash_copy_line:
+_flash_copy_line:
 	ldd	,x++		; Save the whole line
 	std	,y++
 
 	cmpy	#flash_text_storage_end
-	bne	flash_copy_line
+	bne	_flash_copy_line
 
 				; Now the line has been saved,
 				; Turn all text to white
@@ -1231,38 +1233,38 @@ flash_copy_line:
 
 	puls	b
 
-flash_chars_loop:
+_flash_chars_loop:
 	pshs	b,x
-	bsr	flash_chars_white
+	bsr	_flash_chars_white
 	puls	b,x
 
 	pshs	b,x
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	skip_flash_chars
+	beq	_skip_flash_chars
 	rts
 
-skip_flash_chars:
+_skip_flash_chars:
 	pshs	b,x
-	bsr	restore_chars
+	bsr	_restore_chars
 	puls	b,x
 
 	pshs	b,x
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	skip_flash_chars_2
+	beq	_skip_flash_chars_2
 	rts
 
-skip_flash_chars_2:
+_skip_flash_chars_2:
 	tstb			; We do this routine b times
-	beq	flash_finished
+	beq	_flash_finished
 
 	decb
-	bra	flash_chars_loop
+	bra	_flash_chars_loop
 
-flash_finished:
+_flash_finished:
 	clra
 	rts			; Done, go away now
 
@@ -1270,25 +1272,25 @@ flash_finished:
 * Turns all chars on a line white
 *********************************
 
-flash_chars_white:
+_flash_chars_white:
 	lda	,x
 
 	cmpa	#125		; '='
-	beq	not_flashable
+	beq	_not_flashable
 
 	cmpa	#65		; Is it from A to
-	blo	not_flashable
+	blo	_not_flashable
 	cmpa	#127		; Question mark
-	bhi	not_flashable
+	bhi	_not_flashable
 
-	lda	#$cf		; a buff box
+	lda	#WHITE_BOX	; a buff box
 	sta	,x		; store it, and fall through
 
-not_flashable:
+_not_flashable:
 	leax	1,x
 	tfr	x,d
 	andb	#0b00011111	; Calculate x mod 32
-	bne	flash_chars_white	; If more, go back
+	bne	_flash_chars_white	; If more, go back
 
 	clra
 	rts
@@ -1300,7 +1302,7 @@ not_flashable:
 * X = pointer to start of the line
 *****************************************
 
-restore_chars:
+_restore_chars:
 	ldy	#flash_text_storage
 
 flash_restore_chars:

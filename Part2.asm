@@ -62,6 +62,7 @@ birds_graphic:
 
 scroll_text:
 
+	ldx	#bird_scrollers
 	lbsr	display_scroll_texts
 
 	bra	create_dot
@@ -661,26 +662,35 @@ skip:
 ************************
 * Display scroll texts
 *
-* Inputs: None
+* Inputs:
+* X = List of scrollers
+*
 * Outputs: None
 ************************
 
 display_scroll_texts:
-	lbsr	check_for_space
-	tsta
-	bne	_display_scroll_texts_skip
 
-	lbsr	wait_for_vblank
-
-	ldx	#scroller_1
-	bsr	display_scroll_text
-	ldx	#scroller_2
+	ldx	,x
+	beq	_display_scroll_texts_done
 	bsr	display_scroll_text
 
-	bra	display_scroll_texts
 
-_display_scroll_texts_skip:
-	rts
+
+bird_scrollers:
+
+	FDB	scroller_0
+	FDB	scroller_1
+	FDB	scroller_2
+	FDB	scroller_3
+	FDB	scroller_4
+	FDB	scroller_9
+	FDB	scroller_10
+	FDB	scroller_11
+	FDB	scroller_12
+	FDB	scroller_13
+	FDB	scroller_14
+	FDB	scroller_15
+	FDB	0
 
 **********************
 * Display scroll text
@@ -723,14 +733,14 @@ _display_scroll_needs_update:
 	ldu	6,x	; U is where on the screen to start
 	lda	#32	; There are 32 columns per line
 
-_display_scroll_text_loop:
+_display_scroll_text_loop_2:
 
 	ldb	,y+
 	beq	_display_scroll_end
 	stb	,u+
 
 	deca
-	bne	_display_scroll_text_loop
+	bne	_display_scroll_text_loop_2
 
 	rts
 
@@ -1220,14 +1230,15 @@ cartman_graphic_end:
 * Scroll texts
 **************
 
-scroller_1:
+scroller_15:
+
 	FDB	0	; Starting frame
 	FCB	0	; Frame counter
 	FCB	5	; Frames to pause
-	FDB	scroll_text_1
+	FDB	scroll_text_15
 	FDB	TEXTBUF+15*32
 
-scroll_text_1:
+scroll_text_15:
 
 	FCV	"                                "
 	FCV	"THIS IS A TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -1235,14 +1246,15 @@ scroll_text_1:
 	FCV	"                                "
 	FCB	0
 
-scroller_2:
+scroller_14:
+
 	FDB	100	; Starting frame
 	FCB	0	; Frame counter
 	FCB	8	; Frames to pause
-	FDB	scroll_text_2
+	FDB	scroll_text_14
 	FDB	TEXTBUF+14*32
 
-scroll_text_2:
+scroll_text_14:
 
 	FCV	"                                "
 	FCV	"THIS IS ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -1250,6 +1262,162 @@ scroll_text_2:
 	FCV	"                                "
 	FCB	0
 
+scroller_13:
 
+	FDB	150	; Starting frame
+	FCB	0	; Frame counter
+	FCB	10	; Frames to pause
+	FDB	scroll_text_13
+	FDB	TEXTBUF+13*32
 
+scroll_text_13:
 
+	FCV	"                                "
+	FCV	"THIS IS YET ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_12:
+
+	FDB	200	; Starting frame
+	FCB	0	; Frame counter
+	FCB	12	; Frames to pause
+	FDB	scroll_text_12
+	FDB	TEXTBUF+12*32
+
+scroll_text_12:
+
+	FCV	"                                "
+	FCV	"BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_11:
+
+	FDB	250	; Starting frame
+	FCB	0	; Frame counter
+	FCB	15	; Frames to pause
+	FDB	scroll_text_11
+	FDB	TEXTBUF+11*32
+
+scroll_text_11:
+
+	FCV	"                                "
+	FCV	"BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_10:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_10
+	FDB	TEXTBUF+10*32
+
+scroll_text_10:
+
+	FCV	"                                "
+	FCV	"10BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_9:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_9
+	FDB	TEXTBUF+9*32
+
+scroll_text_9:
+
+	FCV	"                                "
+	FCV	"9BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_0:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_0
+	FDB	TEXTBUF
+
+scroll_text_0:
+
+	FCV	"                                "
+	FCV	"0BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_1:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_1
+	FDB	TEXTBUF+1*32
+
+scroll_text_1:
+
+	FCV	"                                "
+	FCV	"1BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_2:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_2
+	FDB	TEXTBUF+2*32
+
+scroll_text_2:
+
+	FCV	"                                "
+	FCV	"2BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_3:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_3
+	FDB	TEXTBUF+3*32
+
+scroll_text_3:
+
+	FCV	"                                "
+	FCV	"3BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_4:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_4
+	FDB	TEXTBUF+4*32
+
+scroll_text_4:
+
+	FCV	"                                "
+	FCV	"4BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0

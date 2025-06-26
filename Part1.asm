@@ -601,7 +601,7 @@ debug_mode_toggle:
 
 pluck_do_frame:
 
-	ldy	#plucks_data
+	leay	plucks_data, PCR
 
 _pluck_do_each_pluck:
 	lda	,y
@@ -654,20 +654,20 @@ _pluck_phase_at_least_2:
 _pluck_phase_3:
 				; We are pulling
 	lda	#GREEN_BOX
-	sta	,x+
+	sta	,x+		; Erase the drawn character
 
 	pshs	a,b,x,y
 	tfr	x,d
-	andb	#0b00011111
+	andb	#0b00011111	; Is X divisible by 32?
 	puls	a,b,x,y		; Does not affect condition codes
-	beq	_pluck_phase_3_divisible_by_32
+	beq	_pluck_phase_3_ended
 
-	stb	,x
-	stx	2,y
+	stb	,x		; Draw it in the next column
+	stx	2,y		; Update position in plucks_data
 
 	rts
 
-_pluck_phase_3_divisible_by_32:
+_pluck_phase_3_ended:		; Character has gone off the right side
 	lda	#PLUCK_PHASE_NOTHING	; clra
 	sta	,y		; Store it
 
@@ -689,12 +689,11 @@ pluck_find_a_spare_slot:
 	leax	plucks_data, PCR
 
 _pluck_find_loop:
-	deca
 	ldb	,x
-	cmpb	#PLUCK_PHASE_NOTHING
+	cmpb	#PLUCK_PHASE_NOTHING	; tstb
 	beq	_pluck_find_found_empty
 
-	tsta
+	deca
 	beq	_pluck_find_no_empty_slot
 	leax	4,x
 	bra	_pluck_find_loop
@@ -886,12 +885,12 @@ _wait_frames_skip:
 * D = The random number
 **********************************************************
 
-* I found these values through simple experimentation.
-* This RNG could be improved on.
-
 USE_DEEKS_CODE	EQU	0
 
 	IF	(USE_DEEKS_CODE==0)
+
+* I found these values through simple experimentation.
+* This RNG could be improved on.
 
 SEED:
 
@@ -913,13 +912,20 @@ get_random:
 ; This code was written by Sean Conner (Deek) and slightly modified
 ; by me in June 2025 during a discussion on Discord
 
+SEED:
+
+	FCB	0xbe
+	FCB	0xef
+
+get_random:
+
 	ldd	SEED
 	lsra
 	rorb
-	bcc	nofeedback
+	bcc	get_random_no_feedback
 	eora	#$b4
-nofeedback:
-	std	seed
+get_random_no_feedback:
+	std	SEED
 	rts
 
 	ENDIF
@@ -949,7 +955,7 @@ _print_text_loop:
 	tsta
 	beq	_find_zero
 
-	lda	#1
+	lda	#1			; User has skipped this
 	rts
 
 _find_zero:
@@ -1083,9 +1089,11 @@ _clear_line_loop:
 
 ************************************************
 * Brings text onto the screen using an animation
-* X = string to print
+*
+* Inputs:
 * A = line number (0 to 15)
 * B = character position (0 to 31)
+* X = string to print
 *
 * Outputs:
 * A = 0 Everything is okay
@@ -1103,24 +1111,24 @@ text_appears:
 	puls	b		; B is the character position to start
 				;   printing the string
 
-buff_box:
-	lda	#$cf		; A buff box
+_text_appears_buff_box:
+	lda	#WHITE_BOX	; A buff (whiteish) box
 	sta	,x		; Put it on the screen
 
 	pshs	b,x,u
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x,u
-	tsta
-	beq	_skip
+	tsta			; Has the user chosen to skip?
+	beq	_text_appears_keep_going
 	rts			; Just return a
 
-_skip:
+_text_appears_keep_going:
 	pshs	b,x,u
-	bsr	_wait_for_vblank_creature_blink
+	bsr	creature_blink	; The creature in the top-left corner
 	puls	b,x,u
 
 	tstb			; If non-zero, we are not printing out
-	bne	green_box	; yet
+	bne	_text_appears_green_box	; yet
 
 	lda	,u+		; Get the next character from the string
 	bne	store_char	; And put it on the screen
@@ -1128,14 +1136,14 @@ _skip:
 	leau	-1,u		; It was a zero we retrieved: Repoint U
 				; And fall through to using a green box
 
-green_box:
+_text_appears_green_box:
 	tstb
-	beq	skip_decrement
+	beq	_text_appears_skip_decrement
 
 	decb
 
-skip_decrement:
-	lda	#$60		; Put a green box in A
+_text_appears_skip_decrement:
+	lda	#GREEN_BOX	; Put a green box in A
 
 store_char:
 	sta	,x+		; Put the relevant character (green box or char) into
@@ -1145,12 +1153,13 @@ store_char:
 	lda	#0b00011111
 	anda	test_area+1,PCR	; Is the character position divisible by 32?
 
-	bne	buff_box	; If no, then go back and do it again
+	bne	_text_appears_buff_box	; If no, then go back and do it again
 
 	clra			; Space was not pressed
 	rts			; Return to the main code
 
 test_area:
+
 	RZB	2
 
 *****************
@@ -1164,29 +1173,29 @@ creature_blinks:
 
 	RZB	1
 
-_wait_for_vblank_creature_blink:
+creature_blink:
 	lda	creature_blinks, PCR
-	bne	_wait_for_vblank_blinks_on
+	bne	_creature_blink_blinks_on
 
 	rts		; creature is not blinking
 
-_wait_for_vblank_blinks_on:
-	ldd	_wait_for_vblank_creature_frames
+_creature_blink_blinks_on:
+	ldd	_creature_blink_frames
 	addd	#1
-	std	_wait_for_vblank_creature_frames
+	std	_creature_blink_frames
 
-	lda	_wait_for_vblank_creature_is_blinking
-	beq	_wait_for_vblank_open_eyes
+	lda	_creature_blink_is_blinking
+	beq	_creature_blink_open_eyes
 
-	ldd	_wait_for_vblank_creature_frames
+	ldd	_creature_blink_frames
 	cmpd	#5
-	blo	_wait_for_vblank_take_no_action
+	blo	_creature_blink_take_no_action
 
 ; Open the creature's eyes
 
-	clr	_wait_for_vblank_creature_is_blinking, PCR
+	clr	_creature_blink_is_blinking, PCR
 	ldd	#0
-	std	_wait_for_vblank_creature_frames, PCR
+	std	_creature_blink_frames, PCR
 
 	ldx	#TEXTBUF+32+1
 	lda	#'O'
@@ -1195,18 +1204,18 @@ _wait_for_vblank_blinks_on:
 
 	rts
 
-_wait_for_vblank_open_eyes:
+_creature_blink_open_eyes:
 
-	ldd	_wait_for_vblank_creature_frames
+	ldd	_creature_blink_frames
 	cmpd	#85
-	blo	_wait_for_vblank_take_no_action
+	blo	_creature_blink_take_no_action
 
 ; Close the creature's eyes
 
 	lda	#1
-	sta	_wait_for_vblank_creature_is_blinking, PCR
+	sta	_creature_blink_is_blinking, PCR
 	ldd	#0
-	std	_wait_for_vblank_creature_frames, PCR
+	std	_creature_blink_frames, PCR
 
 	ldx	#TEXTBUF+32+1
 	lda	#'-' + 64
@@ -1215,13 +1224,13 @@ _wait_for_vblank_open_eyes:
 
 	rts
 
-_wait_for_vblank_take_no_action:
+_creature_blink_take_no_action:
 	rts
 
-_wait_for_vblank_creature_is_blinking:
+_creature_blink_is_blinking:
 	RZB	1
 
-_wait_for_vblank_creature_frames:
+_creature_blink_frames:
 	RZB	2
 
 *************************************
@@ -1261,10 +1270,10 @@ _encase_text_loop:
 _no_skip_encase:
 _encase_text_more:
 	pshs	b,x
-	bsr	_wait_for_vblank_creature_blink
+	bsr	creature_blink
 	puls	b,x
 
-	lda	#$60		; Green box (space)
+	lda	#GREEN_BOX	; Green box (space)
 
 	cmpa	,x		; If x points to a green box...
 	bne	_encase_char_found

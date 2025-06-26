@@ -12,7 +12,7 @@
 const double pi = 3.14159265358979323846;
 
 static void
-fprintf_error()
+fprintf_error(void)
 {
 	(void) fprintf(stderr, "%s%i%c",
 			 "Couldn't print to output file. Error number : ",
@@ -60,7 +60,7 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < 256; ++i)
 	{
-		double angle = (double) i / 256.0 * 2 * pi;
+		double angle = i / 256.0 * 2 * pi;
 		double f = sin(angle) * 256;
 		int j = 0;
 
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 
 		if (f >= 0)	/* If positive, then simply assign the value */
 			 j = (int) f;
-		else	/* Make sure that we round to zero */
+		else	/* Make sure that we round to nearest */
 		{
 			int k = (int) -f;
 			j = -k;

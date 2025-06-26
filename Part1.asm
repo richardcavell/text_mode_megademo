@@ -66,12 +66,13 @@ TEXT_LINES	EQU	16
 * Display "space to skip" message at the bottom of the screen
 *************************************************************
 
-	lda	#TEXT_LINES-1
-	leax	startup_message, PCR
+	lda	#TEXT_LINES-1		; Bottom line of the screen
+	leax	skip_message, PCR
 	lbsr	display_message
 	bra	pluck
 
-startup_message:
+skip_message:
+
 	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
 
@@ -80,12 +81,13 @@ startup_message:
 ***********************************************************
 
 pluck:
-PLUCK_LINES	EQU	TEXT_LINES-1	; The bottom line of
+
+PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
 					; our skip message
 
-GREEN_BOX	EQU	$60
-WHITE_BOX	EQU	$cf
+GREEN_BOX	EQU	($60)
+WHITE_BOX	EQU	($cf)
 
 ; First, count the number of characters on each line of the screen
 
@@ -505,8 +507,8 @@ _pluck_test_char:
 	cmpa	#GREEN_BOX		; Is it an empty green box?
 	beq	_pluck_space_char	; Yes
 
-	inc	,y			; No, so count another
-					; non-space character
+	inc	,y			; No, so count it
+
 _pluck_space_char:
 	decb
 	bne	_pluck_test_char

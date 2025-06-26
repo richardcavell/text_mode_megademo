@@ -16,7 +16,9 @@
 * The ASCII art is by Microsoft Copilot
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
-* In frame-by-frame mode, you press F to see the next frame
+* In frame-by-frame mode, you press F to see the next frame.
+* Also, the lower right corner character cycles when the interrupt request
+* service routine operates.
 
 DEBUG_MODE	EQU	0
 
@@ -414,7 +416,8 @@ DSKREG	EQU	$FF40
 
 turn_off_disk_motor:
 
-	clr	DSKREG		; Turn off disk motor
+	lda	#0
+	sta	DSKREG		; Turn off disk motor
 
 	rts
 

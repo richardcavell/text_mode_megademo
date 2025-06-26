@@ -125,8 +125,6 @@ pluck_loop:
 	tsta
 	beq	_pluck_do_a_frame		; No, just keep processing
 
-; TODO: REVIEW FROM HERE DOWN
-
 	lbsr	pluck_a_char			; Yes, pluck a character
 
 _pluck_do_a_frame:
@@ -144,6 +142,8 @@ pluck_finished:
 	lbsr	clear_line
 
 _pluck_next_section:				; Screen is empty either way
+	lda	#25
+	lbsr	wait_frames			; Wait 25 frames
 	bra	title_screen
 
 **************
@@ -158,7 +158,7 @@ title_screen:
 	lbsr	display_text_graphic
 
 	lda	#1
-	sta	creature_blinks, PCR
+	sta	creature_blinks, PCR		; Set up creature blinks
 
 	bra	display_text
 
@@ -176,8 +176,8 @@ title_screen_text:
 	FCB	8, 10
 	FCN	"PRESENTS"
 	FCB	12, 12
-	FCV	"TEXT MODE DEMO"
-	FCB	0
+	FCV	"TEXT MODE DEMO" ; FCV places green boxes for spaces
+	FCB	0		; So we manually terminate that line
 	FCB	255		; The end
 
 display_text:
@@ -257,6 +257,9 @@ display_text:
 skip_title_screen:		; If space was pressed
 	clr	creature_blinks, PCR
 	lbsr	clear_screen	; Just clear the screen
+
+	lda	#25
+	lbsr	wait_frames			; Wait 25 frames
 
 	bra	loading_screen
 
@@ -599,6 +602,7 @@ debug_mode_toggle:
 ********************
 
 pluck_do_frame:
+
 	ldy	#plucks_data
 
 _pluck_do_each_pluck:
@@ -610,7 +614,7 @@ _pluck_do_each_pluck:
 
 	leay	4,y
 	cmpy	#plucks_data_end
-	bne	_pluck_do_each_pluck
+	blo	_pluck_do_each_pluck
 
 	rts
 
@@ -620,29 +624,29 @@ _pluck_do_one_pluck:
 				; X = Screen Position
 				; Y = Pluck Data
 
-	tsta
+	cmpa	#PLUCK_PHASE_NOTHING	; you could do testa instead
 	bne	_pluck_phase_at_least_1
 
 	rts			; Phase nothing, do nothing
 
 _pluck_phase_at_least_1:
 
-	cmpa	#1
+	cmpa	#PLUCK_PHASE_TURN_WHITE
 	bne	_pluck_phase_at_least_2
 				; We are white
-	lda	#2
+	lda	#PLUCK_PHASE_PLAIN
 	sta	,y
 	rts
 
 _pluck_phase_at_least_2:
 
-	cmpa	#2
+	cmpa	#PLUCK_PHASE_PLAIN
 	bne	_pluck_phase_3
 
 				; We are plain
 	stb	,x		; Show the plain character
 
-	lda	#3		; Go to phase 3
+	lda	#PLUCK_PHASE_PULLING	; Go to phase 3
 	sta	,y
 
 	rts
@@ -806,18 +810,20 @@ _pluck_a_char_find_non_space:
 	cmpa	,-x		; Go backwards until we find a non-space
 	beq	_pluck_a_char_find_non_space
 
-	leau	plucks_data, PCR	; This checks whether the found char is
-	cmpx	2,u			; already being plucked
+	ldu	#plucks_data+2	; This checks whether the found char is
+				; already being plucked
+_pluck_a_char_check:
+	cmpx	,u
 	beq	_pluck_a_char_find_non_space
-	cmpx	6,u
-	beq	_pluck_a_char_find_non_space
-	cmpx	10,u
-	beq	_pluck_a_char_find_non_space
+
+	leau	4,u
+	cmpu	#plucks_data_end
+	blo	_pluck_a_char_check
 
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
 
-; Now register with pluck_data
+; Now register with plucks_data
 
 	tfr	x,y
 	pshs	b,y
@@ -849,6 +855,29 @@ _pluck_a_char_find_non_space:
 
 _pluck_a_char_impossible:
 	bra	_pluck_a_char_impossible	; Should never get here
+
+*****************************
+* Wait for a number of frames
+*
+* Inputs:
+* A = number of frames
+*****************************
+
+wait_frames:
+	pshs	a
+	lbsr	wait_for_vblank_and_check_for_skip
+	tsta
+	puls	a
+	bne	_wait_frames_skip
+
+	deca
+	bne	wait_frames
+
+	clra	; and fallthrough
+
+_wait_frames_skip:
+	lda	#1
+	rts
 
 **********************************************************
 * Returns a random-ish number from 0...65535
@@ -895,15 +924,15 @@ nofeedback:
 
 	ENDIF
 
-***************************
+***********************************
 * Print text
 *
 * Inputs:
 * X = Pointer to data block
 *
 * Outputs:
-* A = User wants to skip
-***************************
+* A = (non-zero) User wants to skip
+***********************************
 
 print_text:
 
@@ -969,7 +998,7 @@ play_sound:
 	bsr	switch_off_irq_and_firq
 	puls	a,x,y
 
-	pshs	y	; _play_sound uses A, X and ,S
+	pshs	y	; _play_sound uses A, X and 2,S
 
 	bsr	_play_sound
 

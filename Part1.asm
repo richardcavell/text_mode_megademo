@@ -121,11 +121,11 @@ pluck_loop:
 	tsta
 	bne	pluck_finished			; Yes, we are finished
 
-; TODO: REVIEW FROM HERE DOWN
-
 	lbsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	_pluck_do_a_frame		; No, just keep processing
+
+; TODO: REVIEW FROM HERE DOWN
 
 	lbsr	pluck_a_char			; Yes, pluck a character
 
@@ -777,17 +777,20 @@ pluck_a_char:
 
 	bsr	pluck_check_empty_lines
 	tsta
-	bne	_pluck_a_char_no_more_chars
+	beq	_pluck_char_get_random
 
+	rts			; No more characters left
+
+_pluck_char_get_random:
 	bsr	get_random 	; Get a random number in D
 	andb	#0b00001111	; Make the random number between 0 and 15
 	cmpb	#PLUCK_LINES
-	beq	pluck_a_char	; Don't choose line 15
+	beq	_pluck_char_get_random	; Don't choose line 15
 
 	leay	pluck_line_counts, PCR
 
 	tst	b,y		; If there are no more characters on this line
-	beq	pluck_a_char	; choose a different one
+	beq	_pluck_char_get_random	; choose a different one
 
 	dec	b,y		; There'll be one less character now
 
@@ -803,14 +806,13 @@ _pluck_a_char_find_non_space:
 	cmpa	,-x		; Go backwards until we find a non-space
 	beq	_pluck_a_char_find_non_space
 
-	leau	plucks_data, PCR
-	cmpx	2,u
+	leau	plucks_data, PCR	; This checks whether the found char is
+	cmpx	2,u			; already being plucked
 	beq	_pluck_a_char_find_non_space
 	cmpx	6,u
 	beq	_pluck_a_char_find_non_space
 	cmpx	10,u
 	beq	_pluck_a_char_find_non_space
-
 
 				; X = position of the character we're plucking
 	ldb	,x		; B = the character
@@ -823,10 +825,10 @@ _pluck_a_char_find_non_space:
 	tsta
 	beq	_pluck_a_char_impossible
 
-	puls	b,y		; X is the slot
-				; B is the character
+	puls	b,y		; B is the character
+				; X is the slot
 				; Y is the screen position
-	lda	#1
+	lda	#PLUCK_PHASE_TURN_WHITE		; This is our new phase
 	sta	,x+		; Store our new phase
 	stb	,x+		; the character
 	sty	,x		; And where it is
@@ -838,18 +840,15 @@ _pluck_a_char_find_non_space:
 
 ; Now play the pluck sound
 
-	ldx	#pluck_sound	; playing the sound
-	ldy	#pluck_sound_end
+	ldx	#pluck_sound	; interrupts and everything else
+	ldy	#pluck_sound_end ; pause while we're doing this
 	lda	#1
 	bsr	play_sound	; Play the pluck noise
 
 	rts
 
 _pluck_a_char_impossible:
-	bra	_pluck_a_char_impossible
-
-_pluck_a_char_no_more_chars:
-	rts
+	bra	_pluck_a_char_impossible	; Should never get here
 
 **********************************************************
 * Returns a random-ish number from 0...65535

@@ -117,10 +117,11 @@ pluck_loop:
 	bne	skip_pluck			; If the user wants to skip,
 						; go here
 
-; TODO: REVIEW FROM HERE DOWN
 	lbsr	pluck_check_empty_screen	; Is the screen empty?
 	tsta
 	bne	pluck_finished			; Yes, we are finished
+
+; TODO: REVIEW FROM HERE DOWN
 
 	lbsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
@@ -587,6 +588,8 @@ _wait_for_vblank_invert_toggle:
 debug_mode_toggle:
 
 	RZB	1
+
+; TODO - REVIEW FROM HERE DOWN
 
 ********************
 * Pluck - Do a frame

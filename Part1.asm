@@ -534,7 +534,7 @@ _pluck_count_chars_end:
 * Inputs: None
 *
 * Output:
-* A = zero     -> a VBlank happened
+* A = 0        -> a VBlank happened
 * A = non-zero -> user is trying to skip
 *********************************************
 
@@ -1265,10 +1265,10 @@ _encase_text_loop:
 	lbsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	_no_skip_encase
+	beq	_encase_no_skip
 	rts			; Simply return a
 
-_no_skip_encase:
+_encase_no_skip:
 _encase_text_more:
 	pshs	b,x
 	bsr	creature_blink
@@ -1409,7 +1409,7 @@ _flash_chars_white_loop:
 
 	cmpa	#65		; Is it from A to
 	blo	_flash_chars_not_flashable
-	cmpa	#127		; Question mark
+	cmpa	#127		; question mark
 	bhi	_flash_chars_not_flashable
 
 	lda	#WHITE_BOX	; a buff box
@@ -1433,7 +1433,7 @@ _flash_chars_not_flashable:
 *****************************************
 
 _restore_chars:
-	ldy	#flash_text_storage
+	leay	flash_text_storage, PCR
 
 _flash_restore_chars:
 	ldd	,y++
@@ -1460,7 +1460,7 @@ flash_text_storage_end:
 flash_screen:
 
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage
+	leay	flash_screen_storage, PCR
 
 _flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
@@ -1478,11 +1478,11 @@ _flash_screen_copy_loop:
 _flash_screen_no_skip:
 	lbsr	wait_for_vblank_and_check_for_skip
 	tsta
-	beq	_flash_screen_skip_2
+	beq	_flash_screen_no_skip_2
 
 	rts
 
-_flash_screen_skip_2:
+_flash_screen_no_skip_2:
 	ldx	#TEXTBUF
 	ldd	#WHITE_BOX << 8 | WHITE_BOX
 
@@ -1492,7 +1492,7 @@ _flash_screen_white_loop:
 	std	,x++
 	std	,x++
 
-	cmpx	#TEXTBUF+TEXTBUFSIZE
+	cmpx	#TEXTBUFEND
 	bne	_flash_screen_white_loop
 
 	lbsr	wait_for_vblank_and_check_for_skip	; If space was pressed
@@ -1514,7 +1514,7 @@ _skip_flash_screen_3:
 
 _skip_flash_screen_4:
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage
+	leay	flash_screen_storage, PCR
 
 _flash_screen_restore_loop:
 	ldd	,y++
@@ -1536,7 +1536,7 @@ _flash_screen_restore_loop:
 
 _flash_screen_skip_5:
 	lbsr	wait_for_vblank_and_check_for_skip
-	rts
+	rts				; Return A
 
 ********************************
 * Drop screen content

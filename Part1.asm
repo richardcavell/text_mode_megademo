@@ -1009,6 +1009,7 @@ _sound_delay_loop:
 ******************
 
 clear_screen:
+
 	ldx	#TEXTBUF
 	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
 
@@ -1063,6 +1064,7 @@ _clear_line_loop:
 ************************************************
 
 text_appears:
+
 	tfr	x,u		; U = string to print
 	pshs	b
 	ldy	#TEXTBUF

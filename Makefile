@@ -81,6 +81,7 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2)
 	$(DECB) copy $(BASIC_PART) -0 -t -r $(DISK),$(BASIC_PART)
 	$(DECB) copy -2 -b -r $(PART1) $(DISK),$(PART1)
 	$(DECB) copy -2 -b -r $(PART2) $(DISK),$(PART2)
+	@$(DECB) free $@
 	@$(ECHO) "... Done"
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)

@@ -266,10 +266,10 @@ skip_title_screen:		; If space was pressed
 loading_screen:
 	lda	#0
 	ldb	#0
-	leax	ascii_art_cat, PCR
+	ldx	#ascii_art_cat
 	lbsr	display_text_graphic
 
-	leax	loading_text, PCR
+	ldx	#loading_text
 	lda	#15
 	ldb	#11
 	lbsr	text_appears		; Ignore the return value
@@ -311,7 +311,7 @@ ascii_art_cat:
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0
 	FCB	255
-ascii_art1_end:
+ascii_art_cat_end:
 
 loading_text:
 	FCV	"LOADING...",0
@@ -1412,7 +1412,7 @@ _flash_chars_white_loop:
 	cmpa	#127		; question mark
 	bhi	_flash_chars_not_flashable
 
-	lda	#WHITE_BOX	; a buff box
+	lda	#WHITE_BOX	; a white (buff) box
 	sta	,x		; store it, and fall through
 
 _flash_chars_not_flashable:

@@ -684,25 +684,25 @@ pluck_find_a_spare_slot:
 	lda	#SIMULTANEOUS_PLUCKS
 	leax	plucks_data, PCR
 
-_pluck_check_slot_loop:
+_pluck_find_loop:
 	deca
 	ldb	,x
 	cmpb	#PLUCK_PHASE_NOTHING
-	beq	_pluck_check_slot_found_empty
+	beq	_pluck_find_found_empty
 
 	tsta
-	beq	_pluck_no_empty_slot
+	beq	_pluck_find_no_empty_slot
 	leax	4,x
-	bra	_pluck_check_slot_loop
+	bra	_pluck_find_loop
 
-_pluck_no_empty_slot:
+_pluck_find_no_empty_slot:
 
 	ldx	#0
 	clra
 
 	rts
 
-_pluck_check_slot_found_empty:
+_pluck_find_found_empty:
 
 	lda	#1		; We return x as well
 

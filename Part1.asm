@@ -1068,6 +1068,7 @@ _clear_screen_clear_char:
 *******************
 
 clear_line:
+
 	ldx	#TEXTBUF
 	ldb	#32
 	mul

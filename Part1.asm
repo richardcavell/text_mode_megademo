@@ -523,17 +523,18 @@ _pluck_count_chars_end:
 
 	rts
 
-******************************************
+*********************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
 *
 * Output:
-* A = zero     return when VBlank happened
+* A = zero     return after a VBlank happened
 * A = non-zero if user is trying to skip
-******************************************
+*********************************************
 
 POLCAT		EQU	$A000
+
 BREAK_KEY	EQU	3
 
 vblank_happened:
@@ -562,6 +563,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	beq	_wait_for_vblank_toggle_is_off
 
 ; If toggle is on, require an F to go forward 1 frame
+
 	cmpa	#'f'
 	beq	_wait_for_vblank_f_pressed
 	cmpa	#'F'

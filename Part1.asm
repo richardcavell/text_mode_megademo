@@ -20,7 +20,7 @@
 * Also, the lower right corner character cycles when the interrupt request
 * service routine operates.
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
@@ -592,8 +592,6 @@ debug_mode_toggle:
 
 	RZB	1
 
-; TODO - REVIEW FROM HERE DOWN
-
 ********************
 * Pluck - Do a frame
 *
@@ -610,7 +608,9 @@ _pluck_do_each_pluck:
 	ldb	1,y
 	ldx	2,y
 
+	pshs	y
 	bsr	_pluck_do_one_pluck
+	puls	y
 
 	leay	4,y
 	cmpy	#plucks_data_end
@@ -668,7 +668,7 @@ _pluck_phase_3:
 	rts
 
 _pluck_phase_3_divisible_by_32:
-	clra			; Phase nothing
+	lda	#PLUCK_PHASE_NOTHING	; clra
 	sta	,y		; Store it
 
 	rts

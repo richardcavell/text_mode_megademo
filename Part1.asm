@@ -117,9 +117,10 @@ pluck_loop:
 	bne	skip_pluck			; If the user wants to skip,
 						; go here
 
+; TODO: REVIEW FROM HERE DOWN
 	lbsr	pluck_check_empty_screen	; Is the screen empty?
 	tsta
-	bne	pluck_finished			; Yes, we could be finished
+	bne	pluck_finished			; Yes, we are finished
 
 	lbsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
@@ -140,8 +141,8 @@ skip_pluck:
 pluck_finished:
 	lda	#15
 	lbsr	clear_line
-				; Screen is empty either way
-_pluck_next_section:
+
+_pluck_next_section:				; Screen is empty either way
 	bra	title_screen
 
 **************
@@ -529,8 +530,8 @@ _pluck_count_chars_end:
 * Inputs: None
 *
 * Output:
-* A = zero     return after a VBlank happened
-* A = non-zero if user is trying to skip
+* A = zero     -> a VBlank happened
+* A = non-zero -> user is trying to skip
 *********************************************
 
 POLCAT		EQU	$A000
@@ -538,9 +539,7 @@ POLCAT		EQU	$A000
 BREAK_KEY	EQU	3
 
 vblank_happened:
-	RZB	1
 
-creature_blinks:
 	RZB	1
 
 wait_for_vblank_and_check_for_skip:
@@ -554,30 +553,25 @@ _wait_for_vblank_and_check_for_skip_loop:
 	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
 	ldb	#DEBUG_MODE
-	beq	_wait_for_vblank_not_debug_mode
+	beq	_wait_for_vblank
 	cmpa	#'t'			; T key
 	beq	_wait_for_vblank_invert_toggle
 	cmpa	#'T'
 	beq	_wait_for_vblank_invert_toggle
 	ldb	debug_mode_toggle, PCR
-	beq	_wait_for_vblank_toggle_is_off
+	beq	_wait_for_vblank
 
 ; If toggle is on, require an F to go forward 1 frame
 
 	cmpa	#'f'
-	beq	_wait_for_vblank_f_pressed
+	beq	_wait_for_vblank
 	cmpa	#'F'
-	beq	_wait_for_vblank_f_pressed
+	beq	_wait_for_vblank
 	bra	_wait_for_vblank_and_check_for_skip_loop
 
-_wait_for_vblank_toggled:
-_wait_for_vblank_f_pressed:
-_wait_for_vblank_toggle_is_off:
-_wait_for_vblank_not_debug_mode:
+_wait_for_vblank:
 	tst	vblank_happened, PCR
 	beq	_wait_for_vblank_and_check_for_skip_loop
-
-	bsr	_wait_for_vblank_creature_blink
 
 	clra		; A VBlank happened
 	rts
@@ -588,71 +582,11 @@ _wait_for_vblank_skip:
 
 _wait_for_vblank_invert_toggle:
 	com	debug_mode_toggle, PCR
-	bra	_wait_for_vblank_toggled
+	bra	_wait_for_vblank
 
 debug_mode_toggle:
 
 	RZB	1
-
-_wait_for_vblank_creature_blink:
-	lda	creature_blinks, PCR
-	bne	_wait_for_vblank_blinks_on
-
-	rts		; creature is not blinking
-
-_wait_for_vblank_blinks_on:
-	ldd	_wait_for_vblank_creature_frames
-	addd	#1
-	std	_wait_for_vblank_creature_frames
-
-	lda	_wait_for_vblank_creature_is_blinking
-	beq	_wait_for_vblank_open_eyes
-
-	ldd	_wait_for_vblank_creature_frames
-	cmpd	#5
-	blo	_wait_for_vblank_take_no_action
-
-; Open the creature's eyes
-
-	clr	_wait_for_vblank_creature_is_blinking, PCR
-	ldd	#0
-	std	_wait_for_vblank_creature_frames, PCR
-
-	ldx	#TEXTBUF+32+1
-	lda	#'O'
-	sta	,x++
-	sta	,x
-
-	rts
-
-_wait_for_vblank_open_eyes:
-
-	ldd	_wait_for_vblank_creature_frames
-	cmpd	#85
-	blo	_wait_for_vblank_take_no_action
-
-; Close the creature's eyes
-
-	lda	#1
-	sta	_wait_for_vblank_creature_is_blinking, PCR
-	ldd	#0
-	std	_wait_for_vblank_creature_frames, PCR
-
-	ldx	#TEXTBUF+32+1
-	lda	#'-' + 64
-	sta	,x++
-	sta	,x
-
-	rts
-
-_wait_for_vblank_take_no_action:
-	rts
-
-_wait_for_vblank_creature_is_blinking:
-	RZB	1
-
-_wait_for_vblank_creature_frames:
-	RZB	2
 
 ********************
 * Pluck - Do a frame
@@ -815,8 +749,6 @@ _pluck_check_data_not_empty:
 pluck_check_empty_lines:
 
 	leay	pluck_line_counts, PCR
-	tsta
-	beq	_pluck_check_empty_line_not_empty
 
 _pluck_check_empty_test_line:
 	tst	,y+
@@ -1150,6 +1082,10 @@ buff_box:
 	rts			; Just return a
 
 _skip:
+	pshs	b,x,u
+	bsr	_wait_for_vblank_creature_blink
+	puls	b,x,u
+
 	tstb			; If non-zero, we are not printing out
 	bne	green_box	; yet
 
@@ -1182,6 +1118,77 @@ store_char:
 	rts			; Return to the main code
 
 test_area:
+	RZB	2
+
+*****************
+* Creature blinks
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+creature_blinks:
+
+	RZB	1
+
+_wait_for_vblank_creature_blink:
+	lda	creature_blinks, PCR
+	bne	_wait_for_vblank_blinks_on
+
+	rts		; creature is not blinking
+
+_wait_for_vblank_blinks_on:
+	ldd	_wait_for_vblank_creature_frames
+	addd	#1
+	std	_wait_for_vblank_creature_frames
+
+	lda	_wait_for_vblank_creature_is_blinking
+	beq	_wait_for_vblank_open_eyes
+
+	ldd	_wait_for_vblank_creature_frames
+	cmpd	#5
+	blo	_wait_for_vblank_take_no_action
+
+; Open the creature's eyes
+
+	clr	_wait_for_vblank_creature_is_blinking, PCR
+	ldd	#0
+	std	_wait_for_vblank_creature_frames, PCR
+
+	ldx	#TEXTBUF+32+1
+	lda	#'O'
+	sta	,x++
+	sta	,x
+
+	rts
+
+_wait_for_vblank_open_eyes:
+
+	ldd	_wait_for_vblank_creature_frames
+	cmpd	#85
+	blo	_wait_for_vblank_take_no_action
+
+; Close the creature's eyes
+
+	lda	#1
+	sta	_wait_for_vblank_creature_is_blinking, PCR
+	ldd	#0
+	std	_wait_for_vblank_creature_frames, PCR
+
+	ldx	#TEXTBUF+32+1
+	lda	#'-' + 64
+	sta	,x++
+	sta	,x
+
+	rts
+
+_wait_for_vblank_take_no_action:
+	rts
+
+_wait_for_vblank_creature_is_blinking:
+	RZB	1
+
+_wait_for_vblank_creature_frames:
 	RZB	2
 
 *************************************
@@ -1220,6 +1227,10 @@ _encase_text_loop:
 
 _no_skip_encase:
 _encase_text_more:
+	pshs	b,x
+	bsr	_wait_for_vblank_creature_blink
+	puls	b,x
+
 	lda	#$60		; Green box (space)
 
 	cmpa	,x		; If x points to a green box...

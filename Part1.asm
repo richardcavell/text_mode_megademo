@@ -137,7 +137,7 @@ _pluck_do_a_frame:
 
 _pluck_skip:
 
-	lbsr	clear_screen
+	jsr	clear_screen
 	bra	_pluck_next_section
 
 _pluck_finished:
@@ -1053,14 +1053,14 @@ clear_screen:
 	ldx	#TEXTBUF
 	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
 
-_clear_screen_clear_char:
+_clear_screen_loop:
 	std	,x++			; Might as well do 8 bytes at a time
 	std	,x++
 	std	,x++
 	std	,x++
 
 	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
-	bne	_clear_screen_clear_char
+	bne	_clear_screen_loop
 	rts
 
 *******************
@@ -1122,7 +1122,7 @@ _text_appears_buff_box:
 	sta	,x		; Put it on the screen
 
 	pshs	b,x,u
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x,u
 	tsta			; Has the user chosen to skip?
 	beq	_text_appears_keep_going
@@ -1164,10 +1164,6 @@ _text_appears_store_char:
 	clra			; Space was not pressed
 	rts			; Return to the main code
 
-test_area:
-
-	RZB	2
-
 *****************
 * Creature blinks
 *
@@ -1205,8 +1201,8 @@ _creature_blink_blinks_on:
 
 	ldx	#TEXTBUF+32+1
 	lda	#'O'
-	sta	,x++
 	sta	,x
+	sta	2,x
 
 	rts
 
@@ -1225,8 +1221,8 @@ _creature_blink_open_eyes:
 
 	ldx	#TEXTBUF+32+1
 	lda	#'-' + 64
-	sta	,x++
 	sta	,x
+	sta	2,x
 
 _creature_blink_take_no_action:
 	rts
@@ -1265,7 +1261,7 @@ encase_text:
 
 _encase_text_loop:
 	pshs	b,x
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
 	beq	_encase_no_skip
@@ -1322,7 +1318,7 @@ _encase_are_we_done:
 	tfr	y,d
 	bne	_encase_text_loop
 
-	lbsr	wait_for_vblank_and_check_for_skip	; The final showing
+	jsr	wait_for_vblank_and_check_for_skip	; The final showing
 	rts			; we are finished. Return a
 
 _encase_right:
@@ -1332,7 +1328,7 @@ _encase_right:
 	tfr	y,d
 	bne	_encase_text_loop	;   by 32, then
 
-	lbsr	wait_for_vblank_and_check_for_skip	; The final showing
+	jsr	wait_for_vblank_and_check_for_skip	; The final showing
 	rts			; we are finished. Return a
 
 **************************************
@@ -1372,7 +1368,7 @@ _flash_copy_line:
 _flash_chars_loop:
 	pshs	b,x
 	bsr	_flash_chars_white
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
 	beq	_skip_flash_chars
@@ -1381,7 +1377,7 @@ _flash_chars_loop:
 _skip_flash_chars:
 	pshs	b,x
 	bsr	_restore_chars
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
 	beq	_skip_flash_chars_2
@@ -1472,14 +1468,14 @@ _flash_screen_copy_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	blo	_flash_screen_copy_loop
 
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	_flash_screen_no_skip
 
 	rts
 
 _flash_screen_no_skip:
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	_flash_screen_no_skip_2
 
@@ -1498,19 +1494,19 @@ _flash_screen_white_loop:
 	cmpx	#TEXTBUFEND
 	bne	_flash_screen_white_loop
 
-	lbsr	wait_for_vblank_and_check_for_skip	; If space was pressed
+	jsr	wait_for_vblank_and_check_for_skip	; If space was pressed
 	tsta
 	beq	_skip_flash_screen_2
 	rts				; return to caller
 
 _skip_flash_screen_2:
-	lbsr	wait_for_vblank_and_check_for_skip	; If space was pressed
+	jsr	wait_for_vblank_and_check_for_skip	; If space was pressed
 	tsta
 	beq	_skip_flash_screen_3
 	rts				; return to caller
 
 _skip_flash_screen_3:
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	_skip_flash_screen_4
 	rts
@@ -1532,13 +1528,13 @@ _flash_screen_restore_loop:
 	cmpx	#TEXTBUF+TEXTBUFSIZE
 	bne	_flash_screen_restore_loop
 
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	beq	_flash_screen_skip_5
 	rts
 
 _flash_screen_skip_5:
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	rts				; Return A
 
 ********************************
@@ -1585,9 +1581,9 @@ _drop_each_line:
 	bsr	_drop_line		; Drop the top line
 	puls	a
 
-	lbsr	clear_line		; Clear the top line
+	jsr	clear_line		; Clear the top line
 
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	rts
 
 _drop_line:

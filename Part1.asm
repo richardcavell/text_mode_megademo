@@ -1349,7 +1349,7 @@ flash_text_white:
 	ldx	#TEXTBUF
 	leax	d,x		; X = starting position
 
-	leay	flash_text_storage, PCR
+	ldy	#flash_text_storage
 
 _flash_copy_line:
 	ldd	,x++		; Save the whole line
@@ -1432,7 +1432,7 @@ _flash_chars_not_flashable:
 *****************************************
 
 _restore_chars:
-	leay	flash_text_storage, PCR
+	ldy	#flash_text_storage
 
 _flash_restore_chars:
 	ldd	,y++
@@ -1459,7 +1459,7 @@ flash_text_storage_end:
 flash_screen:
 
 	ldx	#TEXTBUF
-	leay	flash_screen_storage, PCR
+	ldy	#flash_screen_storage
 
 _flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
@@ -1513,7 +1513,7 @@ _skip_flash_screen_3:
 
 _skip_flash_screen_4:
 	ldx	#TEXTBUF
-	leay	flash_screen_storage, PCR
+	ldy	#flash_screen_storage
 
 _flash_screen_restore_loop:
 	ldd	,y++

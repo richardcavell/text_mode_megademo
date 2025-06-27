@@ -66,18 +66,11 @@ main(int argc, char *argv[])
 
 /*		f = round(f);		This is C99 */
 
-		if (f > 0)
-			f += 0.5;	/* This will cause round to nearest */
+		/* Round to nearest */
+		if (f >= 0)
+			j = (int) (f + 0.5);
 		else
-			f -= 0.5;
-
-		if (f >= 0)	/* If positive, then simply assign the value */
-			 j = (int) f;
-		else	/* Make sure that we round to nearest */
-		{
-			int k = (int) -f;
-			j = -k;
-		}
+			j = (int) -(-f + 0.5);
 
 		ret = fprintf(fp, "%s%i%s%3i%s",
 				  "\tFDB\t",

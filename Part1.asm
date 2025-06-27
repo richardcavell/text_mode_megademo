@@ -876,18 +876,12 @@ _pluck_a_char_impossible:
 
 wait_frames:
 	pshs	a
-	lbsr	wait_for_vblank_and_check_for_skip
-	tsta
+	jsr	wait_for_vblank_and_check_for_skip
 	puls	a
-	bne	_wait_frames_skip
 
 	deca
 	bne	wait_frames
 
-	clra	; and fallthrough
-
-_wait_frames_skip:
-	lda	#1
 	rts
 
 **********************************************************
@@ -911,7 +905,7 @@ SEED:
 
 get_random:
 
-	ldd	SEED, PCR
+	ldd	SEED
 	mul
 	addd	#3037
 	std	SEED
@@ -1039,19 +1033,18 @@ _play_sound_more:
 
 	tfr	a,b
 
-_sound_delay_loop:
+_play_sound_delay_loop:
 	tstb
 	beq	_play_sound		; Have we completed the delay?
 
 	decb				; If not, then wait some more
 
-	bra	_sound_delay_loop
+	bra	_play_sound_delay_loop
 
 ******************
 * Clear the screen
 *
 * Inputs: None
-*
 * Outputs: None
 ******************
 
@@ -1681,12 +1674,12 @@ _display_text_graphic_finished:
 
 uninstall_irq_service_routine:
 
-	lbsr	switch_off_irq
+	jsr	switch_off_irq
 
-	ldy	decb_irq_service_routine, PCR
+	ldy	#decb_irq_service_routine
 	sty	IRQ_HANDLER
 
-	lbsr	switch_on_irq
+	jsr	switch_on_irq
 
 	rts
 

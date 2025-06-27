@@ -485,7 +485,7 @@ turn_6bit_audio_on:
 
 display_message:
 
-	ldb	#32
+	ldb	#COLS_PER_LINE
 	mul
 	ldy	#TEXTBUF
 	leay	d,y	; Y = starting point on the screen
@@ -1076,7 +1076,7 @@ _clear_screen_loop:
 clear_line:
 
 	ldx	#TEXTBUF
-	ldb	#32
+	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
 
@@ -1112,7 +1112,7 @@ text_appears:
 	tfr	x,u		; U = string to print
 	pshs	b
 	ldy	#TEXTBUF
-	ldb	#32
+	ldb	#COLS_PER_LINE
 	mul
 	leax	d,y		; X is where to start the animation
 	puls	b		; B is the character position to start
@@ -1200,7 +1200,7 @@ _creature_blink_blinks_on:
 	ldd	#0
 	std	_creature_blink_frames
 
-	ldx	#TEXTBUF+32+1
+	ldx	#TEXTBUF+COLS_PER_LINE+1
 	lda	#'O'
 	sta	,x
 	sta	2,x
@@ -1220,7 +1220,7 @@ _creature_blink_open_eyes:
 	ldd	#0
 	std	_creature_blink_frames
 
-	ldx	#TEXTBUF+32+1
+	ldx	#TEXTBUF+COLS_PER_LINE+1
 	lda	#'-' + 64
 	sta	,x
 	sta	2,x
@@ -1248,7 +1248,7 @@ encase_text:
 
 	tfr	d,y		; Y (lower 8 bits) is direction
 
-	ldb	#32
+	ldb	#COLS_PER_LINE
 	mul
 	ldx	#TEXTBUF
 	leax	d,x		; X is our starting position
@@ -1296,8 +1296,8 @@ _encase_finished_storing:
 
 _encase_char_found:
 	lda	#125		; This is '='
-	sta	-32,x		; add '=' above
-	sta	32,x		;   and below
+	sta	-COLS_PER_LINE,x	; add '=' above
+	sta	+COLS_PER_LINE,x	;   and below
 
 	tstb
 	bne	_encase_chars_found_backwards
@@ -1345,7 +1345,7 @@ flash_text_white:
 	decb			; We test at the bottom
 	pshs	b
 
-	ldb	#32
+	ldb	#COLS_PER_LINE
 	mul
 	ldx	#TEXTBUF
 	leax	d,x		; X = starting position
@@ -1362,7 +1362,7 @@ _flash_copy_line:
 				; Now the line has been saved,
 				; Turn all text to white
 
-	leax	-32,x		; Back to the start of the line
+	leax	-COLS_PER_LINE,x	; Back to the start of the line
 
 	puls	b
 
@@ -1447,7 +1447,7 @@ _flash_restore_chars:
 	rts
 
 flash_text_storage:
-	RZB	32
+	RZB	COLS_PER_LINE
 flash_text_storage_end:
 
 **************************
@@ -1460,13 +1460,19 @@ flash_text_storage_end:
 flash_screen:
 
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage
+	ldy	#flash_screen_storage	; We overwrite the sound data
 
 _flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
 	std	,y++			; on the screen
+	ldd	,x++
+	std	,y++
+	ldd	,x++
+	std	,y++
+	ldd	,x++
+	std	,y++
 
-	cmpx	#TEXTBUF+TEXTBUFSIZE
+	cmpx	#TEXTBUFEND
 	blo	_flash_screen_copy_loop
 
 	jsr	wait_for_vblank_and_check_for_skip
@@ -1526,7 +1532,7 @@ _flash_screen_restore_loop:
 	ldd	,y++
 	std	,x++
 
-	cmpx	#TEXTBUF+TEXTBUFSIZE
+	cmpx	#TEXTBUFEND
 	bne	_flash_screen_restore_loop
 
 	jsr	wait_for_vblank_and_check_for_skip
@@ -1555,7 +1561,7 @@ drop_screen_content:
 
 	inca				; Next time, start a line lower
 
-	cmpa	#16			; until the starting position is off
+	cmpa	#TEXT_LINES		; until the starting position is off
 					; the screen
 	blo	drop_screen_content
 
@@ -1588,7 +1594,7 @@ _drop_each_line:
 	rts
 
 _drop_line:
-	cmpa	#15
+	cmpa	#TEXTLINES-1
 	blo	_do_drop
 
 	clra
@@ -1596,16 +1602,16 @@ _drop_line:
 
 
 _do_drop:
-	ldb	#32
+	ldb	#COLS_PER_LINE
 	mul
 	ldx	#TEXTBUF
 	leax	d,x			; X = pointer to a line of the screen
 
-	ldb	#32
+	ldb	#COLS_PER_LINE
 
 _move_line_down:
 	lda	,x			; Retrieve the character
-	sta	32,x			; and store it one line below
+	sta	COLS_PER_LINE,x		; and store it one line below
 	leax	1,x
 
 	decb
@@ -1632,7 +1638,7 @@ display_text_graphic:
 	tfr	x,y	; Y = graphic data
 
 	tfr	d,u	; Save B
-	ldb	#32
+	ldb	#COLS_PER_LINE
 	mul
 	ldx	#TEXTBUF
 	leax	d,x
@@ -1651,7 +1657,7 @@ _text_graphic_new_line:
 	tfr	d,u		; Save register B
         tfr     x,d
         andb    #0b11100000
-        addd    #32
+        addd    #COLS_PER_LINE
         tfr     d,x
 	tfr	u,d		; Get B back
 	leax	b,x

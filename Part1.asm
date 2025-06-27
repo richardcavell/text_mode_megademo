@@ -802,7 +802,7 @@ _pluck_char_get_random:
 	cmpb	#PLUCK_LINES
 	beq	_pluck_char_get_random	; Don't choose line 15
 
-	leay	pluck_line_counts, PCR
+	ldy	#pluck_line_counts
 
 	tst	b,y		; If there are no more characters on this line
 	beq	_pluck_char_get_random	; choose a different one
@@ -838,7 +838,7 @@ _pluck_a_char_check:
 
 	tfr	x,y
 	pshs	b,y
-	lbsr	pluck_find_a_spare_slot
+	jsr	pluck_find_a_spare_slot
 	tsta
 	beq	_pluck_a_char_impossible
 

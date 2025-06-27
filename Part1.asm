@@ -664,10 +664,10 @@ _pluck_phase_3:
 	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
 
-	pshs	a,b,x,y
+	pshs	b,x,y
 	tfr	x,d
 	andb	#0b00011111	; Is X divisible by 32?
-	puls	a,b,x,y		; Does not affect condition codes
+	puls	b,x,y		; Does not affect condition codes
 	beq	_pluck_phase_3_ended
 
 	stb	,x		; Draw it in the next column
@@ -694,7 +694,7 @@ _pluck_phase_3_ended:		; Character has gone off the right side
 pluck_find_a_spare_slot:
 
 	lda	#SIMULTANEOUS_PLUCKS
-	leax	plucks_data, PCR
+	ldx	#plucks_data
 
 _pluck_find_loop:
 	ldb	,x
@@ -715,7 +715,7 @@ _pluck_find_no_empty_slot:
 
 _pluck_find_found_empty:
 
-	lda	#1		; We return x as well
+	lda	#1		; We return X as well
 
 	rts
 
@@ -742,9 +742,11 @@ _pluck_check_empty_not_empty:
 	clra				; Screen is not clear
 	rts
 
+************************
+
 pluck_check_empty_slots:
 
-	leax	plucks_data, PCR
+	ldx	#plucks_data
 
 _pluck_check_data:
 	lda	,x
@@ -760,9 +762,11 @@ _pluck_check_data_not_empty:
 	clra				; Screen is not clear
 	rts
 
+************************
+
 pluck_check_empty_lines:
 
-	leay	pluck_line_counts, PCR
+	ldy	#pluck_line_counts
 
 _pluck_check_empty_test_line:
 	tst	,y+

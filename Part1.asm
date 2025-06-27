@@ -1097,13 +1097,13 @@ _clear_line_loop:
 * Brings text onto the screen using an animation
 *
 * Inputs:
-* A = line number (0 to 15)
-* B = character position (0 to 31)
-* X = string to print
+* A = Line number (0 to 15)
+* B = Character position (0 to 31)
+* X = String to print
 *
 * Outputs:
 * A = 0 Everything is okay
-* A = non-zero Space was pressed
+* A = Non-zero Space was pressed
 ************************************************
 
 text_appears:
@@ -1155,10 +1155,10 @@ _text_appears_store_char:
 	sta	,x+		; Put the relevant character (green box or char) into
 				;   the relevant position
 
-	stx	test_area
-	lda	#0b00011111
-	anda	test_area+1	; Is the character position divisible by 32?
-
+	pshs	d
+	tfr	x,d
+	andb	#0b00011111	; Is the character position divisible by 32?
+	puls	d
 	bne	_text_appears_buff_box	; If no, then go back and do it again
 
 	clra			; Space was not pressed
@@ -1180,7 +1180,7 @@ creature_blinks:
 	RZB	1
 
 creature_blink:
-	lda	creature_blinks, PCR
+	lda	creature_blinks
 	bne	_creature_blink_blinks_on
 
 	rts		; creature is not blinking
@@ -1199,9 +1199,9 @@ _creature_blink_blinks_on:
 
 ; Open the creature's eyes
 
-	clr	_creature_blink_is_blinking, PCR
+	clr	_creature_blink_is_blinking
 	ldd	#0
-	std	_creature_blink_frames, PCR
+	std	_creature_blink_frames
 
 	ldx	#TEXTBUF+32+1
 	lda	#'O'
@@ -1219,16 +1219,14 @@ _creature_blink_open_eyes:
 ; Close the creature's eyes
 
 	lda	#1
-	sta	_creature_blink_is_blinking, PCR
+	sta	_creature_blink_is_blinking
 	ldd	#0
-	std	_creature_blink_frames, PCR
+	std	_creature_blink_frames
 
 	ldx	#TEXTBUF+32+1
 	lda	#'-' + 64
 	sta	,x++
 	sta	,x
-
-	rts
 
 _creature_blink_take_no_action:
 	rts

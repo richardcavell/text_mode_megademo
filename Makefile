@@ -54,8 +54,8 @@ ECHO		=	echo
 
 .DEFAULT: all
 
-.PHONY:	all clean disk help info license
-.PHONY: mame mame-debug version xroar xroar-coco3 xroar-ntsc
+.PHONY:	all clean disk help info license version
+.PHONY: mame mame-debug xroar xroar-coco3 xroar-ntsc
 
 all:	$(DISK) $(PART1) $(PART2)
 all:	$(SIN_TABLE) $(SIN_GENERATOR)

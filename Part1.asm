@@ -436,6 +436,9 @@ turn_off_disk_motor:
 
 *********************
 * Turn 6-bit audio on
+*
+* Inputs: None
+* Outputs: None
 *********************
 
 AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
@@ -481,17 +484,16 @@ turn_6bit_audio_on:
 
 display_message:
 
-	tfr	x,y	; Y = message
 	ldb	#32
 	mul
-	ldx	#TEXTBUF
-	leax	d,x	; X = starting point on the screen
+	ldy	#TEXTBUF
+	leay	d,y	; Y = starting point on the screen
 
 _display_message_loop:
-	lda	,y+
+	lda	,x+
 	beq	_display_message_finished
-	sta	,x+
-	cmpx	#TEXTBUFEND
+	sta	,y+
+	cmpy	#TEXTBUFEND
 	blo	_display_message_loop
 
 _display_message_finished:
@@ -508,7 +510,7 @@ _display_message_finished:
 pluck_count_chars_per_line:
 
 	ldx	#TEXTBUF
-	leay	pluck_line_counts, PCR	; There are 15 of these
+	ldy	#pluck_line_counts	; There are 15 of these
 
 _pluck_count_chars_on_one_line:
 	ldb	#COLS_PER_LINE		; There are 32 characters per line
@@ -516,7 +518,7 @@ _pluck_count_chars_on_one_line:
 _pluck_test_char:
 	lda	,x+
 	cmpa	#GREEN_BOX		; Is it an empty green box?
-	beq	_pluck_space_char	; Yes
+	beq	_pluck_space_char	; Yes, so don't count it
 
 	inc	,y			; No, so count it
 
@@ -524,7 +526,7 @@ _pluck_space_char:
 	decb
 	bne	_pluck_test_char
 
-	cmpx	#TEXTBUF+PLUCK_LINES*COLS_PER_LINE
+	cmpx	#TEXTBUF+(PLUCK_LINES*COLS_PER_LINE)
 	beq	_pluck_count_chars_end
 
 	leay	1,y			; Start counting the next line
@@ -554,7 +556,7 @@ vblank_happened:
 
 wait_for_vblank_and_check_for_skip:
 
-	clr	vblank_happened, PCR
+	clr	vblank_happened
 
 _wait_for_vblank_and_check_for_skip_loop:
 	jsr	[POLCAT]
@@ -568,7 +570,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	beq	_wait_for_vblank_invert_toggle
 	cmpa	#'T'
 	beq	_wait_for_vblank_invert_toggle
-	ldb	debug_mode_toggle, PCR
+	ldb	debug_mode_toggle
 	beq	_wait_for_vblank
 
 ; If toggle is on, require an F to go forward 1 frame
@@ -580,7 +582,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	bra	_wait_for_vblank_and_check_for_skip_loop
 
 _wait_for_vblank:
-	tst	vblank_happened, PCR
+	tst	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
 
 	clra		; A VBlank happened
@@ -591,7 +593,7 @@ _wait_for_vblank_skip:
 	rts
 
 _wait_for_vblank_invert_toggle:
-	com	debug_mode_toggle, PCR
+	com	debug_mode_toggle
 	bra	_wait_for_vblank
 
 debug_mode_toggle:
@@ -607,7 +609,7 @@ debug_mode_toggle:
 
 pluck_do_frame:
 
-	leay	plucks_data, PCR
+	ldy	#plucks_data
 
 _pluck_do_each_pluck:
 	lda	,y

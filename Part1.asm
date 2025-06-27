@@ -10,17 +10,17 @@
 *
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
-* Part of this code was written by other authors. You can see it here:
+* Part of this code was written by a number of authors. You can see it here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner.
-* The ASCII art is by Microsoft Copilot
+* The ASCII art is by Microsoft Copilot, and from asciiart.eu
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
 * Also, the lower right corner character cycles when the interrupt request
 * service routine operates.
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
@@ -31,25 +31,25 @@ DEBUG_MODE	EQU	1
 * Zero the DP register
 **********************
 
-	lbsr	zero_dp_register
+	jsr	zero_dp_register
 
 *************************
 * Install our IRQ handler
 *************************
 
-	lbsr	install_irq_service_routine
+	jsr	install_irq_service_routine
 
 *************************
 * Turn off the disk motor
 *************************
 
-	lbsr	turn_off_disk_motor
+	jsr	turn_off_disk_motor
 
 ******************************
 * Turn on 6-bit audio circuits
 ******************************
 
-	lbsr	turn_6bit_audio_on
+	jsr	turn_6bit_audio_on
 
 *************************
 * Text buffer information
@@ -67,8 +67,8 @@ TEXT_LINES	EQU	16
 *************************************************************
 
 	lda	#TEXT_LINES-1		; Bottom line of the screen
-	leax	skip_message, PCR
-	lbsr	display_message
+	ldx	#skip_message
+	jsr	display_message
 	bra	pluck
 
 skip_message:
@@ -91,14 +91,17 @@ WHITE_BOX	EQU	($cf)
 
 ; First, count the number of characters on each line of the screen
 
-	lbsr	pluck_count_chars_per_line
+	jsr	pluck_count_chars_per_line
 	bra	pluck_loop
 
 pluck_line_counts:
 	RZB PLUCK_LINES			; 15 zeroes
 pluck_line_counts_end:
 
-; Structure is phase (1 byte), character (1 byte), position (2 bytes)
+; The structure of an entry in plucks_data is:
+; phase (1 byte),
+; character (1 byte),
+; position (2 bytes)
 
 SIMULTANEOUS_PLUCKS	EQU	3
 
@@ -112,38 +115,38 @@ plucks_data:
 plucks_data_end:
 
 pluck_loop:
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	bne	skip_pluck			; If the user wants to skip,
+	bne	_pluck_skip			; If the user wants to skip,
 						; go here
 
-	lbsr	pluck_check_empty_screen	; Is the screen empty?
+	jsr	pluck_check_empty_screen	; Is the screen empty?
 	tsta
-	bne	pluck_finished			; Yes, we are finished
+	bne	_pluck_finished			; Yes, we are finished
 
-	lbsr	pluck_find_a_spare_slot		; Is there a spare slot?
+	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	_pluck_do_a_frame		; No, just keep processing
 
-	lbsr	pluck_a_char			; Yes, pluck a character
+	jsr	pluck_a_char			; Yes, pluck a character
 
 _pluck_do_a_frame:
-	lbsr	pluck_do_frame			; Do one frame
+	jsr	pluck_do_frame			; Do one frame
 
 	bra	pluck_loop
 
-skip_pluck:
+_pluck_skip:
 
 	lbsr	clear_screen
 	bra	_pluck_next_section
 
-pluck_finished:
+_pluck_finished:
 	lda	#15
-	lbsr	clear_line
+	jsr	clear_line			; and fallthrough
 
 _pluck_next_section:				; Screen is empty either way
 	lda	#25
-	lbsr	wait_frames			; Wait 25 frames
+	jsr	wait_frames			; Wait 25 frames
 	bra	title_screen
 
 **************
@@ -154,11 +157,11 @@ title_screen:
 
 	lda	#0
 	ldb	#0
-	leax	title_screen_graphic, PCR
-	lbsr	display_text_graphic
+	ldx	#title_screen_graphic
+	jsr	display_text_graphic
 
 	lda	#1
-	sta	creature_blinks, PCR		; Set up creature blinks
+	sta	creature_blinks			; Set up creature blinks
 
 	bra	display_text
 
@@ -182,111 +185,112 @@ title_screen_text:
 
 display_text:
 
-	leax	title_screen_text, PCR
+	ldx	#title_screen_text
 
-	lbsr	print_text
+	jsr	print_text
 	tsta
 	bne	skip_title_screen
 
 	ldx	#rjfc_presents_tmd_sound	; Start of sound
 	ldy	#rjfc_presents_tmd_sound_end	; End of sound
 	lda	#8
-	lbsr	play_sound		; Play the sound
+	jsr	play_sound		; Play the sound
 
 	lda	#5
 	ldb	#0
-	lbsr	encase_text		; "Encase" the three text items
+	jsr	encase_text		; "Encase" the three text items
 	tsta
 	bne	skip_title_screen
 
 	lda	#8
 	ldb	#1
-	lbsr	encase_text
+	jsr	encase_text
 	tsta
 	bne	skip_title_screen
 
 	lda	#12
 	ldb	#0
-	lbsr	encase_text
+	jsr	encase_text
 	tsta
 	bne	skip_title_screen
 
 	lda	#5
 	ldb	#3
-	lbsr	flash_text_white
+	jsr	flash_text_white
 	tsta
 	bne	skip_title_screen
 
 	lda	#8
 	ldb	#3
-	lbsr	flash_text_white
+	jsr	flash_text_white
 	tsta
 	bne	skip_title_screen
 
 	lda	#12
 	ldb	#3
-	lbsr	flash_text_white
+	jsr	flash_text_white
 	tsta
 	bne	skip_title_screen
 
-	lbsr	flash_screen
+	jsr	flash_screen
 	tsta
 	bne	skip_title_screen
-	lbsr	flash_screen
+	jsr	flash_screen
 	tsta
 	bne	skip_title_screen
-	lbsr	flash_screen
+	jsr	flash_screen
 	tsta
 	bne	skip_title_screen
 
 * Drop the lines off the bottom end of the screen
 
 	lda	#11
-	lbsr	drop_screen_content
+	jsr	drop_screen_content
 	tsta
 	bne	skip_title_screen
 
 	lda	#7
-	lbsr	drop_screen_content
+	jsr	drop_screen_content
 	tsta
 	bne	skip_title_screen
 
 	lda	#4
-	lbsr	drop_screen_content
+	jsr	drop_screen_content
+
+				; and fallthrough
 
 skip_title_screen:		; If space was pressed
-	clr	creature_blinks, PCR
-	lbsr	clear_screen	; Just clear the screen
+	clr	creature_blinks
+	jsr	clear_screen	; Just clear the screen
 
 	lda	#25
-	lbsr	wait_frames			; Wait 25 frames
+	jsr	wait_frames			; Wait 25 frames
 
-	bra	loading_screen
-
+						; and fallthrough
 loading_screen:
 	lda	#0
 	ldb	#0
 	ldx	#ascii_art_cat
-	lbsr	display_text_graphic
+	jsr	display_text_graphic
 
 	ldx	#loading_text
 	lda	#15
 	ldb	#11
-	lbsr	text_appears		; Ignore the return value
+	jsr	text_appears		; Ignore the return value
 
-	lbsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 					; Display it for one frame
 	tsta
 	bne	_part_1_end
 
 	lda	#15
 	ldb	#3
-	lbsr	flash_text_white	; Ignore the return value
+	jsr	flash_text_white	; Ignore the return value
 
 * This is the end of part 1!
 _part_1_end:
 
-	lbsr	uninstall_irq_service_routine
+	jsr	uninstall_irq_service_routine
 
 	clra
 	rts
@@ -373,10 +377,10 @@ install_irq_service_routine:
 	bsr	switch_off_irq		; Switch off IRQ interrupts for now
 
 	ldy	IRQ_HANDLER		; Load the current vector into y
-	sty	decb_irq_service_routine, PCR	; We will call it at the end
+	sty	decb_irq_service_routine	; We will call it at the end
 						; of our own handler
 
-	leax	irq_service_routine, PCR
+	ldx	#irq_service_routine
 	stx	IRQ_HANDLER		; Our own interrupt service routine
 					; is installed
 
@@ -391,8 +395,9 @@ install_irq_service_routine:
 ***************************************************
 
 irq_service_routine:
+
 	lda	#1
-	sta	vblank_happened, PCR
+	sta	vblank_happened
 
 	lda	#DEBUG_MODE
 	beq	_skip_debug_visual_indication
@@ -400,16 +405,17 @@ irq_service_routine:
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
-	inc	TEXTBUFEND-1
+;	inc	TEXTBUFEND-1
 
 _skip_debug_visual_indication:
 		; In the interests of making our IRQ handler run fast,
 		; the routine assumes that decb_irq_service_routine
 		; has been correctly initialized
 
-	jmp	[decb_irq_service_routine, PCR]
+	jmp	[decb_irq_service_routine]
 
 decb_irq_service_routine:
+
 	RZB	2
 
 *********************

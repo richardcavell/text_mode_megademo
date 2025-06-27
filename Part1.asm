@@ -1137,7 +1137,7 @@ _text_appears_keep_going:
 	bne	_text_appears_green_box	; yet
 
 	lda	,u+		; Get the next character from the string
-	bne	store_char	; And put it on the screen
+	bne	_text_appears_store_char	; And put it on the screen
 
 	leau	-1,u		; It was a zero we retrieved: Repoint U
 				; And fall through to using a green box
@@ -1151,13 +1151,13 @@ _text_appears_green_box:
 _text_appears_skip_decrement:
 	lda	#GREEN_BOX	; Put a green box in A
 
-store_char:
+_text_appears_store_char:
 	sta	,x+		; Put the relevant character (green box or char) into
 				;   the relevant position
 
-	stx	test_area,PCR
+	stx	test_area
 	lda	#0b00011111
-	anda	test_area+1,PCR	; Is the character position divisible by 32?
+	anda	test_area+1	; Is the character position divisible by 32?
 
 	bne	_text_appears_buff_box	; If no, then go back and do it again
 
@@ -1676,7 +1676,7 @@ uninstall_irq_service_routine:
 
 	jsr	switch_off_irq
 
-	ldy	#decb_irq_service_routine
+	ldy	decb_irq_service_routine
 	sty	IRQ_HANDLER
 
 	jsr	switch_on_irq

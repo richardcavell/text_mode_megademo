@@ -249,6 +249,10 @@ move_dot_loop:
 	tsta
 	lbne	skip_dot
 
+	lda	phase
+	cmpa	#9
+	lbeq	dot_end
+
 	ldd	dot_frames		; Add 1 to dot_frames
 	addd	#1
 	std	dot_frames
@@ -300,6 +304,7 @@ phase:
 				; 6 = Changing to 3 asterisks
 				; 7 = Changing to 5 asterisks
 				; 8 = Spinning
+				; 9 = Loading
 
 consider_phase:
 	lda	phase
@@ -317,6 +322,12 @@ consider_phase:
 	lbeq	_phase_5
 	cmpa	#6
 	lbeq	_phase_6
+	cmpa	#7
+	lbeq	_phase_7
+	cmpa	#8
+	lbeq	_phase_8
+	cmpa	#9
+	lbeq	_phase_9
 
 	; Impossible to get here
 	rts
@@ -503,6 +514,8 @@ _phase_5:
 	sta	phase
 	ldd	#0
 	std	dot_frames
+	lda	#7
+	sta	horizontal_angular_speed
 
 _phase_5_return:
 	rts
@@ -533,6 +546,8 @@ _phase_6:
 	std	dot_frames
 	lda	#3
 	sta	vertical_angular_speed
+	lda	#5
+	sta	horizontal_angular_speed
 
 _phase_6_return:
 	rts
@@ -541,21 +556,11 @@ _phase_7:
 	ldd	dot_frames
 	cmpd	#150
 	blo	_phase_7_return
-	lda	horizontal_angle
-	bne	_phase_7_return
-
-	jsr	dot_mouth_open
-
-	lda	#23
-	ldx	#change_message
-	jsr	speech_bubble
 
 	lda	#7
-	ldx	#change_sound
-	ldy	#change_sound_end
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
 	jsr	play_sound
-
-	jsr	dot_mouth_close
 
 	lda	#8
 	sta	phase
@@ -563,11 +568,34 @@ _phase_7:
 	std	dot_frames
 	lda	#1
 	sta	vertical_angular_speed
+	lda	#4
+	sta	horizontal_angular_speed
 
-	lda	#32
+	lda	#3
 	sta	rotation_speed
 
 _phase_7_return:
+	rts
+
+_phase_8:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_8_return
+	ldd	displacement
+	bne	_phase_8_return
+
+	lda	#8
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
+	lda	#9
+	sta	phase
+
+_phase_8_return:
+	rts
+
+_phase_9:
 	rts
 
 **********
@@ -594,6 +622,8 @@ draw_dot:
 	beq	_draw_5_asterisks
 	cmpa	#8
 	beq	_draw_spinning
+	cmpa	#9
+	beq	_draw_loading
 
 	; Should never get here
 	rts
@@ -644,7 +674,7 @@ _draw_smiley:
 
 _draw_3_asterisks:
 	ldd	displacement
-	ldx	#DOT_START-1
+	ldx	#DOT_START
 	leax	d,x
 
 	lda	#'*' + 64
@@ -656,7 +686,7 @@ _draw_3_asterisks:
 
 _draw_5_asterisks:
 	ldd	displacement
-	ldx	#DOT_START-1
+	ldx	#DOT_START
 	leax	d,x
 
 	lda	#'*' + 64
@@ -669,12 +699,26 @@ _draw_5_asterisks:
 	rts
 
 _draw_spinning:
+	ldd	displacement
+	ldx	#DOT_START
+	leax	d,x
+
 	lda	#'*' + 64
 	ldb	rotation_angle
-	ldx	#DOT_START
 
 	jsr	draw_32
 	rts
+
+_draw_loading:
+	lda	#9
+	ldb	#11
+	ldx	#loading_message
+	jsr	display_text_graphic
+	rts
+
+loading_message:
+	FCV	"LOADING..."
+	FCB	0
 
 ************
 * Clear area
@@ -697,6 +741,8 @@ clear_area_loop:
 ; If any part of the dot routine has been skipped, we end up here
 skip_dot:
 	bsr	clear_screen
+
+dot_end:
 
 ; End of part 2!
 end:

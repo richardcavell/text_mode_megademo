@@ -579,10 +579,8 @@ _phase_7_return:
 
 _phase_8:
 	ldd	dot_frames
-	cmpd	#150
+	cmpd	#200
 	blo	_phase_8_return
-	ldd	displacement
-	bne	_phase_8_return
 
 	lda	#8
 	ldx	#finger_snap_sound
@@ -719,6 +717,7 @@ _draw_loading:
 loading_message:
 	FCV	"LOADING..."
 	FCB	0
+	FCV	255
 
 ************
 * Clear area

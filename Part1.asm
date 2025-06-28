@@ -16,6 +16,12 @@
 * The ASCII art of the small creature is by Microsoft Copilot,
 * and the big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
+* The sound Pluck.raw is from Modelm.ogg from Wikimedia Commons, here:
+* https://commons.wikimedia.org/wiki/File:Modelm.ogg
+* by Cpuwhiz13
+* RJFC Presents Text Mode Demo was created by this website:
+* https://speechsynthesis.online/
+* The voice is "Ryan"
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.

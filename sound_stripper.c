@@ -1,7 +1,7 @@
 /* sound_stripper.c
  * by Richard Cavell
  * June 2025
- * This strips the lower 2 bits off the 8-bit raw audio bytes
+ * This sets the lower 2 bits of the 8-bit raw audio bytes to zero
  */
 
 #include <errno.h>

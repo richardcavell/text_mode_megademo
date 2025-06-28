@@ -30,7 +30,8 @@ main(int argc, char *argv[])
 
 	if (argc != 2)
 	{
-		(void) fprintf(stderr, "%s%s%s", "Usage: ", argv[0],
+		(void) fprintf(stderr, "%s%s%s", "Usage: ",
+					 argv[0],
 					 " outputfile\n");
 		exit(EXIT_FAILURE);
 	}

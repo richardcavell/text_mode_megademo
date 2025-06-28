@@ -720,67 +720,54 @@ wait_frames:
 ***********************
 
 display_scroll_texts:
+
 	pshs	x
 	bsr	wait_for_vblank_and_check_for_skip
 	puls	x
 	tsta
-	bne	_skip_section
+	bne	_display_scroll_skip
 	pshs	x
 	bsr	_display_scroll_texts_all_scrollers
 	puls	x
 
 	bra	display_scroll_texts
 
-_skip_section:
+_display_scroll_skip:
 	lda	#1
 	rts
 
 _display_scroll_texts_all_scrollers:
 
-	ldx	#scroller_0
-	bsr	display_scroll_text
-	ldx	#scroller_1
-	bsr	display_scroll_text
-	ldx	#scroller_2
-	bsr	display_scroll_text
-	ldx	#scroller_3
-	bsr	display_scroll_text
-	ldx	#scroller_4
-	bsr	display_scroll_text
-	ldx	#scroller_9
-	bsr	display_scroll_text
-	ldx	#scroller_10
-	bsr	display_scroll_text
-	ldx	#scroller_11
-	bsr	display_scroll_text
-	ldx	#scroller_12
-	bsr	display_scroll_text
-	ldx	#scroller_13
-	bsr	display_scroll_text
-	ldx	#scroller_14
-	bsr	display_scroll_text
-	ldx	#scroller_15
-	bsr	display_scroll_text
+	tfr	x,y
 
-	rts
+_display_scroll_texts_loop:
+	pshs	y
+	ldx	,y
+	beq	_display_scroll_texts_finished
 
-_display_scroll_texts_end:
+	bsr	display_scroll_text
+	puls	y
+	leay	2,y
+	bra	_display_scroll_texts_loop
+
+_display_scroll_texts_finished:
+
 	rts
 
 bird_scrollers:
 
-	FDB	scroller_0
-	FDB	scroller_1
-	FDB	scroller_2
-	FDB	scroller_3
-	FDB	scroller_4
-	FDB	scroller_9
-	FDB	scroller_10
-	FDB	scroller_11
-	FDB	scroller_12
-	FDB	scroller_13
-	FDB	scroller_14
-	FDB	scroller_15
+	FDB	#scroller_0
+	FDB	#scroller_1
+	FDB	#scroller_2
+	FDB	#scroller_3
+	FDB	#scroller_4
+	FDB	#scroller_9
+	FDB	#scroller_10
+	FDB	#scroller_11
+	FDB	#scroller_12
+	FDB	#scroller_13
+	FDB	#scroller_14
+	FDB	#scroller_15
 	FDB	0
 
 **********************
@@ -822,7 +809,7 @@ _display_scroll_needs_update:
 	sty	4,x
 
 	ldu	6,x	; U is where on the screen to start
-	lda	#32	; There are 32 columns per line
+	lda	#COLS_PER_LINE	; There are 32 columns per line
 
 _display_scroll_text_loop_2:
 

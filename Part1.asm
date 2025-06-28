@@ -14,12 +14,13 @@
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner.
 * The ASCII art of the small creature is by Microsoft Copilot,
-* and the big cat was done by Blazej Kozlowski at asciiart.eu
+* and the big cat was done by Blazej Kozlowski at
+* https://www.asciiart.eu/animals/birds-land
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
-* Also, the lower right corner character cycles when the interrupt request
-* service routine operates.
+* Also, you can make the lower right corner character cycle when
+* the interrupt request service routine operates.
 
 DEBUG_MODE	EQU	0
 

@@ -8,35 +8,59 @@
 * This code is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* Some of this content was made by other people
+* ASCII art was made by an unknown person, Joan Stark, Normand Veilleux
+* and Matzec, all from https://www.asciiart.eu/animals/birds-land
+* ASCII art also from Microsoft Copilot
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame
 
-DEBUG_MODE	EQU	1
+* DEBUG_MODE means you press T to toggle frame-by-frame mode.
+* In frame-by-frame mode, you press F to see the next frame.
+* Also, you can make the lower right corner character cycle when
+* the interrupt request service routine operates.
+
+DEBUG_MODE      EQU     0
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
 		ORG $1800
 
+**********************
+* Zero the DP register
+**********************
+
+        jsr     zero_dp_register
+
 *************************
 * Install our IRQ handler
 *************************
 
-	lbsr	install_irq_service_routine
+	jsr	install_irq_service_routine
 
 *************************
 * Turn off the disk motor
 *************************
 
-	lbsr	turn_off_disk_motor
+	jsr	turn_off_disk_motor
 
 ******************
 * Clear the screen
 ******************
 
-	lbsr	clear_screen
+	jsr	clear_screen
+
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF         EQU     $400            ; We're not double-buffering
+TEXTBUFSIZE     EQU     $200            ; so there's only one text screen
+TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE   EQU     32
+TEXT_LINES      EQU     16
 
 ***********************
 * Output a bird graphic
@@ -71,9 +95,6 @@ scroll_text:
 * Create a dot
 **************
 create_dot:
-
-TEXTBUF		EQU	$400		; We're not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
 
 DOT_START	EQU	(TEXTBUF+8*32+16)
 
@@ -491,36 +512,46 @@ loop:	bra	loop
 
 * Assume that no registers are preserved
 
-*********************************
-* Switch IRQ interrupts on or off
-*********************************
+**********************
+* Zero the DP register
+**********************
+
+zero_dp_register:
+
+        clra
+        tfr     a, dp
+
+        rts
+
+***************************
+* Switch IRQ interrupts off
+*
+* Inputs: None
+* Outputs: None
+***************************
 
 switch_off_irq:
 
 	orcc	#0b00010000	; Switch off IRQ interrupts
 	rts
 
+**************************
+* Switch IRQ interrupts on
+*
+* Inputs: None
+* Outputs: None
+**************************
+
 switch_on_irq:
 
 	andcc	#0b11101111	; Switch IRQ interrupts back on
 	rts
 
-******************************************
-* Switch IRQ and FIRQ interrupts on or off
-******************************************
-
-switch_off_irq_and_firq:
-
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-	rts
-
-switch_on_irq_and_firq:
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-	rts
-
 *********************************
 * Install our IRQ service routine
+*
+* Inputs: None
+* Outputs: None
 *********************************
 
 IRQ_HANDLER	EQU	$10d
@@ -530,31 +561,16 @@ install_irq_service_routine:
 	bsr	switch_off_irq		; Switch off interrupts for now
 
 	ldy	IRQ_HANDLER		; Load the current vector into y
-	sty	decb_irq_service_routine, PCR	; We will call it at the
+	sty	decb_irq_service_routine	; We will call it at the
 						; end of our own handler
 
-	leax	irq_service_routine, PCR
+	ldx	#irq_service_routine
 	stx	IRQ_HANDLER		; Our own interrupt service routine
 					;  is installed
 
 	bsr	switch_on_irq		; Switch interrupts back on
 
 	rts
-
-***********************************
-* Uninstall our IRQ service routine
-***********************************
-
-uninstall_irq_service_routine:
-
-        bsr     switch_off_irq
-
-        ldy     decb_irq_service_routine, PCR
-        sty     IRQ_HANDLER
-
-        bsr     switch_on_irq
-
-        rts
 
 **********************
 * Our IRQ handler
@@ -808,6 +824,20 @@ get_random:
 	mul
 	addd	#3037
 	std	SEED
+	rts
+
+******************************************
+* Switch IRQ and FIRQ interrupts on or off
+******************************************
+
+switch_off_irq_and_firq:
+
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+	rts
+
+switch_on_irq_and_firq:
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
 
 *******************************
@@ -1175,6 +1205,21 @@ forward_slash:
 	sta	31,x
 	sta	62,x
 	rts
+
+***********************************
+* Uninstall our IRQ service routine
+***********************************
+
+uninstall_irq_service_routine:
+
+        bsr     switch_off_irq
+
+        ldy     decb_irq_service_routine, PCR
+        sty     IRQ_HANDLER
+
+        bsr     switch_on_irq
+
+        rts
 
 ***************
 * Text graphics

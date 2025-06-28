@@ -263,9 +263,9 @@ move_dot_loop:
 	ldx	vertical_scale_factor
 	jsr	multiply_fixed_point
 	jsr	round_to_nearest
-	ldx	#32*256
-	jsr	multiply_fixed_point
-	jsr	round_to_nearest
+	tfr	a,b
+	lda	#32
+	jsr	b_signed_mul
 	addd	displacement
 	std	displacement
 
@@ -351,6 +351,10 @@ _phase_1:
 	std	horizontal_scale_factor
 	lda	#3
 	sta	horizontal_angular_speed
+	lda	#2
+	sta	vertical_angular_speed
+	ldd	#1000
+	std	vertical_scale_factor
 
 _phase_1_return:
 	rts
@@ -1597,6 +1601,30 @@ done_adjusting_a:
 no_adjust_a:
 round_to_neg_inf:
 	clrb
+	rts
+
+**************
+* B-signed mul
+*
+* Inputs:
+* A (unsigned)
+* B (signed)
+**************
+
+b_signed_mul:
+
+	tstb
+	bmi	_b_signed_is_negative
+
+	mul
+	rts
+
+_b_signed_is_negative:
+	negb
+	mul
+	coma
+	comb
+	addd	#1
 	rts
 
 *********************************

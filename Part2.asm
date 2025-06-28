@@ -132,7 +132,7 @@ dot_graphic:
 	FCV	" > - <",0
 	FCB	255
 
-DOT_START	EQU	(TEXTBUF+8*COLS_PER_LINE+16)
+DOT_START	EQU	(TEXTBUF+9*COLS_PER_LINE+16)
 
 dot_start:
         lda     #WAIT_PERIOD * 3
@@ -152,10 +152,14 @@ dot_start:
 * Wait
 ******
 
-	lda	#100			; Wait this number of frames
+	lda	#WAIT_PERIOD*4		; Wait this number of frames
 	lbsr	wait_frames
 
 	jsr	dot_mouth_open
+
+	lda	#25
+	ldx	#now_message
+	jsr	speech_bubble
 
 	lda	#8
 	ldx	#now_sound
@@ -164,15 +168,23 @@ dot_start:
 
 	jsr	dot_mouth_close
 
-	lda	#50			; Wait this number of frames
+	lda	#WAIT_PERIOD		; Wait this number of frames
 	lbsr	wait_frames
 
 	jsr	dot_mouth_open
+
+	lda	#25
+	ldx	#move_message
+	jsr	speech_bubble
+
 	lda	#8
 	ldx	#move_sound
 	ldy	#move_sound_end
 	jsr	play_sound
 	jsr	dot_mouth_close
+
+	lda	#WAIT_PERIOD		; Wait this number of frames
+	lbsr	wait_frames
 
 ***************
 * The dot moves
@@ -180,33 +192,49 @@ dot_start:
 
 	bra	move_dot
 
+now_message:
+	FCV	"\"NOW\""
+	FCB	0
+
+move_message:
+	FCV	"\"MOVE\""
+	FCB	0
+
+move_more_message:
+	FCV	"\"MOVE MORE\""
+	FCB	0
+
 dot_frames:
 	RZB	2
-phase:
-	RZB	1		; 0 = Starting to move
-				; 1 = Changing to X
-				; 2 = Changing to :-)
-				; 3 = Changing to !
-				; 4 = Changing back to *
-scale_factor:
+
+horizontal_scale_factor:
 	RZB	2		; Fixed point scale factor
-angle:
+
+vertical_scale_factor:
+	RZB	2		; Fixed point scale factor
+
+horizontal_angle:
 	RZB	1		; 0-255 out of 256
-dot_previous:
-	RZB	2		; Previously drawn location of dot
+
+vertical_angle:
+	RZB	1		; 0-255 out of 256
+
+horizontal_angular_speed:
+	RZB	1
+
+vertical_angular_speed:
+	RZB	1
+
 displacement:
-	RZB	1		; The amount that the dot moves
+	RZB	2		; The amount that the dot moves
 
 move_dot:
-	clra			; A is really don't care
-	ldb	angle		; D is our angle in fixed point
-	jsr	sin		; D is now the sine of our angle
+	ldd	#1000
+	std	horizontal_scale_factor
+	lda	#1
+	sta	horizontal_angular_speed
 
-	ldx	scale_factor		; X = scale factor, D is sine
-	jsr	multiply_fixed_point	; multiply D by X (scale by sine)
-	jsr	round_to_nearest	; Need to round D up or down
-	sta	displacement		; This is the displacement
-
+move_dot_loop:
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	lbne	skip_dot
@@ -214,6 +242,155 @@ move_dot:
 	ldd	dot_frames		; Add 1 to dot_frames
 	addd	#1
 	std	dot_frames
+
+	ldb	horizontal_angle
+	addb	horizontal_angular_speed
+	stb	horizontal_angle
+
+	jsr	sin			; Get the sin of our angle
+	ldx	horizontal_scale_factor	; X = scale factor, D is sine
+	jsr	multiply_fixed_point	; multiply D by X (scale by sine)
+	jsr	round_to_nearest	; Need to round D up or down
+	tfr	a,b
+	sex
+	std	displacement		; This is the horizontal displacement
+
+	ldb	vertical_angle
+	addb	vertical_angular_speed
+	stb	vertical_angle
+
+	jsr	sin
+	ldx	vertical_scale_factor
+	jsr	multiply_fixed_point
+	jsr	round_to_nearest
+	ldx	#32*256
+	jsr	multiply_fixed_point
+	jsr	round_to_nearest
+	addd	displacement
+	std	displacement
+
+	jsr	consider_phase
+	jsr	clear_area
+	jsr	draw_dot
+
+	bra	move_dot_loop
+
+
+phase:
+	RZB	1		; 0 = Starting to move
+				; 1 = Moving more
+				; 2 = Moving even more
+				; 3 = Changing to :-)
+				; 4 = Changing to !
+				; 5 = Changing back to *
+
+consider_phase:
+	lda	phase
+	cmpa	#0
+	beq	_phase_0
+	cmpa	#1
+	beq	_phase_1
+	cmpa	#2
+	beq	_phase_2
+	; Impossible to get here
+	rts
+
+_phase_0:
+	ldd	dot_frames
+	cmpd	#512
+	bne	_phase_0_return
+
+	jsr	dot_mouth_open
+
+	lda	#20
+	ldx	#move_more_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#move_more_sound
+	ldy	#move_more_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	ldd	#0
+	std	dot_frames
+	lda	#1
+	sta	phase
+	ldd	#2000
+	std	horizontal_scale_factor
+	lda	#2
+	sta	horizontal_angular_speed
+
+_phase_0_return:
+	rts
+
+_phase_1:
+	ldd	dot_frames
+	cmpd	#100
+	blo	_phase_1_return
+	lda	horizontal_angle
+	bne	_phase_1_return
+
+	jsr	dot_mouth_open
+
+	lda	#20
+	ldx	#move_more_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#move_more_sound
+	ldy	#move_more_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#2
+	sta	phase
+	ldd	#2500
+	std	horizontal_scale_factor
+	lda	#3
+	sta	horizontal_angular_speed
+
+_phase_1_return:
+	rts
+
+_phase_2:
+	rts
+
+**********
+* Draw dot
+**********
+
+draw_dot:
+	lda	phase
+	cmpa	#0
+	beq	_draw_asterisk
+	cmpa	#1
+	beq	_draw_asterisk
+	cmpa	#2
+	beq	_draw_asterisk
+	rts
+
+_draw_asterisk:
+	ldd	displacement
+	ldx	#TEXTBUF + 9 * COLS_PER_LINE + 16
+	leax	d,x
+
+	lda	#'*' + 64
+	sta	,x
+
+	rts
+
+
+
+
+
+
+
+
+
+	IF	0
 
 	lda	phase			; If we're in phase 0...
 	bne	not_phase_0
@@ -532,11 +709,31 @@ phase_finished_expands:
 	sta	angle
 
 	lbra	expand_dot
+	ENDIF
+
+************
+* Clear area
+************
+
+clear_area:
+	ldx	#TEXTBUF+3*COLS_PER_LINE
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+
+clear_area_loop:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	cmpx	#TEXTBUFEND
+	bne	clear_area_loop
+
+	rts
 
 ; If any part of the dot routine has been skipped, we end up here
 skip_dot:
 	bsr	clear_screen
 
+; End of part 2!
 end:
 	jsr	uninstall_irq_service_routine
 
@@ -1183,8 +1380,28 @@ dot_mouth_close:
 	sta	,x
 	rts
 
+***************
+* Speech bubble
+*
+* Inputs:
+* A = column to start in
+* X = text
+*
+* Outputs: None
+***************
 
+speech_bubble:
+	ldy	#TEXTBUF+3*COLS_PER_LINE
+	leay	a,y
 
+_speech_bubble_loop:
+	lda	,x+
+	beq	_speech_bubble_finished
+	sta	,y+
+	bra	_speech_bubble_loop
+
+_speech_bubble_finished:
+	rts
 
 *************************************************************
 * sine function
@@ -1380,35 +1597,6 @@ done_adjusting_a:
 no_adjust_a:
 round_to_neg_inf:
 	clrb
-	rts
-
-*****************************
-* Clear area
-*
-* Inputs:
-* X = fulcrum screen position
-*****************************
-
-clear_area:
-	tfr	x,d
-	andb	#0b11100000
-	subd	#64
-	tfr	d,x
-	leay	160,x
-	pshs	y
-
-	ldd	#$6060
-
-more_green:
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-
-	cmpx	,s
-	bne	more_green
-
-	puls	y
 	rts
 
 *********************************

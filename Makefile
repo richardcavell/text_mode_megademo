@@ -101,6 +101,8 @@ $(PLUCK_SOUND): $(PLUCK_SOUND_RES)
 $(RJFC_SOUND): $(RJFC_SOUND_RES)
 
 $(PLUCK_SOUND) $(RJFC_SOUND): $(SOUND_STR)
+
+$(PLUCK_SOUND) $(RJFC_SOUND):
 	@$(ECHO) Soundstripping $@ ...
 	./$(SOUND_STR) $< $@
 	@$(ECHO) "... Done"

@@ -726,8 +726,10 @@ display_scroll_texts:
 	puls	x
 	tsta
 	bne	_display_scroll_skip
+
 	pshs	x
 	bsr	_display_scroll_texts_all_scrollers
+	bsr	bird_movements
 	puls	x
 
 	bra	display_scroll_texts
@@ -745,12 +747,13 @@ _display_scroll_texts_loop:
 	ldx	,y
 	beq	_display_scroll_texts_finished
 
-	bsr	display_scroll_text
+	lbsr	display_scroll_text
 	puls	y
 	leay	2,y
 	bra	_display_scroll_texts_loop
 
 _display_scroll_texts_finished:
+	puls	y	; Reset the stack
 
 	rts
 
@@ -769,6 +772,146 @@ bird_scrollers:
 	FDB	#scroller_14
 	FDB	#scroller_15
 	FDB	0
+
+****************
+* Bird movements
+*
+* Inputs: None
+* Outputs: None
+****************
+
+bird_movement_frame_counter:
+
+	FDB	0
+
+bird_movements:
+	ldd	bird_movement_frame_counter
+	addd	#1
+	std	bird_movement_frame_counter
+
+	cmpd	#200
+	beq	left_bird_blinks
+	cmpd	#210
+	beq	left_bird_unblinks
+
+	cmpd	#500
+	beq	right_bird_blinks
+	cmpd	#510
+	beq	right_bird_unblinks
+
+	cmpd	#700
+	beq	left_bird_foot_moves
+	cmpd	#1300
+	beq	left_bird_foot_unmoves
+
+	cmpd	#980
+	beq	right_bird_foot_moves
+	cmpd	#1010
+	beq	right_bird_foot_unmoves
+
+	cmpd	#1400
+	beq	left_bird_moves_wings
+	cmpd	#1450
+	beq	left_bird_unmoves_wings
+
+	cmpd	#1500
+	beq	reset_counter
+
+	rts
+
+left_bird_blinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+11
+	lda	#'-' + 64
+	sta	,x++
+	sta	,x
+	rts
+
+left_bird_unblinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+11
+	lda	#'O'
+	sta	,x++
+	sta	,x
+	rts
+
+right_bird_blinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+19
+	lda	#'-' + 64
+	sta	,x++
+	sta	,x
+	rts
+
+right_bird_unblinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+19
+	lda	#'O'
+	sta	,x++
+	sta	,x
+	rts
+
+left_bird_foot_moves:
+
+	ldx	#TEXTBUF+8*COLS_PER_LINE+10
+	lda	#'M'
+	sta	,x+
+	lda	#'-' + 64
+	sta	,x
+	rts
+
+left_bird_foot_unmoves:
+
+	ldx	#TEXTBUF+8*COLS_PER_LINE+10
+	lda	#'-' + 64
+	sta	,x+
+	lda	#'M'
+	sta	,x
+	rts
+
+right_bird_foot_moves:
+
+	ldx	#TEXTBUF+8*COLS_PER_LINE+18
+	lda	#'M'
+	sta	,x+
+	lda	#'-' + 64
+	sta	,x
+	rts
+
+right_bird_foot_unmoves:
+
+	ldx	#TEXTBUF+8*COLS_PER_LINE+18
+	lda	#'-' + 64
+	sta	,x+
+	lda	#'M'
+	sta	,x
+	rts
+
+left_bird_moves_wings:
+
+	ldx	#TEXTBUF+7*COLS_PER_LINE+9
+	lda	#'/' + 64
+	sta	,x
+	ldx	#TEXTBUF+7*COLS_PER_LINE+15
+	lda	#'\\' + 64
+	sta	,x
+	rts
+
+left_bird_unmoves_wings:
+
+	ldx	#TEXTBUF+7*COLS_PER_LINE+9
+	lda	#'(' + 64
+	sta	,x
+	ldx	#TEXTBUF+7*COLS_PER_LINE+15
+	lda	#')' + 64
+	sta	,x
+	rts
+
+reset_counter:
+
+	ldd	#0
+	std	bird_movement_frame_counter
+	rts
 
 **********************
 * Display scroll text

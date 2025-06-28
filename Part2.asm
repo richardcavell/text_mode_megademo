@@ -142,17 +142,13 @@ dot_start:
 
 	ldx	#DOT_START	; in the middle of the screen
 
-	lda	#'*'+64		; Non-inverted asterisk
+	lda	#'*' + 64	; Non-inverted asterisk
 	sta	,x
 
 	lda	#8
 	ldx	#finger_snap_sound
 	ldy	#finger_snap_sound_end
 	jsr	play_sound
-
-******
-* Wait
-******
 
 	lda	#WAIT_PERIOD*4		; Wait this number of frames
 	lbsr	wait_frames

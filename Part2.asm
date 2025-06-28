@@ -8,12 +8,14 @@
 * This code is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* ASCII art was made by an unknown person from
+* ASCII art in the first section was made by an unknown person from
 * https://www.asciiart.eu/animals/birds-land
-* ASCII art made by Microsoft Copilot and modified by me
-* ASCII art from Joan Stark, Normand Veilleux and Matzec, all from
-* https://www.asciiart.eu/animals/birds-land
-* All of the sounds in the dot routine were created by
+* ASCII art in the second section was made by Microsoft Copilot and
+* modified by me
+*
+* The sound of the finger snap in the dot routine is by cori at
+* Wikimedia Commons
+* All of the speech in the dot routine was created by
 * https://speechsynthesis.online/
 * The voice is "Maisie"
 *
@@ -716,6 +718,11 @@ clear_area_loop:
 ; If any part of the dot routine has been skipped, we end up here
 skip_dot:
 	bsr	clear_screen
+
+	lda	#9
+	ldb	#11
+	ldx	#loading_message
+	jsr	display_text_graphic
 
 dot_end:
 
@@ -1685,99 +1692,6 @@ uninstall_irq_service_routine:
         jsr     switch_on_irq
 
         rts
-
-***************
-* Text graphics
-***************
-
-* Art by Joan Stark
-
-face_graphic:
-	FCV	"      ..-'''''-..",0
-	FCV	"    .'  .     .  '.",0
-	FCV	"   /   (.)   (.)   \\",0
-	FCV	"  !  ,           ,  !",0
-	FCV	"  !  \\`.       .`/  !",0
-	FCV	"   \\  '.`'\"\"'\"`.'  /",0
-	FCV	"    '.  `'---'`  .'",0
-	FCV	"JGS   '-.......-'",0
-	FCB	255
-
-happy_face_graphic:
-
-* Art by Joan Stark
-
-	FCV	"      ..-'''''-..",0
-	FCV	"    .'  .     .  '.",0
-	FCV	"   /   (o)   (o)   \\",0
-	FCV	"  !                 !",0
-	FCV	"  !  \\           /  !",0
-	FCV	"   \\  '.       .'  /",0
-	FCV	"    '.  `'---'`  .'",0
-	FCV	"JGS   '-.......-'",0
-	FCB	255
-
-	FCV	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",0
-	FCV	"8                                                   8",0
-	FCV	"8  a---------------a                                8",0
-	FCV	"8  !               !                                8",0
-	FCV	"8  !               !                                8",0
-	FCV	"8  !               !                               8\"",0
-	FCV	"8  \"---------------\"                               8a",0
-	FCV	"8                                                   8",0
-	FCV	"8                                                   8",0
-	FCV	"8                      ,aaaaa,                      8",0
-	FCV	"8                    ad\":::::\"ba                    8",0
-	FCV	"8                  ,d::;gPPRg;::b,                  8",0
-	FCV	"8                  d::dP'   'Yb::b                  8",0
-	FCV	"8                  8::8)     (8::8                  8",0
-	FCV	"8                  Y;:Yb     dP:;P  O               8",0
-	FCV	"8                  'Y;:\"8ggg8\":;P'                  8",0
-	FCV	"8                    \"Yaa:::aaP\"                    8",0
-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	FCV	"8                       \"\"\"\"\"                       8",0
-	FCV	"8                                                   8",0
-	FCV	"8                       ,d\"b,                       8",0
-	FCV	"8                       d:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                  aaa  'bad'  aaa                  8",0
-	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
-	FCV	"                                   Normand  Veilleux",0
-	FCV	255
-
-* Art by Matzec
-
-cartman_graphic:
-	FCV	"                       ..-**-..",0
-	FCV	"                    .,(        ),.",0
-	FCV	"                 .-\"   '-'----'   \"-.",0
-	FCV	"              .-'                    '-.",0
-	FCV	"            .'                          '.",0
-	FCV	"          .'    ...--**'\"\"\"\"\"\"'**--...    '.\\",0
-	FCV	"         /..-*\"'...--**'\"\"\"\"\"\"'**--...'\"*-..\\",0
-	FCV	"        /...-*\"'   .-*\"*-.  .-*\"*-.   '\"*-...",0
-	FCV	"       :          /       ;:       \\          ;",0
-	FCV	"       :         :     *  !!  *     :         ;",0
-	FCV	"        \        '.     .'  '.     .'        /",0
-	FCV	"         \         '-.-'      '-.-'         /",0
-	FCV	"      .-*''.                              .'-.",0
-	FCV	"   .-'      '.                          .'    '.",0
-	FCV	"  :           '-.        ....        .-'        '..",0
-	FCV	" ;\"*-..          '-..  --... `   ..-'        ..*'  '*.",0
-	FCV	":      '.            `\"*-....-*\"`           (        :",0
-	FCV	" ;      ;                 *!                 '-.     ;",0
-	FCV	"  '...*'                   !                    \"\"--'",0
-	FCV	"   :                      *!                      :",0
-	FCV	"   '.                      !                     .'",0
-	FCV	"     '...                 *!        ....----...-'",0
-	FCV	"      \  \"\"\"----.....------'-----\"\"\"         /",0
-	FCV	"       \  ....-------...        .....---..  /",0
-	FCV	"       :'\"              '-..--''          \"';",0
-	FCV	"        '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"'",0
-	FCV	"              C A R T M A N by Matzec",0
-cartman_graphic_end:
 
 **************
 * Scroll texts

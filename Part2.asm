@@ -78,7 +78,7 @@ TEXT_LINES      EQU     16
 
 ; This came from https://www.asciiart.eu/animals/birds-land
 ; Original artist unknown
-; I have modified the graphic a little bit
+; I have modified the graphic a little bit. All the animations are by me.
 
 birds_graphic:
 
@@ -103,6 +103,9 @@ create_dot:
 
 	jsr	clear_screen
 
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+
 	lda	#0
 	ldb	#24
 	ldx	#dot_graphic
@@ -114,7 +117,7 @@ create_dot:
 dot_graphic:
 	FCV	" /\\-/\\",0
 	FCV	"( O.O )",0
-	FCV	" > ' <",0
+	FCV	" > - <",0
 	FCB	255
 
 DOT_START	EQU	(TEXTBUF+8*COLS_PER_LINE+16)
@@ -191,8 +194,7 @@ move_dot:
 
 	lda	#1			; ...go to phase 1
 	sta	phase
-	clra
-	clrb
+	ldd	#0
 	std	dot_frames		; And start counting frames from 0
 
 	bra	abort_phase_change

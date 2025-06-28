@@ -574,54 +574,33 @@ install_irq_service_routine:
 
 **********************
 * Our IRQ handler
-**********************
+*
+* Make sure decb_irq_service_routine is initialized
+***************************************************
 
 irq_service_routine:
-	lda	#1
-	sta	vblank_happened, PCR
 
-		; In the interests of making our IRQ handler run fast,
-		; the routine assumes that decb_irq_service_routine
-		; has been correctly initialized
+        lda     #1
+        sta     vblank_happened
 
-	jmp	[decb_irq_service_routine, PCR]
+        lda     #DEBUG_MODE
+        beq     _skip_debug_visual_indication
+
+; For debugging, this provides a visual indication that
+; our handler is running
+
+;       inc     TEXTBUFEND-1
+
+_skip_debug_visual_indication:
+                ; In the interests of making our IRQ handler run fast,
+                ; the routine assumes that decb_irq_service_routine
+                ; has been correctly initialized
+
+        jmp     [decb_irq_service_routine]
 
 decb_irq_service_routine:
-	RZB 2
 
-vblank_happened:
-	FCB	0
-
-*****************
-* Wait for VBlank
-*****************
-
-wait_for_vblank:
-	clr	vblank_happened, PCR	; Put a zero in vblank_happened
-
-_wait_loop:
-	tst	vblank_happened, PCR	; As soon as a 1 appears...
-	beq	_wait_loop
-
-	lda	#DEBUG_MODE
-	beq	exit_wait_for_vblank
-
-	jsr	[POLCAT]
-	cmpa	#'T'
-	bne	not_t
-
-	com	toggle, PCR
-
-not_t:
-	tst	toggle, PCR
-	beq	exit_wait_for_vblank
-	cmpa	#'F'
-	bne	_wait_loop
-
-exit_wait_for_vblank:
-	rts				; ...return to caller
-
-toggle:	RZB	1
+        RZB     2
 
 *********************
 * Turn off disk motor
@@ -633,6 +612,71 @@ turn_off_disk_motor:
 
 	clr	DSKREG		; Turn off disk motor
 	rts
+
+*********************************************
+* Wait for VBlank and check for skip
+*
+* Inputs: None
+*
+* Output:
+* A = 0        -> a VBlank happened
+* A = non-zero -> user is trying to skip
+*********************************************
+
+POLCAT          EQU     $A000
+
+BREAK_KEY       EQU     3
+
+vblank_happened:
+
+        RZB     1
+
+wait_for_vblank_and_check_for_skip:
+
+        clr     vblank_happened
+
+_wait_for_vblank_and_check_for_skip_loop:
+_wait_for_vblank_and_check_for_skip_loop:
+        jsr     [POLCAT]
+        cmpa    #' '                    ; Space bar
+        beq     _wait_for_vblank_skip
+        cmpa    #BREAK_KEY              ; Break key
+        beq     _wait_for_vblank_skip
+        ldb     #DEBUG_MODE
+        beq     _wait_for_vblank
+        cmpa    #'t'                    ; T key
+        beq     _wait_for_vblank_invert_toggle
+        cmpa    #'T'
+        beq     _wait_for_vblank_invert_toggle
+        ldb     debug_mode_toggle
+        beq     _wait_for_vblank
+
+; If toggle is on, require an F to go forward 1 frame
+
+        cmpa    #'f'
+        beq     _wait_for_vblank
+        cmpa    #'F'
+        beq     _wait_for_vblank
+        bra     _wait_for_vblank_and_check_for_skip_loop
+
+_wait_for_vblank:
+        tst     vblank_happened
+        beq     _wait_for_vblank_and_check_for_skip_loop
+
+        clra            ; A VBlank happened
+        rts
+
+_wait_for_vblank_skip:
+        lda     #1      ; User wants to skip
+        rts
+
+_wait_for_vblank_invert_toggle:
+        com     debug_mode_toggle
+        bra     _wait_for_vblank
+
+debug_mode_toggle:
+
+        RZB     1
 
 ******************
 * Clear the screen
@@ -652,28 +696,22 @@ clear_char:
 	bne	clear_char
 	rts
 
-********************************************************
-* Is space bar being pressed?
+*****************************
+* Wait for a number of frames
 *
-* Output:
-* A = 0 if space bar is not pressed
-* A = non-zero if space bar is being pressed
-********************************************************
+* Inputs:
+* A = number of frames
+*****************************
 
-POLCAT	EQU	$A000			; ROM routine
+wait_frames:
+        pshs    a
+        jsr     wait_for_vblank_and_check_for_skip
+        puls    a
 
-check_for_space:
-	jsr	[POLCAT]		; A ROM routine
-	cmpa	#' '
-	beq	skip
-	cmpa	#3			; break key
-	beq	skip
-	clra
-	rts
+        deca
+        bne     wait_frames
 
-skip:
-	lda	#1
-	rts
+        rts
 
 ***********************
 * Display scroll texts
@@ -808,24 +846,6 @@ _display_scroll_end:
 	std	,x
 	rts
 
-**********************************************************
-* Returns a random-ish number from 0...65535
-*
-* Output:
-* D = the random number
-**********************************************************
-
-SEED:
-	FCB	0xBE
-	FCB	0xEF
-
-get_random:
-	ldd	SEED
-	mul
-	addd	#3037
-	std	SEED
-	rts
-
 ******************************************
 * Switch IRQ and FIRQ interrupts on or off
 ******************************************
@@ -844,83 +864,111 @@ switch_on_irq_and_firq:
 * Play a sound sample
 *
 * Inputs:
+* A = The delay between samples
 * X = The sound data
 * Y = The end of the sound data
-* A = The delay between samples
 *******************************
 
-AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
-
 play_sound:
-	lbsr	switch_off_irq_and_firq
 
-	pshs	y
+        pshs    a,x,y
+        bsr     switch_off_irq_and_firq
+        puls    a,x,y
 
-send_value:
-	cmpx	,s			; Compare X with Y
+        pshs    y       ; _play_sound uses A, X and 2,S
 
-	beq	send_values_finished	; If we have no data, exit
+        bsr     _play_sound
 
-	ldb	,x+
-	stb	AUDIO_PORT
+        puls    y
 
-	tfr	a,b
+        bsr     switch_on_irq_and_firq
 
-sound_delay_loop:
-	tstb
-	beq	send_value		; Have we completed the delay?
+        rts
 
-	decb				; If not, then wait some more
-	bra	sound_delay_loop
+_play_sound:
+        cmpx    2,s                     ; Compare X with Y
 
-send_values_finished:
+        bne     _play_sound_more        ; If we have no more samples, exit
 
-	puls	y
+        rts
 
-	lbsr	switch_on_irq_and_firq
+_play_sound_more:
+        ldb     ,x+
+        stb     AUDIO_PORT
 
-	rts
+        tfr     a,b
 
-*******************
-* Output a graphic
+_play_sound_delay_loop:
+        tstb
+        beq     _play_sound             ; Have we completed the delay?
+
+        decb                            ; If not, then wait some more
+
+        bra     _play_sound_delay_loop
+
+******************
+* Clear the screen
+*
+* Inputs: None
+* Outputs: None
+******************
+
+clear_screen:
+
+        ldx     #TEXTBUF
+        ldd     #GREEN_BOX << 8 | GREEN_BOX     ; Two green boxes
+
+_clear_screen_loop:
+        std     ,x++                    ; Might as well do 8 bytes at a time
+        std     ,x++
+        std     ,x++
+        std     ,x++
+
+        cmpx    #TEXTBUFEND             ; Finish in the lower-right corner
+        bne     _clear_screen_loop
+        rts
+
+************************
+* Display a text graphic
 *
 * Inputs:
 * A = Line number
 * B = Column number
 * X = Graphic data
-*******************
+************************
 
 display_text_graphic:
-	tfr	x,y
 
-	pshs	b
-	ldb	#32
-	mul
-	ldx	#TEXTBUF
-	leax	d,x
-	puls	b
-	leax	b,x
+        tfr     x,y     ; Y = graphic data
 
-display_text_graphic_loop:
+        tfr     d,u     ; Save B
+        ldb     #COLS_PER_LINE
+        mul
+        ldx     #TEXTBUF
+        leax    d,x
+        tfr     u,d     ; B = column number
+        leax    b,x     ; X = Screen memory to start at
+
+_display_text_graphic_loop:
         lda     ,y+
-        beq     text_graphic_new_line
+        beq     _text_graphic_new_line
         cmpa    #255
-        beq	display_text_graphic_finished
+        beq     _display_text_graphic_finished
         sta     ,x+
-        bra     display_text_graphic_loop
+        bra     _display_text_graphic_loop
 
-text_graphic_new_line:
-	tfr	d,u		; Save register b
+_text_graphic_new_line:
+        tfr     d,u             ; Save register B
         tfr     x,d
         andb    #0b11100000
-        addd    #32
+        addd    #COLS_PER_LINE
         tfr     d,x
-	tfr	u,d		; Get b back
-	leax	b,x
-	bra	display_text_graphic_loop
+        tfr     u,d             ; Get B back
+        leax    b,x
+        bra     _display_text_graphic_loop
 
-display_text_graphic_finished:
-	rts
+_display_text_graphic_finished:
+        rts
 
 *************************************************************
 * sine function
@@ -1208,16 +1256,19 @@ forward_slash:
 
 ***********************************
 * Uninstall our IRQ service routine
+*
+* Inputs: None
+* Outputs: None
 ***********************************
 
 uninstall_irq_service_routine:
 
-        bsr     switch_off_irq
+        jsr     switch_off_irq
 
-        ldy     decb_irq_service_routine, PCR
+        ldy     decb_irq_service_routine
         sty     IRQ_HANDLER
 
-        bsr     switch_on_irq
+        jsr     switch_on_irq
 
         rts
 
@@ -1269,7 +1320,7 @@ happy_face_graphic:
 	FCV	"8                  Y;:Yb     dP:;P  O               8",0
 	FCV	"8                  'Y;:\"8ggg8\":;P'                  8",0
 	FCV	"8                    \"Yaa:::aaP\"                    8",0
-	FCV	"8                       \"\"\"\"\"                       8",0
+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	FCV	"8                       \"\"\"\"\"                       8",0
 	FCV	"8                                                   8",0
 	FCV	"8                       ,d\"b,                       8",0
 	FCV	"8                       d:::8                       8",0

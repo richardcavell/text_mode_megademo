@@ -161,11 +161,11 @@ new_position:
 move_dot:
 	clra			; A is really don't care
 	ldb	angle		; D is our angle in fixed point
-	lbsr	sin		; D is now the sine of our angle
+	jsr	sin		; D is now the sine of our angle
 
 	ldx	scale_factor		; X = scale factor, D is sine
-	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
-	lbsr	round_to_nearest	; Need to round D up or down
+	jsr	multiply_fixed_point	; multiply D by X (scale by sine)
+	jsr	round_to_nearest	; Need to round D up or down
 	sta	displacement		; This is the displacement
 
 	jsr	wait_for_vblank_and_check_for_skip

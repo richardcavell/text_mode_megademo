@@ -11,13 +11,29 @@ PART2		=	PART2.BIN
 PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 
-PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
-PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
 PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
+PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
+PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
 
-RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav
-RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
 RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw
+RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
+RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav
+
+NOW_SOUND	=	Sounds/Dot_Sounds/Now.raw
+NOW_SOUND_RES	=	Sounds/Dot_Sounds/Now_resampled.raw
+NOW_SOUND_SRC	=	Sounds/Dot_Sounds/Now.wav
+
+MOVE_SOUND	=	Sounds/Dot_Sounds/Move.raw
+MOVE_SOUND_RES	=	Sounds/Dot_Sounds/Move_resampled.raw
+MOVE_SOUND_SRC	=	Sounds/Dot_Sounds/Move.wav
+
+MMORE_SOUND	=	Sounds/Dot_Sounds/Move_More.raw
+MMORE_SOUND_RES	=	Sounds/Dot_Sounds/Move_More_resampled.raw
+MMORE_SOUND_SRC	=	Sounds/Dot_Sounds/Move_More.wav
+
+CHNGE_SOUND	=	Sounds/Dot_Sounds/Change.raw
+CHNGE_SOUND_RES	=	Sounds/Dot_Sounds/Change_resampled.raw
+CHNGE_SOUND_SRC	=	Sounds/Dot_Sounds/Change.wav
 
 SOUND_STR	=	sound_stripper
 SOUND_STR_SRC	=	sound_stripper.c
@@ -59,16 +75,19 @@ ECHO		=	echo
 
 all:	$(DISK) $(PART1) $(PART2)
 all:	$(SIN_TABLE) $(SIN_GENERATOR)
-all:	$(PLUCK_SOUND) $(RJFC_SOUND)
-all:	$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
+all:	$(PLUCK_SOUND) $(RJFC_SOUND) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
+all:	$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES) $(NOW_SOUND_RES) $(MOVE_SOUND_RES)
+all:	$(MMOVE_SOUND_RES) $(CHNGE_SOUND_RES)
 all:	$(SOUND_STR)
 
 clean:
 	@$(ECHO) "Removing all generated files" ...
 	@$(RM) $(DISK) $(PART1) $(PART2)
 	@$(RM) $(SIN_TABLE) $(SIN_GENERATOR)
-	@$(RM) $(PLUCK_SOUND) $(RJFC_SOUND)
-	@$(RM) $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
+	@$(RM) $(PLUCK_SOUND) $(RJFC_SOUND) $(NOW_SOUND) $(MOVE_SOUND)
+	@$(RM) $(MMORE_SOUND) $(CHNGE_SOUND)
+	@$(RM) $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES) $(NOW_SOUND_RES) $(MOVE_SOUND_RES)
+	@$(RM) $(MMORE_SOUND_RES) $(CHNGE_SOUND_RES)
 	@$(RM) $(SOUND_STR)
 	@$(ECHO) ... Done
 
@@ -85,7 +104,7 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2)
 	@$(ECHO) ... Done
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)
-$(PART2): $(PART2_SRC) $(SIN_TABLE)
+$(PART2): $(PART2_SRC) $(SIN_TABLE) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
 
 $(PART1) $(PART2):
 	@$(ECHO) Assembling $@ ...
@@ -99,18 +118,28 @@ $(SIN_TABLE): $(SIN_GENERATOR)
 
 $(PLUCK_SOUND): $(PLUCK_SOUND_RES)
 $(RJFC_SOUND): $(RJFC_SOUND_RES)
+$(NOW_SOUND): $(NOW_SOUND_RES)
+$(MOVE_SOUND): $(MOVE_SOUND_RES)
+$(MMORE_SOUND): $(MMORE_SOUND_RES)
+$(CHNGE_SOUND): $(CHNGE_SOUND_RES)
 
-$(PLUCK_SOUND) $(RJFC_SOUND): $(SOUND_STR)
+$(PLUCK_SOUND) $(RJFC_SOUND) $(NOW_SOUND): $(SOUND_STR)
+$(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND): $(SOUND_STR)
 
-$(PLUCK_SOUND) $(RJFC_SOUND):
+$(PLUCK_SOUND) $(RJFC_SOUND) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND):
 	@$(ECHO) Soundstripping $@ ...
 	./$(SOUND_STR) $< $@
 	@$(ECHO) "... Done"
 
 $(PLUCK_SOUND_RES): $(PLUCK_SOUND_SRC)
 $(RJFC_SOUND_RES): $(RJFC_SOUND_SRC)
+$(NOW_SOUND_RES): $(NOW_SOUND_SRC)
+$(MOVE_SOUND_RES): $(MOVE_SOUND_SRC)
+$(MMORE_SOUND_RES): $(MMORE_SOUND_SRC)
+$(CHNGE_SOUND_RES): $(CHNGE_SOUND_SRC)
 
-$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES):
+$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES) $(NOW_SOUND_RES) $(MOVE_SOUND_RES) $(MMORE_SOUND_RES)\
+$(CHNGE_SOUND_RES):
 	@$(RM) $@
 	@$(ECHO) Resampling $@ ...
 	ffmpeg -i $< -v warning -af "lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@

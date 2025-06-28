@@ -11,6 +11,16 @@
 
 const double pi = 3.14159265358979323846;
 
+static int
+round_nearest(double f)
+{
+	 /* This is C89 */
+	return (int) ((f >= 0) ? f + 0.5 : f - 0.5);
+
+	/* This is C99 */
+/*	return (int) (round(f)); */
+}
+
 static void
 fprintf_error(void)
 {
@@ -63,15 +73,8 @@ main(int argc, char *argv[])
 	{
 		double angle = i / 256.0 * 2 * pi;
 		double f = sin(angle) * 256;
-		int j = 0;
 
-/*		f = round(f);		This is C99 */
-
-		/* Round to nearest */
-		if (f >= 0)
-			j = (int) (f + 0.5);
-		else
-			j = (int) -(-f + 0.5);
+		int j = round_nearest(f);
 
 		ret = fprintf(fp, "%s%i%s%3i%s",
 				  "\tFDB\t",
@@ -90,7 +93,8 @@ main(int argc, char *argv[])
 	{
 		(void) fprintf(stderr, "%s%s%s%i%c",
 				       "Couldn't close output file ",
-				        argv[1], ". Error number : ",
+				        argv[1],
+					". Error number : ",
 				        errno,
 				        '\n');
 		exit(EXIT_FAILURE);

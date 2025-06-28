@@ -32,7 +32,7 @@ ASMFLAGS	=	-C -v -8
 
 # You can change this to your favorite C compiler
 CC        =  gcc
-CFLAGS    = -std=c89 -Wpedantic
+CFLAGS    = -std=c99 -Wpedantic
 CFLAGS   += -Wall -Wextra -Werror -fmax-errors=1
 CFLAGS   += -Walloca -Wbad-function-cast -Wcast-align -Wcast-qual -Wconversion
 CFLAGS   += -Wdisabled-optimization -Wdouble-promotion -Wduplicated-cond

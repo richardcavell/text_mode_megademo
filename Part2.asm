@@ -8,19 +8,22 @@
 * This code is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* ASCII art was made by an unknown person, Joan Stark, Normand Veilleux
-* and Matzec, all from https://www.asciiart.eu/animals/birds-land
-* ASCII art also from Microsoft Copilot
+* ASCII art was made by an unknown person from
+* https://www.asciiart.eu/animals/birds-land
+* ASCII art made by Microsoft Copilot and modified by me
+* ASCII art from Joan Stark, Normand Veilleux and Matzec, all from
+* https://www.asciiart.eu/animals/birds-land
 *
-* DEBUG_MODE means you press T to toggle frame-by-frame mode.
-* In frame-by-frame mode, you press F to see the next frame
-
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
 * Also, you can make the lower right corner character cycle when
 * the interrupt request service routine operates.
 
 DEBUG_MODE      EQU     0
+
+* Between each section, wait this number of frames
+
+WAIT_PERIOD	EQU	25
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
@@ -45,12 +48,6 @@ DEBUG_MODE      EQU     0
 
 	jsr	turn_off_disk_motor
 
-******************
-* Clear the screen
-******************
-
-	jsr	clear_screen
-
 *************************
 * Text buffer information
 *************************
@@ -62,14 +59,20 @@ TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE   EQU     32
 TEXT_LINES      EQU     16
 
+******************
+* Clear the screen
+******************
+
+	jsr	clear_screen
+
 ***********************
 * Output a bird graphic
 ***********************
 
 	lda	#5
 	ldb	#8
-        leax    birds_graphic, PCR
-	lbsr	display_text_graphic
+        ldx     #birds_graphic
+	jsr	display_text_graphic
 
 	bra	scroll_text
 
@@ -78,6 +81,7 @@ TEXT_LINES      EQU     16
 ; I have modified the graphic a little bit
 
 birds_graphic:
+
 	FCV	"   ---     ---",0
 	FCV	"  (O O)   (O O)",0
 	FCV	" (  V  ) (  V  ) ",0
@@ -87,18 +91,35 @@ birds_graphic:
 scroll_text:
 
 	ldx	#bird_scrollers
-	lbsr	display_scroll_texts
+	jsr	display_scroll_texts
 
 	bra	create_dot
 
 **************
 * Create a dot
 **************
+
 create_dot:
 
-DOT_START	EQU	(TEXTBUF+8*32+16)
+	jsr	clear_screen
 
-	lbsr	clear_screen
+	lda	#0
+	ldb	#24
+	ldx	#dot_graphic
+	jsr	display_text_graphic
+	bra	dot_start
+
+; Made by Microsoft Copilot and modified by me
+
+dot_graphic:
+	FCV	" /\\-/\\",0
+	FCV	"( O.O )",0
+	FCV	" > ' <",0
+	FCB	255
+
+DOT_START	EQU	(TEXTBUF+8*COLS_PER_LINE+16)
+
+dot_start:
 
 	ldx	#DOT_START	; in the middle of the screen
 
@@ -108,40 +129,15 @@ DOT_START	EQU	(TEXTBUF+8*32+16)
 ******
 * Wait
 ******
-	lda	#0
-	ldb	#24
-	leax	dot_graphic,PCR
-	lbsr	display_text_graphic
 
-wait_on_dot:
-	ldb	#50		; Wait this number of frames
-
-dot_wait:
-	pshs	b
-	jsr	check_for_space
-	puls	b		; Doesn't affect condition codes
-	tsta
-	lbne	skip_dot
-
-	pshs	b
-	lbsr	wait_for_vblank
-	puls	b
-	decb
-	bne	dot_wait
+	lda	#50			; Wait this number of frames
+	lbsr	wait_frames
 
 ***************
 * The dot moves
 ***************
 
 	bra	move_dot
-
-; Made by Microsoft Copilot and modified by me
-
-dot_graphic:
-	FCV	" /\\-/\\",0
-	FCV	"( O.O )",0
-	FCV	" > ' <",0
-	FCB	255
 
 dot_frames:
 	RZB	2
@@ -172,11 +168,9 @@ move_dot:
 	lbsr	round_to_nearest	; Need to round D up or down
 	sta	displacement		; This is the displacement
 
-	lbsr	check_for_space
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	lbne	skip_dot
-
-	lbsr	wait_for_vblank
 
 	ldd	dot_frames		; Add 1 to dot_frames
 	addd	#1
@@ -356,11 +350,9 @@ expand_dot:
 	lbsr	round_to_nearest	; Need to round D up or down
 	sta	displacement		; This is the displacement
 
-	lbsr	check_for_space
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	lbne	skip_dot
-
-	lbsr	wait_for_vblank
 
 	ldd	dot_frames		; Add 1 to dot_frames
 	addd	#1
@@ -501,7 +493,7 @@ skip_dot:
 	bsr	clear_screen
 
 end:
-	bsr	uninstall_irq_service_routine
+	jsr	uninstall_irq_service_routine
 
 loop:	bra	loop
 	rts
@@ -613,6 +605,30 @@ turn_off_disk_motor:
 	clr	DSKREG		; Turn off disk motor
 	rts
 
+******************
+* Clear the screen
+*
+* Inputs: None
+* Outputs: None
+******************
+
+GREEN_BOX       EQU     ($60)
+
+clear_screen:
+
+        ldx     #TEXTBUF
+        ldd     #GREEN_BOX << 8 | GREEN_BOX     ; Two green boxes
+
+_clear_screen_loop:
+        std     ,x++                    ; Might as well do 8 bytes at a time
+        std     ,x++
+        std     ,x++
+        std     ,x++
+
+        cmpx    #TEXTBUFEND             ; Finish in the lower-right corner
+        bne     _clear_screen_loop
+        rts
+
 *********************************************
 * Wait for VBlank and check for skip
 *
@@ -635,7 +651,6 @@ wait_for_vblank_and_check_for_skip:
 
         clr     vblank_happened
 
-_wait_for_vblank_and_check_for_skip_loop:
 _wait_for_vblank_and_check_for_skip_loop:
         jsr     [POLCAT]
         cmpa    #' '                    ; Space bar
@@ -678,24 +693,6 @@ debug_mode_toggle:
 
         RZB     1
 
-******************
-* Clear the screen
-******************
-
-clear_screen:
-	ldx	#TEXTBUF
-	ldd	#$6060			; Two green boxes
-
-clear_char:
-	std	,x+			; Might as well do 8 bytes at a time
-	std	,x+
-	std	,x+
-	std	,x+
-
-	cmpx	#TEXTBUF+TEXTBUFSIZE	; Finish in the lower-right corner
-	bne	clear_char
-	rts
-
 *****************************
 * Wait for a number of frames
 *
@@ -724,13 +721,10 @@ wait_frames:
 
 display_scroll_texts:
 	pshs	x
-	bsr	check_for_space
+	bsr	wait_for_vblank_and_check_for_skip
 	puls	x
 	tsta
 	bne	_skip_section
-	pshs	x
-	bsr	wait_for_vblank
-	puls	x
 	pshs	x
 	bsr	_display_scroll_texts_all_scrollers
 	puls	x
@@ -869,6 +863,8 @@ switch_on_irq_and_firq:
 * Y = The end of the sound data
 *******************************
 
+AUDIO_PORT      EQU     $FF20           ; (the top 6 bits)
+
 play_sound:
 
         pshs    a,x,y
@@ -905,28 +901,6 @@ _play_sound_delay_loop:
         decb                            ; If not, then wait some more
 
         bra     _play_sound_delay_loop
-
-******************
-* Clear the screen
-*
-* Inputs: None
-* Outputs: None
-******************
-
-clear_screen:
-
-        ldx     #TEXTBUF
-        ldd     #GREEN_BOX << 8 | GREEN_BOX     ; Two green boxes
-
-_clear_screen_loop:
-        std     ,x++                    ; Might as well do 8 bytes at a time
-        std     ,x++
-        std     ,x++
-        std     ,x++
-
-        cmpx    #TEXTBUFEND             ; Finish in the lower-right corner
-        bne     _clear_screen_loop
-        rts
 
 ************************
 * Display a text graphic

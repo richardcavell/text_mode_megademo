@@ -24,6 +24,10 @@
 
 DEBUG_MODE	EQU	0
 
+* Between each section, wait this number of frames
+
+WAIT_PERIOD	EQU	25
+
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
@@ -147,8 +151,8 @@ _pluck_finished:
 	jsr	clear_line			; and fallthrough
 
 _pluck_next_section:				; Screen is empty either way
-	lda	#25
-	jsr	wait_frames			; Wait 25 frames
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a number of frames
 	bra	title_screen
 
 **************
@@ -265,8 +269,8 @@ skip_title_screen:		; If space was pressed
 	clr	creature_blinks
 	jsr	clear_screen	; Just clear the screen
 
-	lda	#25
-	jsr	wait_frames			; Wait 25 frames
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
 
 						; and fallthrough
 loading_screen:

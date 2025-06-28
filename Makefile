@@ -64,13 +64,13 @@ all:	$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
 all:	$(SOUND_STR)
 
 clean:
-	@$(ECHO) "Removing all generated files ..."
+	@$(ECHO) "Removing all generated files" ...
 	@$(RM) $(DISK) $(PART1) $(PART2)
 	@$(RM) $(SIN_TABLE) $(SIN_GENERATOR)
 	@$(RM) $(PLUCK_SOUND) $(RJFC_SOUND)
 	@$(RM) $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES)
 	@$(RM) $(SOUND_STR)
-	@$(ECHO) "... Done"
+	@$(ECHO) ... Done
 
 disk:	$(DISK)
 
@@ -82,28 +82,26 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2)
 	$(DECB) copy -2 -b -r $(PART1) $(DISK),$(PART1)
 	$(DECB) copy -2 -b -r $(PART2) $(DISK),$(PART2)
 	@$(DECB) free $@
-	@$(ECHO) "... Done"
+	@$(ECHO) ... Done
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)
 $(PART2): $(PART2_SRC) $(SIN_TABLE)
 
 $(PART1) $(PART2):
-	@$(ECHO) "Assembling" $@ ...
+	@$(ECHO) Assembling $@ ...
 	$(ASM) $(ASMFLAGS) -o $@ $<
-	@$(ECHO) "... Done"
+	@$(ECHO) ... Done
 
 $(SIN_TABLE): $(SIN_GENERATOR)
-	@$(ECHO) "Generating sine table ..."
+	@$(ECHO) "Generating sine table" ...
 	./$< $@
-	@$(ECHO) "... Done"
+	@$(ECHO) ... Done
 
 $(PLUCK_SOUND): $(PLUCK_SOUND_RES)
 $(RJFC_SOUND): $(RJFC_SOUND_RES)
 
 $(PLUCK_SOUND) $(RJFC_SOUND): $(SOUND_STR)
-
-$(PLUCK_SOUND) $(RJFC_SOUND):
-	@$(ECHO) "Soundstripping" $@ ...
+	@$(ECHO) Soundstripping $@ ...
 	./$(SOUND_STR) $< $@
 	@$(ECHO) "... Done"
 
@@ -112,19 +110,19 @@ $(RJFC_SOUND_RES): $(RJFC_SOUND_SRC)
 
 $(PLUCK_SOUND_RES) $(RJFC_SOUND_RES):
 	@$(RM) $@
-	@$(ECHO) "Resampling" $@ ...
+	@$(ECHO) Resampling $@ ...
 	ffmpeg -i $< -v warning -af "lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
-	@$(ECHO) "... Done"
+	@$(ECHO) ... Done
 
 $(SOUND_STR): $(SOUND_STR_SRC)
-	@$(ECHO) "Compiling" $@ ...
+	@$(ECHO) Compiling $@ ...
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
-	@$(ECHO) "... Done"
+	@$(ECHO) ... Done
 
 $(SIN_GENERATOR): $(SIN_GEN_SRC)
-	@$(ECHO) "Compiling" $@ ...
+	@$(ECHO) Compiling $@ ...
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@ -lm
-	@$(ECHO) "... Done"
+	@$(ECHO) ... Done
 
 help: info
 
@@ -148,9 +146,9 @@ license:
 
 version:
 	@$(ECHO) "Text Mode Demo source: unversioned"
-	@$(ASM) --version        | head --lines=1
+	@$(ASM)  --version       | head --lines=1
 	@$(DECB) 2>&1 >/dev/null | head --lines=1
-	@$(CC) --version         | head --lines=1
+	@$(CC)   --version       | head --lines=1
 
 mame: $(DISK)
 	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"

@@ -13,6 +13,9 @@
 * ASCII art made by Microsoft Copilot and modified by me
 * ASCII art from Joan Stark, Normand Veilleux and Matzec, all from
 * https://www.asciiart.eu/animals/birds-land
+* All of the sounds in the dot routine were created by
+* https://speechsynthesis.online/
+* The voice is "Maisie"
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -48,6 +51,12 @@ WAIT_PERIOD	EQU	25
 
 	jsr	turn_off_disk_motor
 
+******************************
+* Turn on 6-bit audio circuits
+******************************
+
+        jsr     turn_6bit_audio_on
+
 *************************
 * Text buffer information
 *************************
@@ -64,6 +73,9 @@ TEXT_LINES      EQU     16
 ******************
 
 	jsr	clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
 
 ***********************
 * Output a bird graphic
@@ -112,7 +124,7 @@ create_dot:
 	jsr	display_text_graphic
 	bra	dot_start
 
-; Made by Microsoft Copilot and modified by me
+; Made by Microsoft Copilot and modified by me, animated by me
 
 dot_graphic:
 	FCV	" /\\-/\\",0
@@ -123,18 +135,44 @@ dot_graphic:
 DOT_START	EQU	(TEXTBUF+8*COLS_PER_LINE+16)
 
 dot_start:
+        lda     #WAIT_PERIOD * 3
+        jsr     wait_frames                     ; Wait a number of frames
 
 	ldx	#DOT_START	; in the middle of the screen
 
 	lda	#'*'+64		; Non-inverted asterisk
 	sta	,x
 
+	lda	#8
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
 ******
 * Wait
 ******
 
+	lda	#100			; Wait this number of frames
+	lbsr	wait_frames
+
+	jsr	dot_mouth_open
+
+	lda	#8
+	ldx	#now_sound
+	ldy	#now_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
 	lda	#50			; Wait this number of frames
 	lbsr	wait_frames
+
+	jsr	dot_mouth_open
+	lda	#8
+	ldx	#move_sound
+	ldy	#move_sound_end
+	jsr	play_sound
+	jsr	dot_mouth_close
 
 ***************
 * The dot moves
@@ -158,8 +196,6 @@ dot_previous:
 	RZB	2		; Previously drawn location of dot
 displacement:
 	RZB	1		; The amount that the dot moves
-new_position:
-	RZB	2		; The calculated new position
 
 move_dot:
 	clra			; A is really don't care
@@ -188,9 +224,16 @@ move_dot:
 	lblo	abort_phase_change
 	ldd	scale_factor
 	cmpd	#2000			; once we're at full speed...
-	blo	abort_phase_change
+	lblo	abort_phase_change
 	lda	angle			; and angle is 0...
-	bne	abort_phase_change
+	lbne	abort_phase_change
+
+        jsr     dot_mouth_open		; Play speech "Move More"
+        lda     #8
+        ldx     #move_more_sound
+        ldy     #move_more_sound_end
+        jsr     play_sound
+        jsr     dot_mouth_close
 
 	lda	#1			; ...go to phase 1
 	sta	phase
@@ -497,7 +540,6 @@ skip_dot:
 end:
 	jsr	uninstall_irq_service_routine
 
-loop:	bra	loop
 	rts
 
 *****************************************************************************
@@ -606,6 +648,44 @@ turn_off_disk_motor:
 
 	clr	DSKREG		; Turn off disk motor
 	rts
+
+*********************
+* Turn 6-bit audio on
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+AUDIO_PORT      EQU     $FF20           ; (the top 6 bits)
+DDRA            EQU     $FF20
+PIA2_CRA        EQU     $FF21
+AUDIO_PORT_ON   EQU     $FF23           ; Port Enable Audio (bit 3)
+
+turn_6bit_audio_on:
+
+* This code was modified from code written by Trey Tomes
+
+        lda     AUDIO_PORT_ON
+        ora     #0b00001000
+        sta     AUDIO_PORT_ON   ; Turn on 6-bit audio
+
+* End code modified from code written by Trey Tomes
+
+* This code was written by other people (see the top of this file)
+
+        ldb     PIA2_CRA
+        andb    #0b11111011
+        stb     PIA2_CRA
+
+        lda     #0b11111100
+        sta     DDRA
+
+        orb     #0b00000100
+        stb     PIA2_CRA
+
+* End of code written by other people
+
+        rts
 
 ******************
 * Clear the screen
@@ -995,7 +1075,6 @@ switch_on_irq_and_firq:
 * Y = The end of the sound data
 *******************************
 
-AUDIO_PORT      EQU     $FF20           ; (the top 6 bits)
 
 play_sound:
 
@@ -1075,6 +1154,37 @@ _text_graphic_new_line:
 
 _display_text_graphic_finished:
         rts
+
+****************
+* Dot mouth open
+*
+* Inputs: None
+* Outputs: None
+****************
+
+dot_mouth_open:
+
+	lda	#'O'
+	ldx	#TEXTBUF + 2 * COLS_PER_LINE + 27
+	sta	,x
+	rts
+
+*****************
+* Dot mouth close
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+dot_mouth_close:
+
+	lda	#'-' + 64
+	ldx	#TEXTBUF + 2 * COLS_PER_LINE + 27
+	sta	,x
+	rts
+
+
+
 
 *************************************************************
 * sine function
@@ -1666,3 +1776,27 @@ scroll_text_4:
 	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	FCV	"                                "
 	FCB	0
+
+*************************************
+* Here is our raw data for our sounds
+*************************************
+
+finger_snap_sound:
+	INCLUDEBIN "Sounds/Finger_Snap/Finger_Snap.raw"
+finger_snap_sound_end:
+
+now_sound:
+	INCLUDEBIN "Sounds/Dot_Sounds/Now.raw"
+now_sound_end:
+
+move_sound:
+	INCLUDEBIN "Sounds/Dot_Sounds/Move.raw"
+move_sound_end:
+
+move_more_sound:
+	INCLUDEBIN "Sounds/Dot_Sounds/Move_More.raw"
+move_more_sound_end:
+
+change_sound:
+	INCLUDEBIN "Sounds/Dot_Sounds/Change.raw"
+change_sound_end:

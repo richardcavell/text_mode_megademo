@@ -1594,7 +1594,7 @@ _drop_each_line:
 	rts
 
 _drop_line:
-	cmpa	#TEXTLINES-1
+	cmpa	#TEXT_LINES-1
 	blo	_do_drop
 
 	clra

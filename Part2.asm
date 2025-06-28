@@ -232,6 +232,12 @@ vertical_angular_speed:
 displacement:
 	RZB	2		; The amount that the dot moves
 
+rotation_speed:
+	RZB	1
+
+rotation_angle:
+	RZB	1
+
 move_dot:
 	ldd	#1000
 	std	horizontal_scale_factor
@@ -272,6 +278,10 @@ move_dot_loop:
 	jsr	b_signed_mul
 	addd	displacement
 	std	displacement
+
+	lda	rotation_angle
+	adda	rotation_speed
+	sta	rotation_angle
 
 	jsr	consider_phase
 	jsr	clear_area
@@ -363,6 +373,8 @@ _phase_1:
 
 	lda	#2
 	sta	phase
+	ldd	#0
+	std	dot_frames
 	ldd	#2500
 	std	horizontal_scale_factor
 	lda	#3
@@ -377,7 +389,7 @@ _phase_1_return:
 
 _phase_2:
 	ldd	dot_frames
-	cmpd	#300
+	cmpd	#150
 	blo	_phase_2_return
 	lda	horizontal_angle
 	bne	_phase_2_return
@@ -397,13 +409,17 @@ _phase_2:
 
 	lda	#3
 	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#4
+	sta	horizontal_angular_speed
 
 _phase_2_return:
 	rts
 
 _phase_3:
 	ldd	dot_frames
-	cmpd	#300
+	cmpd	#150
 	blo	_phase_3_return
 	lda	horizontal_angle
 	bne	_phase_3_return
@@ -423,13 +439,17 @@ _phase_3:
 
 	lda	#4
 	sta	phase
+	lda	#5
+	sta	horizontal_angular_speed
+	ldd	#0
+	std	dot_frames
 
 _phase_3_return:
 	rts
 
 _phase_4:
 	ldd	dot_frames
-	cmpd	#300
+	cmpd	#150
 	blo	_phase_4_return
 	lda	horizontal_angle
 	bne	_phase_4_return
@@ -449,13 +469,19 @@ _phase_4:
 
 	lda	#5
 	sta	phase
+	lda	#3
+	sta	vertical_angular_speed
+	lda	#6
+	sta	horizontal_angular_speed
+	ldd	#0
+	std	dot_frames
 
 _phase_4_return:
 	rts
 
 _phase_5:
 	ldd	dot_frames
-	cmpd	#300
+	cmpd	#150
 	blo	_phase_5_return
 	lda	horizontal_angle
 	bne	_phase_5_return
@@ -475,13 +501,15 @@ _phase_5:
 
 	lda	#6
 	sta	phase
+	ldd	#0
+	std	dot_frames
 
 _phase_5_return:
 	rts
 
 _phase_6:
 	ldd	dot_frames
-	cmpd	#300
+	cmpd	#100
 	blo	_phase_6_return
 	lda	horizontal_angle
 	bne	_phase_6_return
@@ -501,8 +529,45 @@ _phase_6:
 
 	lda	#7
 	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#3
+	sta	vertical_angular_speed
 
 _phase_6_return:
+	rts
+
+_phase_7:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_7_return
+	lda	horizontal_angle
+	bne	_phase_7_return
+
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#8
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#1
+	sta	vertical_angular_speed
+
+	lda	#32
+	sta	rotation_speed
+
+_phase_7_return:
 	rts
 
 **********
@@ -527,6 +592,10 @@ draw_dot:
 	beq	_draw_3_asterisks
 	cmpa	#7
 	beq	_draw_5_asterisks
+	cmpa	#8
+	beq	_draw_spinning
+
+	; Should never get here
 	rts
 
 _draw_asterisk:
@@ -578,7 +647,7 @@ _draw_3_asterisks:
 	ldx	#DOT_START-1
 	leax	d,x
 
-	lda	'*' + 64
+	lda	#'*' + 64
 	sta	-32,x
 	sta	,x
 	sta	32,x
@@ -590,7 +659,7 @@ _draw_5_asterisks:
 	ldx	#DOT_START-1
 	leax	d,x
 
-	lda	'*' + 64
+	lda	#'*' + 64
 	sta	-64,x
 	sta	-32,x
 	sta	,x
@@ -599,329 +668,13 @@ _draw_5_asterisks:
 
 	rts
 
-
-
-
-	IF	0
-
-	lda	phase			; If we're in phase 0...
-	bne	not_phase_0
-
-; Phase 0
-	ldd	dot_frames
-	cmpd	#150
-	lblo	abort_phase_change
-	ldd	scale_factor
-	cmpd	#2000			; once we're at full speed...
-	lblo	abort_phase_change
-	lda	angle			; and angle is 0...
-	lbne	abort_phase_change
-
-        jsr     dot_mouth_open		; Play speech "Move More"
-        lda     #8
-        ldx     #move_more_sound
-        ldy     #move_more_sound_end
-        jsr     play_sound
-        jsr     dot_mouth_close
-
-	lda	#1			; ...go to phase 1
-	sta	phase
-	ldd	#0
-	std	dot_frames		; And start counting frames from 0
-
-	bra	abort_phase_change
-
-not_phase_0:
-	lda	phase
-	cmpa	#1
-	bne	not_phase_1
-
-	ldd	dot_frames
-	cmpd	#50			; After 50 frames,...
-	bne	abort_phase_change
-
-	lda	#2
-	sta	phase			; ...go to phase 2
-	clra
-	clrb
-	std	dot_frames
-
-not_phase_1:
-	lda	phase
-	cmpa	#2
-	bne	not_phase_2
-
-	ldd	dot_frames
-	cmpd	#50			; After 50 frames...
-	bne	abort_phase_change
-
-	lda	#3
-	sta	phase			; ...go to phase 3
-	clra
-	clrb
-	std	dot_frames
-
-not_phase_2:
-	lda	phase
-	cmpa	#3
-	bne	not_phase_3
-
-	ldd	dot_frames
-	cmpd	#50
-	bne	abort_phase_change
-
-	lda	#4
-	sta	phase
-	clra
-	clrb
-	std	dot_frames
-
-not_phase_3:
-	lda	phase
-	cmpa	#4
-	lbne	dot_expands
-
-	ldd	dot_frames
-	cmpd	#50
-	bne	abort_phase_change
-
-	lda	#5
-	sta	phase
-	clra
-	clrb
-	std	dot_frames
-
-abort_phase_change:
-	lda	#$60		; Green box
-	ldx	dot_previous
-	sta	,x		; Erase previous dot
-	sta	-1,x
-	sta	1,x
-
-	lda	displacement
+_draw_spinning:
+	lda	#'*' + 64
+	ldb	rotation_angle
 	ldx	#DOT_START
-	leax	a,x		; X is now the position of the new dot
 
-	lda	phase
-	bne	_test_for_1
-
-	lda	#'*' + 64	; In phase 0, draw *
-	sta	,x
-	bra	phase_finished
-
-_test_for_1:
-	lda	phase
-	cmpa	#1
-	bne	_test_for_2
-
-	lda	#'X'		; In phase 1, change to an X
-	sta	,x
-
-	bra	phase_finished
-
-_test_for_2:
-	lda	phase
-	cmpa	#2
-	bne	_test_for_3
-	lda	#':' + 64
-	sta	1,x
-	lda	#'-' + 64
-	sta	,x
-	lda	#'(' + 64
-	sta	-1,x
-	bra	phase_finished
-
-_test_for_3:
-	lda	phase
-	cmpa	#3
-	bne	_test_for_4
-	lda	#'!' + 64
-	sta	,x
-	bra	phase_finished
-
-_test_for_4:
-	lda	phase
-	cmpa	#4
-	bne	dot_expands
-	lda	#'*' + 64
-	sta	,x
-	bra	phase_finished
-
-phase_finished:
-	stx	dot_previous	; And erase after next VBlank
-
-	ldd	scale_factor	; Increase the scale factor
-	addd	#20		; gradually
-
-	cmpd	#2000		; If D is over 2000,
-	blt	d_is_clamped
-
-	ldd	#2000		; Make it equal to 2000
-
-d_is_clamped:
-	std	scale_factor
-
-	lda	angle		; (A fixed-point fraction)
-	adda	#2		; It rotates constantly
-	sta	angle
-
-	lbra	move_dot
-
-dot_expands:
-	clr	phase
-				; Phase 0 is 3-asterisks
-				; Phase 1 is 5-asterisks
-				; Phase 2 is 5 spinning
-				; Phase 3 is back to an asterisk
-
-expand_dot:
-	clra			; A is really don't care
-	ldb	angle		; D is our angle in fixed point
-	lbsr	sin		; D is now the sine of our angle
-
-	ldx	scale_factor		; X = scale factor, D is sine
-	lbsr	multiply_fixed_point	; multiply D by X (scale by sine)
-	lbsr	round_to_nearest	; Need to round D up or down
-	sta	displacement		; This is the displacement
-
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	lbne	skip_dot
-
-	ldd	dot_frames		; Add 1 to dot_frames
-	addd	#1
-	std	dot_frames
-
-	lda	phase			; If we're in phase 0...
-	bne	not_phase_0_expands
-
-; Phase 0
-	ldd	dot_frames
-	cmpd	#50
-	blo	abort_phase_change_expands
-
-	lda	#1			; ...go to phase 1
-	sta	phase
-	clra
-	clrb
-	std	dot_frames		; and restart the framecount
-
-	bra	abort_phase_change_expands
-
-not_phase_0_expands:
-	lda	phase
-	cmpa	#1
-	bne	not_phase_1_expands
-
-	ldd	dot_frames
-	cmpd	#50			; After 50 frames,...
-	bne	abort_phase_change_expands
-
-	lda	#2
-	sta	phase			; ...go to phase 2
-	clra
-	clrb
-	std	dot_frames
-
-not_phase_1_expands:
-	lda	phase
-	cmpa	#2
-	bne	not_phase_2_expands
-
-	ldd	dot_frames
-	cmpd	#200			; After 50 frames...
-	bne	abort_phase_change_expands
-
-	lda	#3
-	sta	phase			; ...go to phase 3
-	clra
-	clrb
-	std	dot_frames
-
-not_phase_2_expands:
-
-; Must be phase 3
-
-	ldd	dot_frames
-	cmpd	#200
-	bne	abort_phase_change_expands
-
-	bra	skip_dot
-
-abort_phase_change_expands:
-	lda	displacement
-	ldx	#DOT_START
-	leax	a,x		; X is now the position of the new dot
-
-	pshs	x
-	lbsr	clear_area
-	puls	x
-
-	lda	phase
-	bne	_test_for_1_expands
-
-	lda	#'*' + 64	; In phase 0, draw *
-	sta	,x
-	sta	-32,x
-	sta	32,x
-	bra	phase_finished_expands
-
-_test_for_1_expands:
-	lda	phase
-	cmpa	#1
-	bne	_test_for_2_expands
-
-	lda	#'*' + 64	; In phase 1
-	sta	-64,x
-	sta	-32,x
-	sta	,x
-	sta	32,x
-	sta	64,x
-
-	bra	phase_finished_expands
-
-internal_angle:
-	RZB	1
-
-_test_for_2_expands:
-	lda	internal_angle
-	adda	#2
-	sta	internal_angle
-
-	lda	phase
-	cmpa	#2
-	bne	_phase_3
-
-	lda	#'*' + 64
-	ldb	internal_angle
-	lbsr	draw_32
-
-	bra	phase_finished_expands
-
-_phase_3:
-	lda	#'*' + 64
-	sta	,x
-
-	ldd	scale_factor
-	subd	#100
-	bpl	_store_sf
-	clra		; Clamp D at zero
-	clrb
-
-_store_sf:
-	std	scale_factor
-
-	bra	phase_finished_expands
-
-phase_finished_expands:
-	stx	dot_previous	; And erase after next VBlank
-
-	lda	angle		; (A fixed-point fraction)
-	adda	#2		; It rotates constantly
-	sta	angle
-
-	lbra	expand_dot
-	ENDIF
+	jsr	draw_32
+	rts
 
 ************
 * Clear area

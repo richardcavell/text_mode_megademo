@@ -601,6 +601,10 @@ _phase_9:
 **********
 
 draw_dot:
+	ldd	displacement
+	ldx	#DOT_START
+	leax	d,x
+
 	lda	phase
 	cmpa	#0
 	beq	_draw_asterisk
@@ -627,54 +631,34 @@ draw_dot:
 	rts
 
 _draw_asterisk:
-	ldd	displacement
-	ldx	#DOT_START
-	leax	d,x
-
 	lda	#'*' + 64
 	sta	,x
 
 	rts
 
 _draw_x:
-	ldd	displacement
-	ldx	#DOT_START
-	leax	d,x
-
 	lda	#'X'
 	sta	,x
 
 	rts
 
 _draw_bang:
-	ldd	displacement
-	ldx	#DOT_START
-	leax	d,x
-
 	lda	#'!' + 64
 	sta	,x
 
 	rts
 
 _draw_smiley:
-	ldd	displacement
-	ldx	#DOT_START-1
-	leax	d,x
-
 	lda	#':' + 64
-	sta	,x+
+	sta	-1,x
 	lda	#'-' + 64
-	sta	,x+
-	lda	#')' + 64
 	sta	,x
+	lda	#')' + 64
+	sta	1,x
 
 	rts
 
 _draw_3_asterisks:
-	ldd	displacement
-	ldx	#DOT_START
-	leax	d,x
-
 	lda	#'*' + 64
 	sta	-32,x
 	sta	,x
@@ -683,10 +667,6 @@ _draw_3_asterisks:
 	rts
 
 _draw_5_asterisks:
-	ldd	displacement
-	ldx	#DOT_START
-	leax	d,x
-
 	lda	#'*' + 64
 	sta	-64,x
 	sta	-32,x
@@ -697,10 +677,6 @@ _draw_5_asterisks:
 	rts
 
 _draw_spinning:
-	ldd	displacement
-	ldx	#DOT_START
-	leax	d,x
-
 	lda	#'*' + 64
 	ldb	rotation_angle
 

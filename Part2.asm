@@ -204,6 +204,10 @@ move_more_message:
 	FCV	"\"MOVE MORE\""
 	FCB	0
 
+change_message:
+	FCV	"\"CHANGE\""
+	FCB	0
+
 dot_frames:
 	RZB	2
 
@@ -280,9 +284,12 @@ phase:
 	RZB	1		; 0 = Starting to move
 				; 1 = Moving more
 				; 2 = Moving even more
-				; 3 = Changing to :-)
+				; 3 = Changing to X
 				; 4 = Changing to !
-				; 5 = Changing back to *
+				; 5 = Changing to smiley
+				; 6 = Changing to 3 asterisks
+				; 7 = Changing to 5 asterisks
+				; 8 = Spinning
 
 consider_phase:
 	lda	phase
@@ -291,7 +298,16 @@ consider_phase:
 	cmpa	#1
 	beq	_phase_1
 	cmpa	#2
-	beq	_phase_2
+	lbeq	_phase_2
+	cmpa	#3
+	lbeq	_phase_3
+	cmpa	#4
+	lbeq	_phase_4
+	cmpa	#5
+	lbeq	_phase_5
+	cmpa	#6
+	lbeq	_phase_6
+
 	; Impossible to get here
 	rts
 
@@ -327,7 +343,7 @@ _phase_0_return:
 
 _phase_1:
 	ldd	dot_frames
-	cmpd	#100
+	cmpd	#200
 	blo	_phase_1_return
 	lda	horizontal_angle
 	bne	_phase_1_return
@@ -360,6 +376,133 @@ _phase_1_return:
 	rts
 
 _phase_2:
+	ldd	dot_frames
+	cmpd	#300
+	blo	_phase_2_return
+	lda	horizontal_angle
+	bne	_phase_2_return
+
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#3
+	sta	phase
+
+_phase_2_return:
+	rts
+
+_phase_3:
+	ldd	dot_frames
+	cmpd	#300
+	blo	_phase_3_return
+	lda	horizontal_angle
+	bne	_phase_3_return
+
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#4
+	sta	phase
+
+_phase_3_return:
+	rts
+
+_phase_4:
+	ldd	dot_frames
+	cmpd	#300
+	blo	_phase_4_return
+	lda	horizontal_angle
+	bne	_phase_4_return
+
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#5
+	sta	phase
+
+_phase_4_return:
+	rts
+
+_phase_5:
+	ldd	dot_frames
+	cmpd	#300
+	blo	_phase_5_return
+	lda	horizontal_angle
+	bne	_phase_5_return
+
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#6
+	sta	phase
+
+_phase_5_return:
+	rts
+
+_phase_6:
+	ldd	dot_frames
+	cmpd	#300
+	blo	_phase_6_return
+	lda	horizontal_angle
+	bne	_phase_6_return
+
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#7
+	sta	phase
+
+_phase_6_return:
 	rts
 
 **********
@@ -374,11 +517,21 @@ draw_dot:
 	beq	_draw_asterisk
 	cmpa	#2
 	beq	_draw_asterisk
+	cmpa	#3
+	beq	_draw_x
+	cmpa	#4
+	beq	_draw_bang
+	cmpa	#5
+	beq	_draw_smiley
+	cmpa	#6
+	beq	_draw_3_asterisks
+	cmpa	#7
+	beq	_draw_5_asterisks
 	rts
 
 _draw_asterisk:
 	ldd	displacement
-	ldx	#TEXTBUF + 9 * COLS_PER_LINE + 16
+	ldx	#DOT_START
 	leax	d,x
 
 	lda	#'*' + 64
@@ -386,10 +539,65 @@ _draw_asterisk:
 
 	rts
 
+_draw_x:
+	ldd	displacement
+	ldx	#DOT_START
+	leax	d,x
 
+	lda	#'X'
+	sta	,x
 
+	rts
 
+_draw_bang:
+	ldd	displacement
+	ldx	#DOT_START
+	leax	d,x
 
+	lda	#'!' + 64
+	sta	,x
+
+	rts
+
+_draw_smiley:
+	ldd	displacement
+	ldx	#DOT_START-1
+	leax	d,x
+
+	lda	#':' + 64
+	sta	,x+
+	lda	#'-' + 64
+	sta	,x+
+	lda	#')' + 64
+	sta	,x
+
+	rts
+
+_draw_3_asterisks:
+	ldd	displacement
+	ldx	#DOT_START-1
+	leax	d,x
+
+	lda	'*' + 64
+	sta	-32,x
+	sta	,x
+	sta	32,x
+
+	rts
+
+_draw_5_asterisks:
+	ldd	displacement
+	ldx	#DOT_START-1
+	leax	d,x
+
+	lda	'*' + 64
+	sta	-64,x
+	sta	-32,x
+	sta	,x
+	sta	32,x
+	sta	64,x
+
+	rts
 
 
 

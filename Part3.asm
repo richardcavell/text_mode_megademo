@@ -425,14 +425,14 @@ blank_lines_at_top:
 	ldx	large_text_buffer
 
 _blank_lines_at_top_loop:
-	tsta
-	bpl	_blank_lines_at_top_return
+	cmpa	#0
+	ble	_blank_lines_at_top_return
 
 	pshs	a
 	bsr	output_clear_line
 	puls	a
 
-	inca
+	deca
 	bra	_blank_lines_at_top_loop
 
 _blank_lines_at_top_return:

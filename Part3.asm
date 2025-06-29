@@ -549,7 +549,7 @@ _print_text_loop:
 	bra	_print_text_loop
 
 _print_text_finished:
-	sty	large_text_graphic_data	; Return A,X
+	sty	large_text_graphic_data	; Return A and X
 	rts
 
 _print_text_found_zero:

@@ -403,18 +403,8 @@ _phase_2:
 	lda	horizontal_angle
 	bne	_phase_2_return
 
-	jsr	dot_mouth_open
-
-	lda	#23
-	ldx	#change_message
-	jsr	speech_bubble
-
 	lda	#8
-	ldx	#change_sound
-	ldy	#change_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
+	jsr	change
 
 	lda	#3
 	sta	phase
@@ -433,18 +423,8 @@ _phase_3:
 	lda	horizontal_angle
 	bne	_phase_3_return
 
-	jsr	dot_mouth_open
-
-	lda	#23
-	ldx	#change_message
-	jsr	speech_bubble
-
 	lda	#7
-	ldx	#change_sound
-	ldy	#change_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
+	jsr	change
 
 	lda	#4
 	sta	phase
@@ -465,16 +445,8 @@ _phase_4:
 
 	jsr	dot_mouth_open
 
-	lda	#23
-	ldx	#change_message
-	jsr	speech_bubble
-
 	lda	#7
-	ldx	#change_sound
-	ldy	#change_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
+	jsr	change
 
 	lda	#5
 	sta	phase
@@ -495,18 +467,8 @@ _phase_5:
 	lda	horizontal_angle
 	bne	_phase_5_return
 
-	jsr	dot_mouth_open
-
-	lda	#23
-	ldx	#change_message
-	jsr	speech_bubble
-
 	lda	#7
-	ldx	#change_sound
-	ldy	#change_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
+	jsr	change
 
 	lda	#6
 	sta	phase
@@ -525,18 +487,8 @@ _phase_6:
 	lda	horizontal_angle
 	bne	_phase_6_return
 
-	jsr	dot_mouth_open
-
-	lda	#23
-	ldx	#change_message
-	jsr	speech_bubble
-
 	lda	#7
-	ldx	#change_sound
-	ldy	#change_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
+	jsr	change
 
 	lda	#7
 	sta	phase
@@ -592,6 +544,26 @@ _phase_8_return:
 	rts
 
 _phase_9:
+	rts
+
+********
+* Change
+********
+
+change:
+	pshs	a
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	puls	a
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
 	rts
 
 **********

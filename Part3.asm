@@ -82,7 +82,7 @@ horizontal_coord:
 
 vertical_coord:
 
-	FCB	-5
+	RZB	0
 
 large_text_graphic_viewer_loop:
 	jsr	wait_for_vblank_and_check_for_skip
@@ -360,9 +360,9 @@ wait_frames:
 * Large text graphic display
 *
 * Inputs:
-* A = horizontal coordinate
-* B = vertical coordinate
-* X = graphic data
+* A = Horizontal coordinate
+* B = Vertical coordinate
+* X = Graphic data
 *****************************************
 
 ; First, output any blank lines
@@ -407,7 +407,9 @@ _large_text_top_loop:
 	bra	large_text_top_done
 
 _large_text_vertical_start_found:
+	pshs	a,b
 	bsr	draw_lines
+	puls	a,b
 
 _large_text_bottom_clear_lines:
 	cmpy	#TEXTBUFEND
@@ -453,19 +455,52 @@ output_clear_line:
 	std	,x++
 	rts
 
-************
+***************************
 * Draw lines
-************
+*
+* Inputs:
+* A = Horizontal coordinate
+* B = Vertical coordinate
+* X = Graphic data
+* Y = Text buffer
+***************************
 
 draw_lines:
+	tsta
+	bpl	_draw_lines_consume_graphic
+
+	pshs	a
+	lda	#GREEN_BOX
+	sta	,y+
+	puls	a
+	bra	draw_lines
+
+_draw_lines_consume_graphic:
+	leax	a,x	; Step over initial entries to get to the right start
+
+_draw_line_loop:
+	lda	,x+
+	beq	_found_zero
+	lda	,x+
+	beq	_found_end
+	sta	,y+
+	bra	_draw_line_loop
+
+
+
+
+_found_zero:
+
+_found_end:
 
 	rts
-	
-	
 
 *************
 * Output line
 *************
+
+
+
 
 **********************
 * Display scroll text

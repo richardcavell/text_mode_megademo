@@ -77,13 +77,13 @@ TEXT_LINES      EQU     16
 * Large text graphic viewer
 ***************************
 
-horizontal_coord:
+horizontal_coord:	; of the graphic
 
 	RZB	1
 
-vertical_coord:
+vertical_coord:		; of the graphic
 
-	FCB	1
+	RZB	1
 
 CARTMAN_TEXT_GRAPHIC_HEIGHT	EQU	27
 
@@ -462,6 +462,49 @@ _blank_lines_clear_loop:
 
 _blank_lines_none:
 	rts
+
+**********
+* Do lines
+**********
+
+large_text_do_lines:
+
+	lda	#0	; Line 0
+
+_do_lines_loop:
+
+	cmpa	large_text_vertical_coordinate
+
+
+	bsr	left_margin
+
+	bsr	print_text
+
+	bsr	right_margin
+
+	bra	_do_lines_loop
+
+	rts
+
+*************
+* Left margin
+*************
+
+left_margin:
+
+	ldb	large_text_horizontal_coordinate
+	cmpb	#0
+	ble	_left_margin_none
+
+_left_margin_loop:
+	decb
+	
+
+
+_left_margin_none:
+	rts
+
+
 
 *******************************
 * Output clear line

@@ -365,7 +365,7 @@ wait_frames:
 * Inputs:
 *
 * A = Horizontal coordinate
- B = Vertical coordinate
+* B = Vertical coordinate
 * X = Graphic data
 *
 * Outputs: None
@@ -436,7 +436,7 @@ _large_text_top_return:
 * Input:
 * X = Start of line
 *
-* Output
+* Output:
 * X = Start of next line
 ************************
 
@@ -461,7 +461,7 @@ output_clear_line:
 	std	,x++
 	rts
 
-***************************
+*********************************
 * Draw lines
 *
 * Inputs:
@@ -469,7 +469,11 @@ output_clear_line:
 * B = Vertical coordinate
 * X = Graphic data
 * Y = Text buffer
-***************************
+*
+* Outputs:
+* X = Graphic data (new location)
+* Y = Text buffer (new location)
+*********************************
 
 draw_lines:
 	tsta

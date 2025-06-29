@@ -577,7 +577,7 @@ _phase_7_return:
 
 _phase_8:
 	ldd	dot_frames
-	cmpd	#200
+	cmpd	#194
 	blo	_phase_8_return
 
 	lda	#8

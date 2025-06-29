@@ -408,21 +408,28 @@ large_text_graphic_display:
 	tfr	y,d
 	stb	large_text_graphic_height
 
+	ldx	#TEXTBUF
+
 	bsr	blank_lines_at_top
 
-	bsr	large_text_do_lines
+	bsr	do_lines
 
 	bsr	blank_lines_at_bottom
 	rts
 
-********************
+**************************
 * Blank lines at top
-********************
+*
+* Input:
+* X = start of text buffer
+*
+* Output:
+* X = where we are up to
+**************************
 
 blank_lines_at_top:
 
 	lda	large_text_vertical_coordinate
-	ldx	large_text_buffer
 
 _blank_lines_at_top_loop:
 	cmpa	#0
@@ -439,72 +446,118 @@ _blank_lines_at_top_return:
 
 	rts
 
-***********************
+************************
 * Blank lines at bottom
-***********************
+*
+* Input:
+* X = where we are up to
+*
+* Output: None
+************************
 
 blank_lines_at_bottom:
 
-	lda	large_text_graphic_height
-	adda	large_text_vertical_coordinate
-	cmpa	#16
-	bhs	_blank_lines_none
-
-	ldb	#32
-	mul
-	ldx	#TEXTBUF
-	leax	d,x		; Start blanking from here
-
 _blank_lines_clear_loop:
-	bsr	output_clear_line
 	cmpx	#TEXTBUFEND
-	blo	_blank_lines_clear_loop
+	beq	_blank_lines_none
+
+	bsr	output_clear_line
+	bra	_blank_lines_clear_loop
 
 _blank_lines_none:
 	rts
 
-**********
+************************
 * Do lines
-**********
+*
+* Input:
+* X = where we are up to
+*
+* Output:
+* X = where we are up to
+************************
 
-large_text_do_lines:
-
-	lda	#0	; Line 0
+do_lines:
+	lda	large_text_horizontal_coordinate
 
 _do_lines_loop:
-
-	cmpa	large_text_vertical_coordinate
-
+	cmpx	#TEXTBUFEND
+	beq	_do_lines_done
 
 	bsr	left_margin
-
 	bsr	print_text
-
 	bsr	right_margin
 
 	bra	_do_lines_loop
 
+_do_lines_done:
+
 	rts
 
-*************
+************************
 * Left margin
-*************
+*
+* Inputs:
+* X = where we are up to
+*
+* Outputs:
+* A = left margin
+* X = where we are up to
+************************
 
 left_margin:
 
-	ldb	large_text_horizontal_coordinate
-	cmpb	#0
-	ble	_left_margin_none
+	lda	large_text_horizontal_coordinate
 
 _left_margin_loop:
-	decb
-	
+	cmpa	#0
+	ble	_left_margin_none
 
+	ldb	#WHITE_BOX
+	stb	,x+
+	deca
+	bra	_left_margin_loop
 
 _left_margin_none:
+	lda	large_text_horizontal_coordinate	; Return A and X
+
 	rts
 
+************************
+* Print text
+*
+* Inputs:
+* A = left margin
+* X = where we are up to
+*
+* Outputs:
+* A = right margin
+* X = where we are up to
+************************
 
+print_text:
+	bsr	skip_graphic_data_vertical
+
+	ldb	,x+
+
+
+skip_graphic_data_vertical:
+
+skip_vertical_loop:
+	lda	large_text_vertical_coordinate
+
+************************
+* Right margin
+*
+* Inputs:
+* X = where we are up to
+*
+* Outputs:
+* X = where we are up to
+************************
+
+right_margin:
+	rts
 
 *******************************
 * Output clear line
@@ -532,17 +585,6 @@ _output_clear_line_loop:
 	decb
 	bne	_output_clear_line_loop
 
-	rts
-
-************************************
-* Large text do lines
-*
-* Inputs: None
-* Outputs: None
-************************************
-
-large_text_do_lines:
-	leax	32,x
 	rts
 
 **********************

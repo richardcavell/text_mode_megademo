@@ -83,7 +83,7 @@ horizontal_coord:
 
 vertical_coord:
 
-	RZB	0
+	FCB	1
 
 CARTMAN_TEXT_GRAPHIC_HEIGHT	EQU	27
 
@@ -356,11 +356,18 @@ debug_mode_toggle:
 wait_frames:
         pshs    a
         jsr     wait_for_vblank_and_check_for_skip
+	tsta
         puls    a
+	bne	_wait_frames_skipped
 
         deca
         bne     wait_frames
 
+	lda	#0
+	rts
+
+_wait_frames_skipped:
+	lda	#1
         rts
 
 *****************************************
@@ -396,11 +403,10 @@ large_text_graphic_display:
 	sta	large_text_horizontal_coordinate
 	stb	large_text_vertical_coordinate
 	stx	large_text_graphic_data
-	tfr	y,d
-	stb	large_text_graphic_height
-
 	ldx	#TEXTBUF
 	stx	large_text_buffer
+	tfr	y,d
+	stb	large_text_graphic_height
 
 	bsr	blank_lines_at_top
 

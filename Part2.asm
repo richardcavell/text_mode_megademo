@@ -119,6 +119,8 @@ create_dot:
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
+	tsta
+	bne	skip_dot
 
 	lda	#0
 	ldb	#24
@@ -958,6 +960,7 @@ wait_frames:
         deca
         bne     wait_frames
 
+	lda	#0
         rts
 
 _wait_frames_skip:

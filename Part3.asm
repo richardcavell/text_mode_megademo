@@ -548,13 +548,15 @@ _print_text_loop:
 
 _print_text_finished:
 	sty	large_text_graphic_data	; Return A and X
+	lda	#0
 	rts
 
 _print_text_found_zero:
+	sty	large_text_graphic_data	; Return A and X
 	pshs	a
 	ldb	#32
 	subb	,s+
-	tfr	b,a		; Return A and X
+	tfr	b,a
 	rts
 
 ****************************
@@ -600,8 +602,8 @@ right_margin:
 _right_margin_loop:
 	tsta
 	beq	_right_margin_finished
-	lda	#WHITE_BOX
-	sta	,x+
+	ldb	#WHITE_BOX
+	stb	,x+
 	deca
 	bra	_right_margin_loop
 

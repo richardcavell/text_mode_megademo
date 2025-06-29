@@ -102,7 +102,7 @@ clean:
 
 disk:	$(DISK)
 
-$(DISK): $(BASIC_PART) $(PART1) $(PART2)
+$(DISK): $(BASIC_PART) $(PART1) $(PART2) $(PART3)
 	@$(RM) $@
 	@$(ECHO) "Compiling disk" $@ ...
 	$(DECB) dskini $@ -3

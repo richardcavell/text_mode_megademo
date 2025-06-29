@@ -92,7 +92,6 @@ large_text_graphic_viewer_loop:
 	lda	horizontal_coord
 	ldb	vertical_coord
 	ldx	#cartman_text_graphic
-	ldy	#cartman_text_graphic_end
 	jsr	large_text_graphic_display
 
 	bra	large_text_graphic_viewer_loop
@@ -364,35 +363,139 @@ wait_frames:
 * A = horizontal coordinate
 * B = vertical coordinate
 * X = graphic data
-* Y = end of graphic data
 *****************************************
+
+; First, output any blank lines
 
 large_text_graphic_display:
 
-	ldu	#TEXTBUF	; U = text buffer
-	pshs	a,b
-	lda	#0
-	ldb	#0
+	ldy	#TEXTBUF	; Y = text buffer
 
-_large_text_graphic_display_loop:
+	tstb
+	bpl	_large_text_b_is_positive
 
-	bsr	output_char
-
-	inca			; Next horizontal position
-	cmpa	#COLS_PER_LINE
-	blo	_large_text_graphic_display_loop
-
-	clra			; Next line
+_large_text_output_top_lines:
+	pshs	a,b,x
+	bsr	output_clear_line	; This returns Y
+	puls	a,b,x
 	incb
-	cmpb	#TEXT_LINES
-	blo	_large_text_graphic_display_loop
+	bne	_large_text_output_top_lines
 
-	puls	a,b
+_large_text_b_is_positive:
+	bsr	large_text_top_done
 	rts
 
-output_char:
-	lda	#'*' + 64
-	sta	,u+
+*********************
+* Large text top done
+*********************
+
+; Second, find the vertical start of the text graphic
+
+large_text_top_done:
+	tstb
+	beq	_large_text_vertical_start_found
+
+_large_text_top_loop:
+	pshs	a
+	lda	,x+
+	puls	a
+	bne	_large_text_top_loop
+
+	decb
+	bra	large_text_top_done
+
+_large_text_vertical_start_found:
+	bsr	draw_lines
+
+_large_text_bottom_clear_lines:
+	cmpy	#TEXTBUFEND
+	beq	_large_text_top_return
+
+	tfr	y,x
+	bsr	output_clear_line
+	tfr	x,y
+
+	bra	_large_text_bottom_clear_lines
+
+_large_text_top_return:
+	rts
+
+************************
+* Output clear line
+*
+* Input:
+* X = Start of line
+*
+* Output
+* X = Start of next line
+************************
+
+output_clear_line:
+
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	rts
+
+************
+* Draw lines
+************
+
+draw_lines:
+
+_large_text_graphic_display_prepare_for_loop:
+	rts
+
+	puls	a
+
+_large_text_graphic_display_loop:
+	cmpy	#TEXTBUFEND
+	beq	_large_text_finished
+
+	pshs	a,b,y
+	bsr	output_line
+	puls	a,b,y
+
+	bra	_large_text_graphic_display_loop
+
+_large_text_finished:
+	rts
+
+output_line:
+	pshs	a,b		; ,s = horizontal coordinate
+				; 1,s = vertical coordinate
+
+	lda	#32
+
+_output_line_loop:
+	ldb	,x
+	cmpb	#0
+	beq	_output_line_return
+	cmpb	#255
+	beq	_output_line_return
+
+	leax	1,x
+	stb	,y+
+
+	deca
+	bne	_output_line_loop
+
+_output_line_return:
+	puls	a,b
 	rts
 
 *************

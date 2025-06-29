@@ -411,6 +411,7 @@ large_text_graphic_display:
 	ldx	#TEXTBUF
 
 	bsr	blank_lines_at_top
+	bsr	skip_graphic_data_vertical
 
 	bsr	do_lines
 
@@ -536,10 +537,6 @@ _left_margin_none:
 **********************************
 
 print_text:
-	pshs	a,x
-	bsr	skip_graphic_data_vertical
-	puls	a,x
-
 	ldy	large_text_graphic_data
 
 _print_text_loop:
@@ -552,7 +549,7 @@ _print_text_loop:
 	bra	_print_text_loop
 
 _print_text_finished:
-	sty	large_text_graphic_data
+	sty	large_text_graphic_data	; Return A,X
 	rts
 
 _print_text_found_zero:
@@ -565,20 +562,27 @@ _print_text_found_zero:
 
 ****************************
 * Skip graphic data vertical
+*
+* Input:
+* X = start of text buffer
+*
+* Output:
+* X = where we are up to
 ****************************
 
 skip_graphic_data_vertical:
+
 	lda	large_text_vertical_coordinate
 	bpl	_skip_graphic_data_return
 
-	ldx	large_text_graphic_data
+	ldy	large_text_graphic_data
 _skip_graphic_loop:
-	tst	,x+
+	tst	,y+
 	bne	_skip_graphic_loop
 	inca
 	bne	_skip_graphic_loop
 
-	stx	large_text_graphic_data
+	sty	large_text_graphic_data
 
 _skip_graphic_data_return:
 	rts

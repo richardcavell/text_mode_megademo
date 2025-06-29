@@ -7,9 +7,11 @@ DISK		=	TMDEMO.DSK
 BASIC_PART	=	DEMO.BAS
 PART1		=	PART1.BIN
 PART2		=	PART2.BIN
+PART3		=	PART3.BIN
 
 PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
+PART3_SRC	=	Part3.asm
 
 PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
@@ -77,7 +79,7 @@ ECHO		=	echo
 .PHONY:	all clean disk help info license version
 .PHONY: mame mame-debug xroar xroar-coco3 xroar-ntsc
 
-all:	$(DISK) $(PART1) $(PART2)
+all:	$(DISK) $(PART1) $(PART2) $(PART3)
 all:	$(SIN_TABLE) $(SIN_GENERATOR)
 all:	$(PLUCK_SOUND) $(RJFC_SOUND) $(SNAP_SOUND)
 all:	$(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
@@ -88,7 +90,7 @@ all:	$(SOUND_STR)
 
 clean:
 	@$(ECHO) "Removing all generated files" ...
-	@$(RM) $(DISK) $(PART1) $(PART2)
+	@$(RM) $(DISK) $(PART1) $(PART2) $(PART3)
 	@$(RM) $(SIN_TABLE) $(SIN_GENERATOR)
 	@$(RM) $(PLUCK_SOUND) $(RJFC_SOUND) $(SNAP_SOUND)
 	@$(RM) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
@@ -107,14 +109,16 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2)
 	$(DECB) copy $(BASIC_PART) -0 -t -r $(DISK),$(BASIC_PART)
 	$(DECB) copy -2 -b -r $(PART1) $(DISK),$(PART1)
 	$(DECB) copy -2 -b -r $(PART2) $(DISK),$(PART2)
+	$(DECB) copy -2 -b -r $(PART3) $(DISK),$(PART3)
 	@$(DECB) free $@
 	@$(ECHO) ... Done
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)
 $(PART2): $(PART2_SRC) $(SIN_TABLE) $(SNAP_SOUND)
 $(PART2): $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
+$(PART3): $(PART3_SRC) $(SIN_TABLE)
 
-$(PART1) $(PART2):
+$(PART1) $(PART2) $(PART3):
 	@$(ECHO) Assembling $@ ...
 	$(ASM) $(ASMFLAGS) -o $@ $<
 	@$(ECHO) ... Done

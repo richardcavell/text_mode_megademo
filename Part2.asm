@@ -794,7 +794,7 @@ install_irq_service_routine:
 
 	rts
 
-**********************
+***************************************************
 * Our IRQ handler
 *
 * Make sure decb_irq_service_routine is initialized

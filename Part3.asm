@@ -409,6 +409,7 @@ _large_text_top_loop:
 	puls	a
 	bne	_large_text_top_loop
 
+
 	decb
 	bra	large_text_top_done
 
@@ -417,7 +418,16 @@ _large_text_vertical_start_found:
 	bsr	draw_lines
 	puls	a,b
 
-_large_text_bottom_clear_lines:
+	bsr	large_text_bottom_clear_lines
+	rts
+
+************************
+* Large text fill bottom
+************************
+
+; Third, fill the bottom with clear lines, if applicable
+
+large_text_bottom_clear_lines:
 	cmpy	#TEXTBUFEND
 	beq	_large_text_top_return
 

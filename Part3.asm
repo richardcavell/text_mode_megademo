@@ -82,7 +82,7 @@ horizontal_coord:
 
 vertical_coord:
 
-	RZB	1
+	FCB	-5
 
 large_text_graphic_viewer_loop:
 	jsr	wait_for_vblank_and_check_for_skip
@@ -376,7 +376,9 @@ large_text_graphic_display:
 
 _large_text_output_top_lines:
 	pshs	a,b,x
-	bsr	output_clear_line	; This returns Y
+	tfr	y,x
+	bsr	output_clear_line	; This returns X
+	tfr	x,y
 	puls	a,b,x
 	incb
 	bne	_large_text_output_top_lines
@@ -457,46 +459,9 @@ output_clear_line:
 
 draw_lines:
 
-_large_text_graphic_display_prepare_for_loop:
 	rts
-
-	puls	a
-
-_large_text_graphic_display_loop:
-	cmpy	#TEXTBUFEND
-	beq	_large_text_finished
-
-	pshs	a,b,y
-	bsr	output_line
-	puls	a,b,y
-
-	bra	_large_text_graphic_display_loop
-
-_large_text_finished:
-	rts
-
-output_line:
-	pshs	a,b		; ,s = horizontal coordinate
-				; 1,s = vertical coordinate
-
-	lda	#32
-
-_output_line_loop:
-	ldb	,x
-	cmpb	#0
-	beq	_output_line_return
-	cmpb	#255
-	beq	_output_line_return
-
-	leax	1,x
-	stb	,y+
-
-	deca
-	bne	_output_line_loop
-
-_output_line_return:
-	puls	a,b
-	rts
+	
+	
 
 *************
 * Output line

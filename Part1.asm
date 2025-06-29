@@ -292,8 +292,6 @@ loading_screen:
 
 	jsr	wait_for_vblank_and_check_for_skip
 					; Display it for one frame
-	tsta
-	bne	_part_1_end
 
 	lda	#15
 	ldb	#3

@@ -435,7 +435,7 @@ large_text_bottom_clear_lines:
 	bsr	output_clear_line
 	tfr	x,y
 
-	bra	_large_text_bottom_clear_lines
+	bra	large_text_bottom_clear_lines
 
 _large_text_top_return:
 	rts

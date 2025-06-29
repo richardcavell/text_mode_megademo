@@ -344,6 +344,9 @@ debug_mode_toggle:
 *
 * Inputs:
 * A = number of frames
+*
+* Outputs:
+* None
 *****************************
 
 wait_frames:
@@ -360,9 +363,12 @@ wait_frames:
 * Large text graphic display
 *
 * Inputs:
+*
 * A = Horizontal coordinate
-* B = Vertical coordinate
+ B = Vertical coordinate
 * X = Graphic data
+*
+* Outputs: None
 *****************************************
 
 ; First, output any blank lines

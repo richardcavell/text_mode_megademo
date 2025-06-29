@@ -436,7 +436,7 @@ _blank_lines_at_top_loop:
 	ble	_blank_lines_at_top_return
 
 	pshs	a
-	bsr	output_clear_line
+	bsr	output_clear_line	; Input = X, Output = X
 	puls	a
 
 	deca
@@ -467,15 +467,15 @@ _blank_lines_clear_loop:
 _blank_lines_none:
 	rts
 
-************************
+**********************************
 * Do lines
 *
 * Input:
 * X = where we are up to
 *
 * Output:
-* X = where we are up to
-************************
+* X = where we are up to (updated)
+**********************************
 
 do_lines:
 	lda	large_text_horizontal_coordinate
@@ -494,16 +494,16 @@ _do_lines_done:
 
 	rts
 
-************************
+**********************************
 * Left margin
 *
 * Inputs:
+* A = left margin
 * X = where we are up to
 *
 * Outputs:
-* A = left margin
-* X = where we are up to
-************************
+* X = where we are up to (updated)
+**********************************
 
 left_margin:
 
@@ -523,7 +523,7 @@ _left_margin_none:
 
 	rts
 
-************************
+**********************************
 * Print text
 *
 * Inputs:
@@ -532,24 +532,62 @@ _left_margin_none:
 *
 * Outputs:
 * A = right margin
-* X = where we are up to
-************************
+* X = where we are up to (updated)
+**********************************
 
 print_text:
+	pshs	a,x
 	bsr	skip_graphic_data_vertical
+	puls	a,x
 
-	ldb	,x+
+	ldy	large_text_graphic_data
 
+_print_text_loop:
+	ldb	,y+
+	beq	_print_text_found_zero
+	stb	,x+
+	inca
+	cmpa	#32
+	beq	_print_text_finished
+	bra	_print_text_loop
+
+_print_text_finished:
+	sty	large_text_graphic_data
+	rts
+
+_print_text_found_zero:
+	pshs	a
+	ldb	#32
+	subb	,s
+	puls	a
+	tfr	b,a		; Return A and X
+	rts
+
+****************************
+* Skip graphic data vertical
+****************************
 
 skip_graphic_data_vertical:
-
-skip_vertical_loop:
 	lda	large_text_vertical_coordinate
+	bpl	_skip_graphic_data_return
+
+	ldx	large_text_graphic_data
+_skip_graphic_loop:
+	tst	,x+
+	bne	_skip_graphic_loop
+	inca
+	bne	_skip_graphic_loop
+
+	stx	large_text_graphic_data
+
+_skip_graphic_data_return:
+	rts
 
 ************************
 * Right margin
 *
 * Inputs:
+* A = size of right margin
 * X = where we are up to
 *
 * Outputs:
@@ -557,6 +595,16 @@ skip_vertical_loop:
 ************************
 
 right_margin:
+
+_right_margin_loop:
+	tsta
+	beq	_right_margin_finished
+	lda	#WHITE_BOX
+	sta	,x+
+	deca
+	bra	_right_margin_loop
+
+_right_margin_finished:		; Return X
 	rts
 
 *******************************

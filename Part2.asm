@@ -139,6 +139,8 @@ DOT_START	EQU	(TEXTBUF+9*COLS_PER_LINE+16)
 dot_start:
         lda     #WAIT_PERIOD * 3
         jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	lbne	skip_dot
 
 	ldx	#DOT_START	; in the middle of the screen
 
@@ -152,6 +154,8 @@ dot_start:
 
 	lda	#WAIT_PERIOD*4		; Wait this number of frames
 	lbsr	wait_frames
+	tsta
+	lbne	skip_dot
 
 	jsr	dot_mouth_open
 
@@ -168,6 +172,8 @@ dot_start:
 
 	lda	#WAIT_PERIOD		; Wait this number of frames
 	lbsr	wait_frames
+	tsta
+	lbne	skip_dot
 
 	jsr	dot_mouth_open
 
@@ -183,6 +189,8 @@ dot_start:
 
 	lda	#WAIT_PERIOD		; Wait this number of frames
 	lbsr	wait_frames
+	tsta
+	lbne	skip_dot
 
 ***************
 * The dot moves
@@ -943,12 +951,18 @@ debug_mode_toggle:
 wait_frames:
         pshs    a
         jsr     wait_for_vblank_and_check_for_skip
+	tsta
         puls    a
+	bne	_wait_frames_skip
 
         deca
         bne     wait_frames
 
         rts
+
+_wait_frames_skip:
+	lda	#1
+	rts
 
 ***********************
 * Display scroll texts

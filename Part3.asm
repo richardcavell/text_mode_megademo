@@ -76,6 +76,7 @@ TEXT_LINES      EQU     16
 ***************************
 * Large text graphic viewer
 ***************************
+
 horizontal_coord:
 
 	RZB	1
@@ -83,6 +84,8 @@ horizontal_coord:
 vertical_coord:
 
 	RZB	0
+
+CARTMAN_TEXT_GRAPHIC_HEIGHT	EQU	27
 
 large_text_graphic_viewer_loop:
 	jsr	wait_for_vblank_and_check_for_skip
@@ -92,6 +95,7 @@ large_text_graphic_viewer_loop:
 	lda	horizontal_coord
 	ldb	vertical_coord
 	ldx	#cartman_text_graphic
+	ldy	#CARTMAN_TEXT_GRAPHIC_HEIGHT
 	jsr	large_text_graphic_display
 
 	bra	large_text_graphic_viewer_loop
@@ -367,160 +371,130 @@ wait_frames:
 * A = Horizontal coordinate
 * B = Vertical coordinate
 * X = Graphic data
+* Y = Graphic height
 *
 * Outputs: None
 *****************************************
 
-; First, output any blank lines
+large_text_horizontal_coordinate:
+	RZB	1
+
+large_text_vertical_coordinate:
+	RZB	1
+
+large_text_graphic_data:
+	RZB	2
+
+large_text_buffer:
+	RZB	2
+
+large_text_graphic_height:
+	RZB	1
 
 large_text_graphic_display:
 
-	ldy	#TEXTBUF	; Y = text buffer
+	sta	large_text_horizontal_coordinate
+	stb	large_text_vertical_coordinate
+	stx	large_text_graphic_data
+	tfr	y,d
+	stb	large_text_graphic_height
 
-	tstb
-	bpl	_large_text_b_is_positive
+	ldx	#TEXTBUF
+	stx	large_text_buffer
 
-_large_text_output_top_lines:
-	pshs	a,b,x
-	tfr	y,x
-	bsr	output_clear_line	; This returns X
-	tfr	x,y
-	puls	a,b,x
-	incb
-	bne	_large_text_output_top_lines
+	bsr	blank_lines_at_top
 
-_large_text_b_is_positive:
-	bsr	large_text_top_done
+	bsr	large_text_do_lines
+
+	bsr	blank_lines_at_bottom
 	rts
 
-*********************
-* Large text top done
-*********************
+********************
+* Blank lines at top
+********************
 
-; Second, find the vertical start of the text graphic
+blank_lines_at_top:
 
-large_text_top_done:
-	tstb
-	beq	_large_text_vertical_start_found
+	lda	large_text_vertical_coordinate
+	ldx	large_text_buffer
 
-_large_text_top_loop:
+_blank_lines_at_top_loop:
+	tsta
+	bpl	_blank_lines_at_top_return
+
 	pshs	a
-	lda	,x+
-	puls	a
-	bne	_large_text_top_loop
-
-
-	decb
-	bra	large_text_top_done
-
-_large_text_vertical_start_found:
-	pshs	a,b
-	bsr	draw_lines
-	puls	a,b
-
-	bsr	large_text_bottom_clear_lines
-	rts
-
-************************
-* Large text fill bottom
-************************
-
-; Third, fill the bottom with clear lines, if applicable
-
-large_text_bottom_clear_lines:
-	cmpy	#TEXTBUFEND
-	beq	_large_text_top_return
-
-	tfr	y,x
 	bsr	output_clear_line
-	tfr	x,y
+	puls	a
 
-	bra	large_text_bottom_clear_lines
+	inca
+	bra	_blank_lines_at_top_loop
 
-_large_text_top_return:
+_blank_lines_at_top_return:
+
 	rts
 
-************************
+***********************
+* Blank lines at bottom
+***********************
+
+blank_lines_at_bottom:
+
+	lda	large_text_graphic_height
+	adda	large_text_vertical_coordinate
+	cmpa	#16
+	bhs	_blank_lines_none
+
+	ldb	#32
+	mul
+	ldx	#TEXTBUF
+	leax	d,x		; Start blanking from here
+
+_blank_lines_clear_loop:
+	bsr	output_clear_line
+	cmpx	#TEXTBUFEND
+	blo	_blank_lines_clear_loop
+
+_blank_lines_none:
+	rts
+
+*******************************
 * Output clear line
 *
-* Input:
-* X = Start of line
+* Inputs:
+* X = start of text buffer line
 *
-* Output:
-* X = Start of next line
-************************
+* Outputs:
+* X = start of the next line
+*******************************
+
+WHITE_BOX	EQU	$CF
 
 output_clear_line:
 
-	ldd	#GREEN_BOX << 8 | GREEN_BOX
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	rts
+	lda	#WHITE_BOX
+	ldb	#8
 
-*********************************
-* Draw lines
-*
-* Inputs:
-* A = Horizontal coordinate
-* B = Vertical coordinate
-* X = Graphic data
-* Y = Text buffer
-*
-* Outputs:
-* X = Graphic data (new location)
-* Y = Text buffer (new location)
-*********************************
+_output_clear_line_loop:
+	sta	,x+
+	sta	,x+
+	sta	,x+
+	sta	,x+
 
-draw_lines:
-	tsta
-	bpl	_draw_lines_consume_graphic
-
-	pshs	a
-	lda	#GREEN_BOX
-	sta	,y+
-	puls	a
-	bra	draw_lines
-
-_draw_lines_consume_graphic:
-	leax	a,x	; Step over initial entries to get to the right start
-
-_draw_line_loop:
-	lda	,x+
-	beq	_found_zero
-	lda	,x+
-	beq	_found_end
-	sta	,y+
-	bra	_draw_line_loop
-
-
-
-
-_found_zero:
-
-_found_end:
+	decb
+	bne	_output_clear_line_loop
 
 	rts
 
-*************
-* Output line
-*************
+************************************
+* Large text do lines
+*
+* Inputs: None
+* Outputs: None
+************************************
 
-
-
+large_text_do_lines:
+	leax	32,x
+	rts
 
 **********************
 * Display scroll text

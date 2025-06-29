@@ -443,7 +443,7 @@ _blank_lines_at_top_loop:
 	deca
 	bra	_blank_lines_at_top_loop
 
-_blank_lines_at_top_return:
+_blank_lines_at_top_return:		; Return X
 
 	rts
 
@@ -499,7 +499,6 @@ _do_lines_done:
 * Left margin
 *
 * Inputs:
-* A = left margin
 * X = where we are up to
 *
 * Outputs:
@@ -519,8 +518,7 @@ _left_margin_loop:
 	deca
 	bra	_left_margin_loop
 
-_left_margin_none:
-	lda	large_text_horizontal_coordinate	; Return A and X
+_left_margin_none:		; Return X
 
 	rts
 
@@ -528,7 +526,6 @@ _left_margin_none:
 * Print text
 *
 * Inputs:
-* A = left margin
 * X = where we are up to
 *
 * Outputs:
@@ -537,6 +534,7 @@ _left_margin_none:
 **********************************
 
 print_text:
+	lda	large_text_horizontal_coordinate
 	ldy	large_text_graphic_data
 
 _print_text_loop:
@@ -555,8 +553,7 @@ _print_text_finished:
 _print_text_found_zero:
 	pshs	a
 	ldb	#32
-	subb	,s
-	puls	a
+	subb	,s+
 	tfr	b,a		; Return A and X
 	rts
 

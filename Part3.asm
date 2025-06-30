@@ -560,7 +560,7 @@ _left_margin_loop:
 	cmpa	#0
 	ble	_left_margin_none
 
-	ldb	#WHITE_BOX
+	ldb	#GREEN_BOX
 	stb	,x+
 	deca
 	bra	_left_margin_loop
@@ -593,6 +593,8 @@ _print_text_start_at_zero:
 _print_text_loop:
 	ldb	,y+
 	beq	_print_text_found_zero
+	cmpb	#255
+	beq	_print_text_found_end
 	stb	,x+
 	inca
 	cmpa	#32
@@ -605,6 +607,9 @@ _print_text_finished:
 	sty	large_text_graphic_data	; Return A and X
 	lda	#0
 	rts
+
+_print_text_found_end:
+	leay	-1,y	; and fallthrough
 
 _print_text_found_zero:
 	sty	large_text_graphic_data	; Return A and X
@@ -689,7 +694,7 @@ right_margin:
 _right_margin_loop:
 	tsta
 	beq	_right_margin_finished
-	ldb	#WHITE_BOX
+	ldb	#GREEN_BOX
 	stb	,x+
 	deca
 	bra	_right_margin_loop
@@ -707,11 +712,9 @@ _right_margin_finished:		; Return X
 * X = start of the next line
 *******************************
 
-WHITE_BOX	EQU	$CF
-
 output_clear_line:
 
-	lda	#WHITE_BOX
+	lda	#GREEN_BOX
 	ldb	#8
 
 _output_clear_line_loop:
@@ -1234,7 +1237,8 @@ cartman_text_graphic:
 	FCV	"       \  ....-------...        .....---..  /",0
 	FCV	"       :'\"              '-..--''          \"';",0
 	FCV	"        '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"'",0
-	FCV	"              C A R T M A N by Matzec",0
+	FCV	"              C A R T M A N BY MATZEC",0
+	FCB	255
 cartman_text_graphic_end:
 
 *************************************

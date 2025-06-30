@@ -115,9 +115,9 @@ large_text_graphic_viewer_loop:
 	addd	#1
 	std	cartman_frames
 
-	lda	cartman_horizontal_angle
-	adda	#CARTMAN_HORIZONTAL_ANGLE_SPEED
-	sta	cartman_horizontal_angle
+	ldb	cartman_horizontal_angle
+	addb	#CARTMAN_HORIZONTAL_ANGLE_SPEED
+	stb	cartman_horizontal_angle
 
 	jsr	sin			; Get the sine of our angle
 	ldx	#CARTMAN_HORIZONTAL_SCALE
@@ -126,9 +126,9 @@ large_text_graphic_viewer_loop:
 	adda	#CARTMAN_HORIZONTAL_DISPLACEMENT
 	sta	horizontal_coord
 
-	lda	cartman_vertical_angle
-	adda	#CARTMAN_VERTICAL_ANGLE_SPEED
-	sta	cartman_vertical_angle
+	ldb	cartman_vertical_angle
+	addb	#CARTMAN_VERTICAL_ANGLE_SPEED
+	stb	cartman_vertical_angle
 
 	jsr	sin
 	ldx	#CARTMAN_VERTICAL_SCALE

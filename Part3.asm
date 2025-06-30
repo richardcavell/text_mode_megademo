@@ -535,7 +535,7 @@ large_text_graphic_display:
 	ldx	#TEXTBUF
 
 	bsr	blank_lines_at_top
-	bsr	skip_graphic_data_vertical
+	jsr	skip_graphic_data_vertical
 
 	bsr	do_lines
 
@@ -672,7 +672,12 @@ _print_text_loop:
 	ldb	,y+
 	beq	_print_text_found_zero
 	cmpb	#255
-	beq	_print_text_found_end
+	bne	_print_text_char
+
+	leay	-1,y
+	ldb	#GREEN_BOX
+
+_print_text_char:
 	stb	,x+
 	inca
 	cmpa	#32
@@ -685,9 +690,6 @@ _print_text_finished:
 	sty	large_text_graphic_data	; Return A and X
 	lda	#0
 	rts
-
-_print_text_found_end:
-	leay	-1,y	; and fallthrough
 
 _print_text_found_zero:
 	sty	large_text_graphic_data	; Return A and X

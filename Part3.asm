@@ -96,11 +96,14 @@ cartman_vertical_angle:
 
 CARTMAN_TEXT_GRAPHIC_HEIGHT		EQU	27
 
-CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	3
-CARTMAN_VERTICAL_ANGLE_SPEED		EQU	2
+CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	8
+CARTMAN_VERTICAL_ANGLE_SPEED		EQU	4
 
-CARTMAN_HORIZONTAL_SCALE		EQU	1000
-CARTMAN_VERTICAL_SCALE			EQU	1200
+CARTMAN_HORIZONTAL_SCALE		EQU	4200
+CARTMAN_VERTICAL_SCALE			EQU	3000
+
+CARTMAN_HORIZONTAL_DISPLACEMENT		EQU	-11
+CARTMAN_VERTICAL_DISPLACEMENT		EQU	-6
 
 large_text_graphic_viewer_loop:
 
@@ -120,6 +123,7 @@ large_text_graphic_viewer_loop:
 	ldx	#CARTMAN_HORIZONTAL_SCALE
 	jsr	multiply_fixed_point
 	jsr	round_to_nearest
+	adda	#CARTMAN_HORIZONTAL_DISPLACEMENT
 	sta	horizontal_coord
 
 	lda	cartman_vertical_angle
@@ -130,10 +134,12 @@ large_text_graphic_viewer_loop:
 	ldx	#CARTMAN_VERTICAL_SCALE
 	jsr	multiply_fixed_point
 	jsr	round_to_nearest
+	adda	#CARTMAN_VERTICAL_DISPLACEMENT
 	sta	vertical_coord
 
 	lda	horizontal_coord
 	ldb	vertical_coord
+
 	ldx	#cartman_text_graphic
 	ldy	#CARTMAN_TEXT_GRAPHIC_HEIGHT
 	jsr	large_text_graphic_display
@@ -1218,7 +1224,7 @@ cartman_text_graphic:
 	FCV	"   .-'      '.                          .'    '.",0
 	FCV	"  :           '-.        ....        .-'        '..",0
 	FCV	" ;\"*-..          '-..  --... '   ..-'        ..*'  '*.",0
-	FCV	":      '.            `\"*-....-*\"`           (        :",0
+	FCV	":      '.            '\"*-....-*\"'           (        :",0
 	FCV	" ;      ;                 *!                 '-.     ;",0
 	FCV	"  '...*'                   !                    \"\"--'",0
 	FCV	"   :                      *!                      :",0

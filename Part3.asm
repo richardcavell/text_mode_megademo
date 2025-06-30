@@ -113,21 +113,21 @@ large_text_graphic_viewer_loop:
 	std	cartman_frames
 
 	lda	cartman_horizontal_angle
-	adda	CARTMAN_HORIZONTAL_ANGLE_SPEED
+	adda	#CARTMAN_HORIZONTAL_ANGLE_SPEED
 	sta	cartman_horizontal_angle
 
 	jsr	sin			; Get the sine of our angle
-	ldx	CARTMAN_HORIZONTAL_SCALE
+	ldx	#CARTMAN_HORIZONTAL_SCALE
 	jsr	multiply_fixed_point
 	jsr	round_to_nearest
 	sta	horizontal_coord
 
 	lda	cartman_vertical_angle
-	adda	CARTMAN_VERTICAL_ANGLE_SPEED
+	adda	#CARTMAN_VERTICAL_ANGLE_SPEED
 	sta	cartman_vertical_angle
 
 	jsr	sin
-	ldx	CARTMAN_VERTICAL_SCALE
+	ldx	#CARTMAN_VERTICAL_SCALE
 	jsr	multiply_fixed_point
 	jsr	round_to_nearest
 	sta	vertical_coord

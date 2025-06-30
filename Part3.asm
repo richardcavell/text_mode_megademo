@@ -1282,7 +1282,7 @@ disk_text_graphic:
 	FCV	"8  \"---------------\"                               8A",0
 	FCV	"8                                                   8",0
 	FCV	"8                                                   8",0
-	FCV	"8                      ,aaaaa,                      8",0
+	FCV	"8                      ,AAAAA,                      8",0
 	FCV	"8                    AD\":::::\"BA                    8",0
 	FCV	"8                  ,D::;GPPRG;::B,                  8",0
 	FCV	"8                  D::DP'   'YB::B                  8",0
@@ -1311,27 +1311,53 @@ earth_text_graphic:
 	FCV	"              .-O#&&*''''?D:>B\\.",0
 	FCV	"          .O/\"'''  '',, DMF9MMMMMHO.",0
 	FCV	"       .O&#'        '\"MBHMMMMMMMMMMMHO.",0
-	FCV	"     .O"" '         VODM*$&&HMMMMMMMMMM?.",0
+	FCV	"     .O\"\" '         VODM*$&&HMMMMMMMMMM?.",0
 	FCV	"    ,'              $M&OOD,-''(&##MMMMMMH\\",0
 	FCV	"   /               ,MMMMMMM#B?#BOBMMMMHMMML",0
 	FCV	"  &              ?MMMMMMMMMMMMMMMMM7MMM$R*HK",0
-	FCV	" ?$.            :MMMMMMMMMMMMMMMMMMM/HMMM|'*L",0
-	FCV	"1               |MMMMMMMMMMMMMMMMMMMMBMH'   T,",0
-	FCV	"$H#:            '*MMMMMMMMMMMMMMMMMMMMb#}'  '?",0
-	FCV	"]MMH#             ""*""""*#MMMMMMMMMMMMM'    -",0
-	FCV	"MMMMMB.                   |MMMMMMMMMMMP'     :",0
+	FCV	" ?$.            :MMMMMMMMMMMMMMMMMMM/HMMMI'*L",0
+	FCV	"1               IMMMMMMMMMMMMMMMMMMMMBMH'   T,",0
+	FCV	"$H#:            '*MMMMMMMMMMMMMMMMMMMMB#)'  '?",0
+	FCV	"]MMH#             \"\"*\"\"\"\"*#MMMMMMMMMMMMM'    -",0
+	FCV	"MMMMMB.                   IMMMMMMMMMMMP'     :",0
 	FCV	"HMMMMMMMHO                 'MMMMMMMMMT       .",0
-	FCV	"?MMMMMMMMP                  9MMMMMMMM}       -",0
-	FCV	"-?MMMMMMM                  |MMMMMMMMM?,D-    '",0
-	FCV	" :|MMMMMM-                 'MMMMMMMT .MI.   :",0
+	FCV	"?MMMMMMMMP                  9MMMMMMMM)       -",0
+	FCV	"-?MMMMMMM                  IMMMMMMMMM?,D-    '",0
+	FCV	" :IMMMMMM-                 'MMMMMMMT .MI.   :",0
 	FCV	"  .9MMM[                    &MMMMM*' ''    .",0
 	FCV	"   :9MMK                    'MMM#\"        -",0
-	FCV	"     &M}                     '          .-",0
+	FCV	"     &M)                     '          .-",0
 	FCV	"      '&.                             .",0
 	FCV	"        '-,   .                     ./",0
 	FCV	"            . .                  .-",0
 	FCV	"              ''--..,DD###PP=\"\"'",0
 earth_text_graphic_end:
+
+red_dwarf_graphic:
+	FCV	"       ..                                   ,--------.",0
+	FCV	"      / /                                 ,' /.|    /",0
+	FCV	"    RED'                                ,'    II   /",0
+	FCV	"   DWARF                                \     II  /",0
+	FCV	"  / /                                    \_____---.  _---.",0
+	FCV	"  ''                                .-----     ---:,'   / \",0
+	FCV	"                   ._--~~~--_.    ,'           ---:     | |",0
+	FCV	"    _--~~~--_    ,'   |    :  `. /   __---~~~~~---'`.   \ /",0
+	FCV	"  ,:_     ;  `._/     | .  :  ..\--~~         ;   |__~---`",0
+	FCV	" //  ~~-_. ;   \=   '---'..:     i STARBUG  1  ;    :  \",0
+	FCV	"i '~~~~~~' ;    i=               |.....        ;    :...i",0
+	FCV	"|     ::   ;    |=........            :        ;    :   |",0
+	FCV	"`.    ::   ;### !=       :       |    :        ;        |",0
+	FCV	" \)       ;    /=        :      !     :.. _---_         |",0
+	FCV	"  `. 0  _--_ ,'~\ :=====;:      /        /     \       .!",0
+	FCV	"    ~--/    \    `.`.___|:    ,:        |       |    ,'/",0
+	FCV	"       \_--_/      `~--___--~'  \        \_---_/    / /",0
+	FCV	"        \,./                     `.    :::\   /    /,'",0
+	FCV	"         | |                       `-_.   |   | ,_-'",0
+	FCV	"         ||:                           ~~~(  |'~",0
+	FCV	"         ||:                               | |",0
+	FCV	"         ||'                               | |",0
+	FCV	"       '"~~~"`                           '"~~~"`",0
+red_dwarf_graphic_end:
 
 *************************************
 * Here is our raw data for our sounds

@@ -79,18 +79,58 @@ TEXT_LINES      EQU     16
 
 horizontal_coord:	; of the graphic
 
-	FCB	-1
+	RZB	1
 
 vertical_coord:		; of the graphic
 
 	RZB	1
 
-CARTMAN_TEXT_GRAPHIC_HEIGHT	EQU	27
+cartman_frames:
+	RZB	2
+
+cartman_horizontal_angle:
+	RZB	1
+
+cartman_vertical_angle:
+	RZB	1
+
+CARTMAN_TEXT_GRAPHIC_HEIGHT		EQU	27
+
+CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	3
+CARTMAN_VERTICAL_ANGLE_SPEED		EQU	2
+
+CARTMAN_HORIZONTAL_SCALE		EQU	1000
+CARTMAN_VERTICAL_SCALE			EQU	1200
 
 large_text_graphic_viewer_loop:
+
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	bne	skip_large_text_graphic_viewer
+
+	ldd	cartman_frames
+	addd	#1
+	std	cartman_frames
+
+	lda	cartman_horizontal_angle
+	adda	CARTMAN_HORIZONTAL_ANGLE_SPEED
+	sta	cartman_horizontal_angle
+
+	jsr	sin			; Get the sine of our angle
+	ldx	CARTMAN_HORIZONTAL_SCALE
+	jsr	multiply_fixed_point
+	jsr	round_to_nearest
+	sta	horizontal_coord
+
+	lda	cartman_vertical_angle
+	adda	CARTMAN_VERTICAL_ANGLE_SPEED
+	sta	cartman_vertical_angle
+
+	jsr	sin
+	ldx	CARTMAN_VERTICAL_SCALE
+	jsr	multiply_fixed_point
+	jsr	round_to_nearest
+	sta	vertical_coord
 
 	lda	horizontal_coord
 	ldb	vertical_coord
@@ -536,6 +576,12 @@ _left_margin_none:		; Return X
 
 print_text:
 	lda	large_text_horizontal_coordinate
+	cmpa	#0
+	bpl	_print_text_start_at_zero
+
+	lda	#0
+
+_print_text_start_at_zero:
 	ldy	large_text_graphic_data
 
 _print_text_loop:

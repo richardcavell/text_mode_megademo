@@ -115,7 +115,7 @@ pluck_line_counts_end:
 ; character (1 byte),
 ; position (2 bytes)
 
-SIMULTANEOUS_PLUCKS	EQU	3
+SIMULTANEOUS_PLUCKS	EQU	6
 
 PLUCK_PHASE_NOTHING	EQU	0
 PLUCK_PHASE_TURN_WHITE	EQU	1

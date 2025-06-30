@@ -81,7 +81,7 @@ graphic:
 	RZB	1	; 0 = Cartman
 			; 1 = Floppy disk
 			; 2 = Earth
-			; 3 =
+			; 3 = Red Dwarf
 
 horizontal_coord:	; of the graphic
 
@@ -103,6 +103,7 @@ cartman_vertical_angle:
 CARTMAN_TEXT_GRAPHIC_HEIGHT		EQU	27
 DISK_TEXT_GRAPHIC_HEIGHT		EQU	28
 EARTH_TEXT_GRAPHIC_HEIGHT		EQU	23
+RED_DWARF_GRAPHIC_HEIGHT		EQU	23
 
 CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	8
 CARTMAN_VERTICAL_ANGLE_SPEED		EQU	4
@@ -135,7 +136,11 @@ large_text_graphic_viewer_loop:
 	beq	_large_text_graphic_1
 	cmpa	#1
 	beq	_large_text_graphic_2
-	bra	_large_text_animate_cartman
+	cmpa	#2
+	beq	_large_text_graphic_3
+	cmpa	#3
+	lbeq	skip_large_text_graphic_viewer
+	jmp	skip_large_text_graphic_viewer
 
 _large_text_graphic_1:
 	lda	#1
@@ -147,6 +152,13 @@ _large_text_graphic_1:
 
 _large_text_graphic_2:
 	lda	#2
+	sta	graphic
+	ldd	#0
+	std	cartman_frames
+	bra	_large_text_animate_cartman
+
+_large_text_graphic_3:
+	lda	#3
 	sta	graphic
 	ldd	#0
 	std	cartman_frames
@@ -182,8 +194,8 @@ _large_text_animate_cartman:
 	beq	_floppy_disk
 	cmpa	#2
 	beq	_earth
-
-	bra	_display_graphic
+	cmpa	#3
+	beq	_red_dwarf
 
 _cartman:
 	ldx	#cartman_text_graphic
@@ -198,6 +210,11 @@ _floppy_disk:
 _earth:
 	ldx	#earth_text_graphic
 	ldy	#EARTH_TEXT_GRAPHIC_HEIGHT
+	bra	_display_graphic
+
+_red_dwarf:
+	ldx	#red_dwarf_graphic
+	ldy	#RED_DWARF_GRAPHIC_HEIGHT
 	bra	_display_graphic
 
 _display_graphic:
@@ -1335,28 +1352,28 @@ earth_text_graphic_end:
 
 red_dwarf_graphic:
 	FCV	"       ..                                   ,--------.",0
-	FCV	"      / /                                 ,' /.|    /",0
-	FCV	"    RED'                                ,'    II   /",0
-	FCV	"   DWARF                                \     II  /",0
-	FCV	"  / /                                    \_____---.  _---.",0
-	FCV	"  ''                                .-----     ---:,'   / \",0
-	FCV	"                   ._--~~~--_.    ,'           ---:     | |",0
-	FCV	"    _--~~~--_    ,'   |    :  `. /   __---~~~~~---'`.   \ /",0
-	FCV	"  ,:_     ;  `._/     | .  :  ..\--~~         ;   |__~---`",0
-	FCV	" //  ~~-_. ;   \=   '---'..:     i STARBUG  1  ;    :  \",0
-	FCV	"i '~~~~~~' ;    i=               |.....        ;    :...i",0
-	FCV	"|     ::   ;    |=........            :        ;    :   |",0
-	FCV	"`.    ::   ;### !=       :       |    :        ;        |",0
-	FCV	" \)       ;    /=        :      !     :.. _---_         |",0
-	FCV	"  `. 0  _--_ ,'~\ :=====;:      /        /     \       .!",0
-	FCV	"    ~--/    \    `.`.___|:    ,:        |       |    ,'/",0
-	FCV	"       \_--_/      `~--___--~'  \        \_---_/    / /",0
-	FCV	"        \,./                     `.    :::\   /    /,'",0
-	FCV	"         | |                       `-_.   |   | ,_-'",0
-	FCV	"         ||:                           ~~~(  |'~",0
-	FCV	"         ||:                               | |",0
-	FCV	"         ||'                               | |",0
-	FCV	"       '"~~~"`                           '"~~~"`",0
+	FCV	"      / /                                 ,' /.!    /",0
+	FCV	"    RED'                                ,'    !!   /",0
+	FCV	"   DWARF                                \     !!  /",0
+	FCV	"  / /                                    \.....---.  .---.",0
+	FCV	"  ''                                .-----     ---:,'   / \\",0
+	FCV	"                   ..-------..    ,'           ---:     ! !",0
+	FCV	"    .-------.    ,'   !    :  '. /   ..-----------''.   \\ /",0
+	FCV	"  ,:.     ;  '._/     ! .  :  ..\\----         ;   !..----'",0
+	FCV	" //  ---.. ;   \\=   '---'..:     ! STARBUG  1  ;    :  \\",0
+	FCV	"! '------' ;    !=               !.....        ;    :...!",0
+	FCV	"!     ::   ;    !=........            :        ;    :   !",0
+	FCV	"'.    ::   ;### !=       :       !    :        ;        !",0
+	FCV	" \\)       ;    /=        :      !     :.. .---.         !",0
+	FCV	"  '. 0  .--. ,'-\ :=====;:      /        /     \\       .!",0
+	FCV	"    ---/    \\    '.'....!:    ,:        !       !    ,'/",0
+	FCV	"       \\.--./      '---...---'  \\        \\.---./    / /",0
+	FCV	"        \\,./                     '.    :::\\   /    /,'",0
+	FCV	"         ! !                       '-..   !   ! ,.-'",0
+	FCV	"         !!:                           ---(  !'-",0
+	FCV	"         !!:                               ! !",0
+	FCV	"         !!'                               ! !",0
+	FCV	"       '\"---\"'                           '\"---\"'",0
 red_dwarf_graphic_end:
 
 *************************************

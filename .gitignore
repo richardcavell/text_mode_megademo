@@ -1,8 +1,8 @@
-TMDEMO.DSK
+Password.txt
+TMMGDEMO.DSK
 PART1.BIN
 PART2.BIN
 PART3.BIN
-Password.txt
 sin_table.asm
 sin_table_generator
 sound_stripper
@@ -10,11 +10,11 @@ Sounds/Pluck/Model_M_resampled.raw
 Sounds/Pluck/Pluck.raw
 Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
 Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw
-Sounds/Dot_Sounds/Change.raw
-Sounds/Dot_Sounds/Change_resampled.raw
+Sounds/Dot_Sounds/Now.raw
+Sounds/Dot_Sounds/Now_resampled.raw
 Sounds/Dot_Sounds/Move_resampled.raw
 Sounds/Dot_Sounds/Move.raw
 Sounds/Dot_Sounds/Move_More.raw
 Sounds/Dot_Sounds/Move_More_resampled.raw
-Sounds/Dot_Sounds/Now.raw
-Sounds/Dot_Sounds/Now_resampled.raw
+Sounds/Dot_Sounds/Change.raw
+Sounds/Dot_Sounds/Change_resampled.raw

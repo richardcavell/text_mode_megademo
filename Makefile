@@ -1,9 +1,9 @@
 # Makefile
-# Part of Text Mode Demo by Richard Cavell
+# Part of Text Mode Megademo by Richard Cavell
 # Still being written
-# June 2025
+# July 2025
 
-DISK		=	TMDEMO.DSK
+DISK		=	TMMGDEMO.DSK
 BASIC_PART	=	DEMO.BAS
 PART1		=	PART1.BIN
 PART2		=	PART2.BIN
@@ -114,8 +114,8 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2) $(PART3)
 	@$(ECHO) ... Done
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)
-$(PART2): $(PART2_SRC) $(SIN_TABLE) $(SNAP_SOUND)
-$(PART2): $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
+$(PART2): $(PART2_SRC) $(SIN_TABLE)
+$(PART2): $(SNAP_SOUND) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
 $(PART3): $(PART3_SRC) $(SIN_TABLE)
 
 $(PART1) $(PART2) $(PART3):

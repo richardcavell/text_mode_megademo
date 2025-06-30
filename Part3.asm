@@ -79,7 +79,7 @@ TEXT_LINES      EQU     16
 
 horizontal_coord:	; of the graphic
 
-	RZB	1
+	FCB	-1
 
 vertical_coord:		; of the graphic
 
@@ -437,7 +437,7 @@ _blank_lines_at_top_loop:
 	ble	_blank_lines_at_top_return
 
 	pshs	a
-	bsr	output_clear_line	; Input = X, Output = X
+	jsr	output_clear_line	; Input = X, Output = X
 	puls	a
 
 	deca
@@ -462,7 +462,7 @@ _blank_lines_clear_loop:
 	cmpx	#TEXTBUFEND
 	beq	_blank_lines_none
 
-	bsr	output_clear_line
+	jsr	output_clear_line
 	bra	_blank_lines_clear_loop
 
 _blank_lines_none:
@@ -486,6 +486,7 @@ _do_lines_loop:
 	beq	_do_lines_done
 
 	bsr	left_margin
+	bsr	skip_graphic_data_horizontal
 	bsr	print_text
 	bsr	right_margin
 
@@ -547,6 +548,8 @@ _print_text_loop:
 	bra	_print_text_loop
 
 _print_text_finished:
+	lda	,y+			; Find the zero
+	bne	_print_text_finished
 	sty	large_text_graphic_data	; Return A and X
 	lda	#0
 	rts
@@ -585,6 +588,38 @@ _skip_graphic_loop:
 
 _skip_graphic_data_return:
 	rts
+
+******************************
+* Skip graphic data horizontal
+*
+* Input:
+* X = start of text buffer
+*
+* Output:
+* X = where we are up to
+******************************
+
+skip_graphic_data_horizontal:
+
+	lda	large_text_horizontal_coordinate
+
+	ldy	large_text_graphic_data
+_skip_graphic_horizontal_loop:
+	tsta
+	bpl	_skip_graphic_data_horizontal_return
+
+	tst	,y+
+	beq	_skip_graphic_data_hit_zero
+	inca
+	bra	_skip_graphic_horizontal_loop
+
+_skip_graphic_data_hit_zero:
+	leay	-1,y
+
+_skip_graphic_data_horizontal_return:
+	sty	large_text_graphic_data
+	rts				; Return X
+
 
 ************************
 * Right margin
@@ -1118,7 +1153,7 @@ happy_face_graphic:
 	FCV	"                                   Normand  Veilleux",0
 	FCV	255
 
-* Art by Matzec
+* Art by Matzec, modified by me
 
 cartman_text_graphic:
 	FCV	"                       ..-**-..",0
@@ -1136,7 +1171,7 @@ cartman_text_graphic:
 	FCV	"      .-*''.                              .'-.",0
 	FCV	"   .-'      '.                          .'    '.",0
 	FCV	"  :           '-.        ....        .-'        '..",0
-	FCV	" ;\"*-..          '-..  --... `   ..-'        ..*'  '*.",0
+	FCV	" ;\"*-..          '-..  --... '   ..-'        ..*'  '*.",0
 	FCV	":      '.            `\"*-....-*\"`           (        :",0
 	FCV	" ;      ;                 *!                 '-.     ;",0
 	FCV	"  '...*'                   !                    \"\"--'",0

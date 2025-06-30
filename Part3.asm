@@ -1273,34 +1273,34 @@ cartman_text_graphic_end:
 * Art by Normand Veilleux
 
 disk_text_graphic:
-	FCV	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",0
+	FCV	"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",0
 	FCV	"8                                                   8",0
-	FCV	"8  a---------------a                                8",0
+	FCV	"8  A---------------A                                8",0
 	FCV	"8  !               !                                8",0
 	FCV	"8  !               !                                8",0
 	FCV	"8  !               !                               8\"",0
-	FCV	"8  \"---------------\"                               8a",0
+	FCV	"8  \"---------------\"                               8A",0
 	FCV	"8                                                   8",0
 	FCV	"8                                                   8",0
 	FCV	"8                      ,aaaaa,                      8",0
-	FCV	"8                    ad\":::::\"ba                    8",0
-	FCV	"8                  ,d::;gPPRg;::b,                  8",0
-	FCV	"8                  d::dP'   'Yb::b                  8",0
+	FCV	"8                    AD\":::::\"BA                    8",0
+	FCV	"8                  ,D::;GPPRG;::B,                  8",0
+	FCV	"8                  D::DP'   'YB::B                  8",0
 	FCV	"8                  8::8)     (8::8                  8",0
-	FCV	"8                  Y;:Yb     dP:;P  O               8",0
-	FCV	"8                  'Y;:\"8ggg8\":;P'                  8",0
-	FCV	"8                    \"Yaa:::aaP\"                    8",0
+	FCV	"8                  Y;:YB     DP:;P  O               8",0
+	FCV	"8                  'Y;:\"8GGG8\":;P'                  8",0
+	FCV	"8                    \"YAA:::AAP\"                    8",0
 	FCV	"8                       \"\"\"\"\"                       8",0
 	FCV	"8                                                   8",0
-	FCV	"8                       ,d\"b,                       8",0
-	FCV	"8                       d:::8                       8",0
+	FCV	"8                       ,D\"B,                       8",0
+	FCV	"8                       B:::8                       8",0
 	FCV	"8                       8:::8                       8",0
 	FCV	"8                       8:::8                       8",0
 	FCV	"8                       8:::8                       8",0
 	FCV	"8                       8:::8                       8",0
-	FCV	"8                  aaa  'bad'  aaa                  8",0
+	FCV	"8                  AAA  'BAD'  AAA                  8",0
 	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
-	FCV	"                                   Normand  Veilleux",0
+	FCV	"                                   NORMAND  VEILLEUX",0
 	FCV	255
 disk_text_graphic_end:
 
@@ -1308,29 +1308,29 @@ disk_text_graphic_end:
 * Modified by me
 
 earth_text_graphic:
-	FCV	"              .-o#&&*''''?d:>b\\.",0
-	FCV	"          .o/\"'''  '',, dMF9MMMMMHo.",0
-	FCV	"       .o&#'        '\"MbHMMMMMMMMMMMHo.",0
-	FCV	"     .o"" '         vodM*$&&HMMMMMMMMMM?.",0
-	FCV	"    ,'              $M&ood,-''(&##MMMMMMH\\",0
-	FCV	"   /               ,MMMMMMM#b?#bobMMMMHMMML",0
-	FCV	"  &              ?MMMMMMMMMMMMMMMMM7MMM$R*Hk",0
+	FCV	"              .-O#&&*''''?D:>B\\.",0
+	FCV	"          .O/\"'''  '',, DMF9MMMMMHO.",0
+	FCV	"       .O&#'        '\"MBHMMMMMMMMMMMHO.",0
+	FCV	"     .O"" '         VODM*$&&HMMMMMMMMMM?.",0
+	FCV	"    ,'              $M&OOD,-''(&##MMMMMMH\\",0
+	FCV	"   /               ,MMMMMMM#B?#BOBMMMMHMMML",0
+	FCV	"  &              ?MMMMMMMMMMMMMMMMM7MMM$R*HK",0
 	FCV	" ?$.            :MMMMMMMMMMMMMMMMMMM/HMMM|'*L",0
-	FCV	"1               |MMMMMMMMMMMMMMMMMMMMbMH'   T,",0
+	FCV	"1               |MMMMMMMMMMMMMMMMMMMMBMH'   T,",0
 	FCV	"$H#:            '*MMMMMMMMMMMMMMMMMMMMb#}'  '?",0
 	FCV	"]MMH#             ""*""""*#MMMMMMMMMMMMM'    -",0
-	FCV	"MMMMMb.                   |MMMMMMMMMMMP'     :",0
-	FCV	"HMMMMMMMHo                 'MMMMMMMMMT       .",0
+	FCV	"MMMMMB.                   |MMMMMMMMMMMP'     :",0
+	FCV	"HMMMMMMMHO                 'MMMMMMMMMT       .",0
 	FCV	"?MMMMMMMMP                  9MMMMMMMM}       -",0
-	FCV	"-?MMMMMMM                  |MMMMMMMMM?,d-    '",0
+	FCV	"-?MMMMMMM                  |MMMMMMMMM?,D-    '",0
 	FCV	" :|MMMMMM-                 'MMMMMMMT .MI.   :",0
 	FCV	"  .9MMM[                    &MMMMM*' ''    .",0
-	FCV	"   :9MMk                    'MMM#\"        -",0
+	FCV	"   :9MMK                    'MMM#\"        -",0
 	FCV	"     &M}                     '          .-",0
 	FCV	"      '&.                             .",0
 	FCV	"        '-,   .                     ./",0
 	FCV	"            . .                  .-",0
-	FCV	"              ''--..,dd###pp=\"\"'",0
+	FCV	"              ''--..,DD###PP=\"\"'",0
 earth_text_graphic_end:
 
 *************************************

@@ -77,6 +77,12 @@ TEXT_LINES      EQU     16
 * Large text graphic viewer
 ***************************
 
+graphic:
+	RZB	1	; 0 = Cartman
+			; 1 = Floppy disk
+			; 2 = Earth
+			; 3 =
+
 horizontal_coord:	; of the graphic
 
 	RZB	1
@@ -95,6 +101,8 @@ cartman_vertical_angle:
 	RZB	1
 
 CARTMAN_TEXT_GRAPHIC_HEIGHT		EQU	27
+DISK_TEXT_GRAPHIC_HEIGHT		EQU	28
+EARTH_TEXT_GRAPHIC_HEIGHT		EQU	23
 
 CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	8
 CARTMAN_VERTICAL_ANGLE_SPEED		EQU	4
@@ -109,12 +117,42 @@ large_text_graphic_viewer_loop:
 
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	bne	skip_large_text_graphic_viewer
+	lbne	skip_large_text_graphic_viewer
 
 	ldd	cartman_frames
 	addd	#1
 	std	cartman_frames
 
+	cmpd	#250
+	blo	_large_text_animate_cartman
+
+	lda	cartman_horizontal_angle
+	cmpa	#0
+	bne	_large_text_animate_cartman
+
+	lda	graphic
+	cmpa	#0
+	beq	_large_text_graphic_1
+	cmpa	#1
+	beq	_large_text_graphic_2
+	bra	_large_text_animate_cartman
+
+_large_text_graphic_1:
+	lda	#1
+	sta	graphic
+	ldd	#0
+	std	cartman_frames
+
+	bra	_large_text_animate_cartman
+
+_large_text_graphic_2:
+	lda	#2
+	sta	graphic
+	ldd	#0
+	std	cartman_frames
+	bra	_large_text_animate_cartman
+
+_large_text_animate_cartman:
 	ldb	cartman_horizontal_angle
 	addb	#CARTMAN_HORIZONTAL_ANGLE_SPEED
 	stb	cartman_horizontal_angle
@@ -137,14 +175,37 @@ large_text_graphic_viewer_loop:
 	adda	#CARTMAN_VERTICAL_DISPLACEMENT
 	sta	vertical_coord
 
-	lda	horizontal_coord
-	ldb	vertical_coord
+	lda	graphic
+	cmpa	#0
+	beq	_cartman
+	cmpa	#1
+	beq	_floppy_disk
+	cmpa	#2
+	beq	_earth
 
+	bra	_display_graphic
+
+_cartman:
 	ldx	#cartman_text_graphic
 	ldy	#CARTMAN_TEXT_GRAPHIC_HEIGHT
+	bra	_display_graphic
+
+_floppy_disk:
+	ldx	#disk_text_graphic
+	ldy	#DISK_TEXT_GRAPHIC_HEIGHT
+	bra	_display_graphic
+
+_earth:
+	ldx	#earth_text_graphic
+	ldy	#EARTH_TEXT_GRAPHIC_HEIGHT
+	bra	_display_graphic
+
+_display_graphic:
+	lda	horizontal_coord
+	ldb	vertical_coord
 	jsr	large_text_graphic_display
 
-	bra	large_text_graphic_viewer_loop
+	jmp	large_text_graphic_viewer_loop
 
 skip_large_text_graphic_viewer:
 
@@ -1176,38 +1237,6 @@ happy_face_graphic:
 	FCV	"JGS   '-.......-'",0
 	FCB	255
 
-* Art by Normand Veilleux
-
-	FCV	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",0
-	FCV	"8                                                   8",0
-	FCV	"8  a---------------a                                8",0
-	FCV	"8  !               !                                8",0
-	FCV	"8  !               !                                8",0
-	FCV	"8  !               !                               8\"",0
-	FCV	"8  \"---------------\"                               8a",0
-	FCV	"8                                                   8",0
-	FCV	"8                                                   8",0
-	FCV	"8                      ,aaaaa,                      8",0
-	FCV	"8                    ad\":::::\"ba                    8",0
-	FCV	"8                  ,d::;gPPRg;::b,                  8",0
-	FCV	"8                  d::dP'   'Yb::b                  8",0
-	FCV	"8                  8::8)     (8::8                  8",0
-	FCV	"8                  Y;:Yb     dP:;P  O               8",0
-	FCV	"8                  'Y;:\"8ggg8\":;P'                  8",0
-	FCV	"8                    \"Yaa:::aaP\"                    8",0
-	FCV	"8                       \"\"\"\"\"                       8",0
-	FCV	"8                                                   8",0
-	FCV	"8                       ,d\"b,                       8",0
-	FCV	"8                       d:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                  aaa  'bad'  aaa                  8",0
-	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
-	FCV	"                                   Normand  Veilleux",0
-	FCV	255
-
 * Art by Matzec, modified by me
 
 cartman_text_graphic:
@@ -1240,6 +1269,69 @@ cartman_text_graphic:
 	FCV	"              C A R T M A N BY MATZEC",0
 	FCB	255
 cartman_text_graphic_end:
+
+* Art by Normand Veilleux
+
+disk_text_graphic:
+	FCV	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",0
+	FCV	"8                                                   8",0
+	FCV	"8  a---------------a                                8",0
+	FCV	"8  !               !                                8",0
+	FCV	"8  !               !                                8",0
+	FCV	"8  !               !                               8\"",0
+	FCV	"8  \"---------------\"                               8a",0
+	FCV	"8                                                   8",0
+	FCV	"8                                                   8",0
+	FCV	"8                      ,aaaaa,                      8",0
+	FCV	"8                    ad\":::::\"ba                    8",0
+	FCV	"8                  ,d::;gPPRg;::b,                  8",0
+	FCV	"8                  d::dP'   'Yb::b                  8",0
+	FCV	"8                  8::8)     (8::8                  8",0
+	FCV	"8                  Y;:Yb     dP:;P  O               8",0
+	FCV	"8                  'Y;:\"8ggg8\":;P'                  8",0
+	FCV	"8                    \"Yaa:::aaP\"                    8",0
+	FCV	"8                       \"\"\"\"\"                       8",0
+	FCV	"8                                                   8",0
+	FCV	"8                       ,d\"b,                       8",0
+	FCV	"8                       d:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                       8:::8                       8",0
+	FCV	"8                  aaa  'bad'  aaa                  8",0
+	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
+	FCV	"                                   Normand  Veilleux",0
+	FCV	255
+disk_text_graphic_end:
+
+* Art by anonymous at asciiart.eu/space/planets
+* Modified by me
+
+earth_text_graphic:
+	FCV	"              .-o#&&*''''?d:>b\\.",0
+	FCV	"          .o/\"'''  '',, dMF9MMMMMHo.",0
+	FCV	"       .o&#'        '\"MbHMMMMMMMMMMMHo.",0
+	FCV	"     .o"" '         vodM*$&&HMMMMMMMMMM?.",0
+	FCV	"    ,'              $M&ood,-''(&##MMMMMMH\\",0
+	FCV	"   /               ,MMMMMMM#b?#bobMMMMHMMML",0
+	FCV	"  &              ?MMMMMMMMMMMMMMMMM7MMM$R*Hk",0
+	FCV	" ?$.            :MMMMMMMMMMMMMMMMMMM/HMMM|'*L",0
+	FCV	"1               |MMMMMMMMMMMMMMMMMMMMbMH'   T,",0
+	FCV	"$H#:            '*MMMMMMMMMMMMMMMMMMMMb#}'  '?",0
+	FCV	"]MMH#             ""*""""*#MMMMMMMMMMMMM'    -",0
+	FCV	"MMMMMb.                   |MMMMMMMMMMMP'     :",0
+	FCV	"HMMMMMMMHo                 'MMMMMMMMMT       .",0
+	FCV	"?MMMMMMMMP                  9MMMMMMMM}       -",0
+	FCV	"-?MMMMMMM                  |MMMMMMMMM?,d-    '",0
+	FCV	" :|MMMMMM-                 'MMMMMMMT .MI.   :",0
+	FCV	"  .9MMM[                    &MMMMM*' ''    .",0
+	FCV	"   :9MMk                    'MMM#\"        -",0
+	FCV	"     &M}                     '          .-",0
+	FCV	"      '&.                             .",0
+	FCV	"        '-,   .                     ./",0
+	FCV	"            . .                  .-",0
+	FCV	"              ''--..,dd###pp=\"\"'",0
+earth_text_graphic_end:
 
 *************************************
 * Here is our raw data for our sounds

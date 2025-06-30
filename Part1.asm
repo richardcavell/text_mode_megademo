@@ -289,13 +289,19 @@ loading_screen:
 	lda	#15
 	ldb	#11
 	jsr	text_appears		; Ignore the return value
+	tsta
+	bne	_skipped_loading_screen
 
 	jsr	wait_for_vblank_and_check_for_skip
 					; Display it for one frame
+	tsta
+	bne	_skipped_loading_screen
 
 	lda	#15
 	ldb	#3
 	jsr	flash_text_white	; Ignore the return value
+	tsta
+	bne	_skipped_loading_screen
 
 * This is the end of part 1!
 _part_1_end:
@@ -304,6 +310,11 @@ _part_1_end:
 
 	clra
 	rts
+
+_skipped_loading_screen:
+
+	jsr	clear_screen
+	bra	_part_1_end
 
 * This art is modified by me from the original by Blazej Kozlowski
 * It's from https://www.asciiart.eu/animals/cats

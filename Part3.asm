@@ -105,8 +105,8 @@ DISK_TEXT_GRAPHIC_HEIGHT		EQU	28
 EARTH_TEXT_GRAPHIC_HEIGHT		EQU	23
 RED_DWARF_GRAPHIC_HEIGHT		EQU	23
 
-CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	8
-CARTMAN_VERTICAL_ANGLE_SPEED		EQU	4
+CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	4
+CARTMAN_VERTICAL_ANGLE_SPEED		EQU	2
 
 CARTMAN_HORIZONTAL_SCALE		EQU	4200
 CARTMAN_VERTICAL_SCALE			EQU	3000
@@ -1284,7 +1284,6 @@ cartman_text_graphic:
 	FCV	"       :'\"              '-..--''          \"';",0
 	FCV	"        '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"'",0
 	FCV	"              C A R T M A N BY MATZEC",0
-	FCB	255
 cartman_text_graphic_end:
 
 * Art by Normand Veilleux
@@ -1318,7 +1317,6 @@ disk_text_graphic:
 	FCV	"8                  AAA  'BAD'  AAA                  8",0
 	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
 	FCV	"                                   NORMAND  VEILLEUX",0
-	FCV	255
 disk_text_graphic_end:
 
 * Art by anonymous at asciiart.eu/space/planets

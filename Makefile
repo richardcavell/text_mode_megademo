@@ -21,9 +21,9 @@ RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw
 RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
 RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav
 
-SNAP_SOUND	=	Sounds/Finger_Snap/Finger_Snap.raw
-SNAP_SOUND_RES	=	Sounds/Finger_Snap/Finger_Snap_resampled.raw
-SNAP_SOUND_SRC	=	Sounds/Finger_Snap/Finger_Snap.wav
+SNAP_SOUND	=	Sounds/Dot_Sounds/Finger_Snap.raw
+SNAP_SOUND_RES	=	Sounds/Dot_Sounds/Finger_Snap_resampled.raw
+SNAP_SOUND_SRC	=	Sounds/Dot_Sounds/Finger_Snap.wav
 
 NOW_SOUND	=	Sounds/Dot_Sounds/Now.raw
 NOW_SOUND_RES	=	Sounds/Dot_Sounds/Now_resampled.raw

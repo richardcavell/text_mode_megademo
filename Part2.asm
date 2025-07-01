@@ -1879,7 +1879,7 @@ scroll_text_4:
 *************************************
 
 finger_snap_sound:
-	INCLUDEBIN "Sounds/Finger_Snap/Finger_Snap.raw"
+	INCLUDEBIN "Sounds/Dot_Sounds/Finger_Snap.raw"
 finger_snap_sound_end:
 
 now_sound:

@@ -206,6 +206,7 @@ version:
 	@$(CC)     --version       | head --lines=1
 	@$(MAME)   -help           | head --lines=1
 	@./$(SIN_GENERATOR) -V	   | head --lines=1
+	@./$(SOUND_STR) -V	   | head --lines=1
 	@$(XROAR)  -V		   | head --lines=1
 
 mame: $(DISK)

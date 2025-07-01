@@ -13,8 +13,6 @@ PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 PART3_SRC	=	Part3.asm
 
-# Review is up to here
-
 PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
 PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
@@ -22,6 +20,8 @@ PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
 RJFC_SOUND	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.raw
 RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM_resampled.raw
 RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.wav
+
+# Review is up to here
 
 SNAP_SOUND	=	Sounds/Dot/Finger_Snap.raw
 SNAP_SOUND_RES	=	Sounds/Dot/Finger_Snap_resampled.raw

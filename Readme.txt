@@ -1,5 +1,5 @@
 Readme.txt
-Text Mode Demo
+Text Mode Megademo
 by Richard Cavell
 Still being written
 June 2025 - July 2025

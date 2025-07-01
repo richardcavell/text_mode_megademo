@@ -1,6 +1,6 @@
 /* sin_table_generator.c
  * by Richard Cavell
- * June 2025
+ * June 2025 - July 2025
  *
  */
 

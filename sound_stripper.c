@@ -1,14 +1,16 @@
 /* sound_stripper.c
  * by Richard Cavell
- * June 2025
+ * June 2025 - July 2025
  * This sets the lower 2 bits of the 8-bit raw audio bytes to zero
  */
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	FILE *input_fp  = NULL;
 	FILE *output_fp = NULL;
@@ -16,12 +18,16 @@ int main(int argc, char *argv[])
 
 	if (argc != 3)
 	{
-		(void) fprintf(stderr,
-			"%s%s%s",
+		(void) printf("%s",
+			"Sound Stripper v1.0\n"
+			"by Richard Cavell\n"
+			"https://github.com/richardcavell/sound_stripper\n");
+
+		(void) printf("%s%s%s",
 		        "Usage: ",
 			 argv[0],
 			" inputfile outputfile\n");
-		exit(EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 	}
 
 	input_fp  = fopen(argv[1], "r");

@@ -78,11 +78,9 @@ DECB		=	decb
 RM		=	rm -f -v
 ECHO		=	echo
 
-# Review is up to here
-
 .DEFAULT: all
 
-.PHONY:	all clean disk help info license version
+.PHONY:	all clean disk help info license list version
 .PHONY: mame mame-debug xroar xroar-coco3 xroar-ntsc
 
 all:	$(DISK) $(PART1) $(PART2) $(PART3)
@@ -118,6 +116,8 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2) $(PART3)
 	$(DECB) copy -2 -b -r $(PART3) $(DISK),$(PART3)
 	@$(DECB) free $@
 	@$(ECHO) ... Done
+
+# Review is up to here
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)
 $(PART2): $(PART2_SRC) $(SIN_TABLE)
@@ -184,7 +184,7 @@ info:
 	@$(ECHO) "make all"
 	@$(ECHO) "make clean"
 	@$(ECHO) "make disk"
-	@$(ECHO) "make info"	# Also make help
+	@$(ECHO) "make info"	# Also make help and make list
 	@$(ECHO) "make license"
 	@$(ECHO) "make mame"
 	@$(ECHO) "make mame-debug"
@@ -195,6 +195,8 @@ info:
 
 license:
 	@cat LICENSE
+
+list: info
 
 version:
 	@$(ECHO) "Text Mode Demo source: unversioned"

@@ -21,8 +21,6 @@ RJFC_SOUND	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.raw
 RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM_resampled.raw
 RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.wav
 
-# Review is up to here
-
 SNAP_SOUND	=	Sounds/Dot/Finger_Snap.raw
 SNAP_SOUND_RES	=	Sounds/Dot/Finger_Snap_resampled.raw
 SNAP_SOUND_SRC	=	Sounds/Dot/Finger_Snap.wav
@@ -60,17 +58,22 @@ CFLAGS    = -std=c89 -Wpedantic
 CFLAGS   += -Wall -Wextra -Werror -fmax-errors=1
 CFLAGS   += -Walloca -Wbad-function-cast -Wcast-align -Wcast-qual -Wconversion
 CFLAGS   += -Wdisabled-optimization -Wdouble-promotion -Wduplicated-cond
+CFLAGS	 += -Wduplicated-branches
 CFLAGS   += -Werror=format-security -Werror=implicit-function-declaration
 CFLAGS   += -Wfloat-equal -Wformat=2 -Wformat-overflow -Wformat-truncation
-CFLAGS   += -Wlogical-op -Wmissing-prototypes -Wmissing-declarations
+CFLAGS   += -Wjump-misses-init
+CFLAGS   += -Wlogical-op -Wmissing-declarations -Wmissing-prototypes
 CFLAGS   += -Wno-missing-field-initializers -Wnull-dereference
+CFLAGS   += -Wold-style-definition
 CFLAGS   += -Woverlength-strings -Wpointer-arith -Wredundant-decls -Wshadow
 CFLAGS   += -Wsign-conversion -Wstack-protector -Wstrict-aliasing
-CFLAGS   += -Wstrict-overflow -Wswitch-default -Wswitch-enum
+CFLAGS   += -Wstrict-overflow=5 -Wswitch-default -Wswitch-enum
 CFLAGS   += -Wundef -Wunreachable-code -Wunsafe-loop-optimizations
-CFLAGS   += -fstack-protector-strong
+CFLAGS   += -fanalyzer -fstack-protector-strong
 CFLAGS   += -g -O2
 LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro -Wl,-z,now
+
+# Review is up to here
 
 DECB		=	decb
 RM		=	rm -f -v

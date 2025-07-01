@@ -73,11 +73,12 @@ CFLAGS   += -fanalyzer -fstack-protector-strong
 CFLAGS   += -g -O2
 LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro -Wl,-z,now
 
-# Review is up to here
-
+# The toolshed is at https://toolshed.sourceforge.net/ToolShed.html
 DECB		=	decb
 RM		=	rm -f -v
 ECHO		=	echo
+
+# Review is up to here
 
 .DEFAULT: all
 

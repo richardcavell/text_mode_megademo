@@ -17,9 +17,9 @@ PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
 PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav
 
-RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw
-RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
-RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav
+RJFC_SOUND	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.raw
+RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM_resampled.raw
+RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.wav
 
 SNAP_SOUND	=	Sounds/Dot/Finger_Snap.raw
 SNAP_SOUND_RES	=	Sounds/Dot/Finger_Snap_resampled.raw

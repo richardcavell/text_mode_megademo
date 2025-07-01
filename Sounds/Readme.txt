@@ -5,7 +5,7 @@ The sound Modelm.ogg came from Wikimedia Commons, from here:
 https://commons.wikimedia.org/wiki/File:Modelm.ogg
 by Cpuwhiz13
 
-RJFC Presents Text Mode Demo was created by this website:
+RJFC Presents Text Mode Megademo was created by this website:
 https://speechsynthesis.online/
 The voice is "Ryan"
 

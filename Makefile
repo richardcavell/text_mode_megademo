@@ -117,12 +117,12 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2) $(PART3)
 	@$(DECB) free $@
 	@$(ECHO) ... Done
 
-# Review is up to here
-
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND) $(RJFC_SOUND)
 $(PART2): $(PART2_SRC) $(SIN_TABLE)
 $(PART2): $(SNAP_SOUND) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
 $(PART3): $(PART3_SRC) $(SIN_TABLE)
+
+# Review is up to here
 
 $(PART1) $(PART2) $(PART3):
 	@$(ECHO) Assembling $@ ...

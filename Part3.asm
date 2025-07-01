@@ -1288,7 +1288,7 @@ cartman_text_graphic:
 	FCV	"              C A R T M A N BY MATZEC",0
 cartman_text_graphic_end:
 
-* Art by Normand Veilleux
+* Art by Normand Veilleux, modified by me
 
 disk_text_graphic:
 	FCV	"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",0
@@ -1350,6 +1350,9 @@ earth_text_graphic:
 	FCV	"              ''--..,DD###PP=\"\"'",0
 earth_text_graphic_end:
 
+* Art by name unknown at asciiart.eu
+* Modified by me
+
 red_dwarf_graphic:
 	FCV	"       ..                                   ,--------.",0
 	FCV	"      / /                                 ,' /.!    /",0
@@ -1379,4 +1382,3 @@ red_dwarf_graphic_end:
 *************************************
 * Here is our raw data for our sounds
 *************************************
-

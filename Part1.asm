@@ -10,16 +10,16 @@
 *
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
-* Part of this code was written by a number of authors. You can see it here:
+* Part of this code was written by a number of other authors.
+* You can see it here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner.
-* The ASCII art of the small creature is by Microsoft Copilot,
-* and the big cat was done by Blazej Kozlowski at
+* The ASCII art of the small creature is by Microsoft Copilot.
+* The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
-* The sound Pluck.raw is from Modelm.ogg from Wikimedia Commons, here:
-* https://commons.wikimedia.org/wiki/File:Modelm.ogg
-* by Cpuwhiz13
-* RJFC Presents Text Mode Demo was created by this website:
+* The sound Pluck.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
+* here: https://commons.wikimedia.org/wiki/File:Modelm.ogg
+* RJFC Presents Text Mode Megademo was created by this website:
 * https://speechsynthesis.online/
 * The voice is "Ryan"
 
@@ -186,11 +186,11 @@ title_screen_graphic:
 	FCB	255
 
 title_screen_text:
-	FCB	5, 6
+	FCB	5, 5
 	FCN	"RJFC"	; Each string ends with a zero when you use FCN
-	FCB	8, 10
+	FCB	8, 9
 	FCN	"PRESENTS"
-	FCB	12, 12
+	FCB	12, 11
 	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
 	FCB	0		; So we manually terminate that line
 	FCB	255		; The end
@@ -426,9 +426,10 @@ irq_service_routine:
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
-;	inc	TEXTBUFEND-1
+	inc	TEXTBUFEND-1
 
 _skip_debug_visual_indication:
+
 		; In the interests of making our IRQ handler run fast,
 		; the routine assumes that decb_irq_service_routine
 		; has been correctly initialized

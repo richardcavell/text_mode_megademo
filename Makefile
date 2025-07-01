@@ -78,6 +78,9 @@ DECB		=	decb
 RM		=	rm -f -v
 ECHO		=	echo
 
+MAME		=	mame
+XROAR		=	xroar
+
 .DEFAULT: all
 
 .PHONY:	all clean disk help info license list version
@@ -122,8 +125,6 @@ $(PART2): $(PART2_SRC) $(SIN_TABLE)
 $(PART2): $(SNAP_SOUND) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
 $(PART3): $(PART3_SRC) $(SIN_TABLE)
 
-# Review is up to here
-
 $(PART1) $(PART2) $(PART3):
 	@$(ECHO) Assembling $@ ...
 	$(ASM) $(ASMFLAGS) -o $@ $<
@@ -135,10 +136,10 @@ $(SIN_TABLE): $(SIN_GENERATOR)
 	@$(ECHO) ... Done
 
 $(PLUCK_SOUND): $(PLUCK_SOUND_RES)
-$(RJFC_SOUND): $(RJFC_SOUND_RES)
-$(SNAP_SOUND): $(SNAP_SOUND_RES)
-$(NOW_SOUND): $(NOW_SOUND_RES)
-$(MOVE_SOUND): $(MOVE_SOUND_RES)
+$(RJFC_SOUND): 	$(RJFC_SOUND_RES)
+$(SNAP_SOUND): 	$(SNAP_SOUND_RES)
+$(NOW_SOUND): 	$(NOW_SOUND_RES)
+$(MOVE_SOUND): 	$(MOVE_SOUND_RES)
 $(MMORE_SOUND): $(MMORE_SOUND_RES)
 $(CHNGE_SOUND): $(CHNGE_SOUND_RES)
 
@@ -152,15 +153,15 @@ $(MMORE_SOUND) $(CHNGE_SOUND):
 	@$(ECHO) "... Done"
 
 $(PLUCK_SOUND_RES): $(PLUCK_SOUND_SRC)
-$(RJFC_SOUND_RES): $(RJFC_SOUND_SRC)
-$(SNAP_SOUND_RES): $(SNAP_SOUND_SRC)
-$(NOW_SOUND_RES): $(NOW_SOUND_SRC)
-$(MOVE_SOUND_RES): $(MOVE_SOUND_SRC)
+$(RJFC_SOUND_RES):  $(RJFC_SOUND_SRC)
+$(SNAP_SOUND_RES):  $(SNAP_SOUND_SRC)
+$(NOW_SOUND_RES):   $(NOW_SOUND_SRC)
+$(MOVE_SOUND_RES):  $(MOVE_SOUND_SRC)
 $(MMORE_SOUND_RES): $(MMORE_SOUND_SRC)
 $(CHNGE_SOUND_RES): $(CHNGE_SOUND_SRC)
 
-$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES) $(SNAP_SOUND_RES)\
- $(NOW_SOUND_RES) $(MOVE_SOUND_RES) $(MMORE_SOUND_RES) $(CHNGE_SOUND_RES):
+$(PLUCK_SOUND_RES) $(RJFC_SOUND_RES) $(SNAP_SOUND_RES) \
+$(NOW_SOUND_RES) $(MOVE_SOUND_RES) $(MMORE_SOUND_RES) $(CHNGE_SOUND_RES):
 	@$(RM) $@
 	@$(ECHO) Resampling $@ ...
 	ffmpeg -i $< -v warning -af "lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
@@ -196,25 +197,27 @@ info:
 license:
 	@cat LICENSE
 
-list: info
+list:	info
 
 version:
-	@$(ECHO) "Text Mode Demo source: unversioned"
-	@$(ASM)  --version       | head --lines=1
-	@$(DECB) 2>&1 >/dev/null | head --lines=1
-	@$(CC)   --version       | head --lines=1
+	@$(ECHO)   "Text Mode Demo source: unversioned"
+	@$(ASM)    --version       | head --lines=1
+	@$(DECB)   2>&1 >/dev/null | head --lines=1
+	@$(CC)     --version       | head --lines=1
+	@$(MAME)   -help           | head --lines=1
+	@$(XROAR)  -V		   | head --lines=1
 
 mame: $(DISK)
-	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"
+	$(MAME) coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r"
 
 mame-debug: $(DISK)
-	mame coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r" -debug
+	$(MAME) coco2b -flop1 $(DISK) -autoboot_delay 2 -autoboot_command "RUN \"DEMO\"\r" -debug
 
 xroar: $(DISK)
-	xroar -m coco2b -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"
+	$(XROAR) -m coco2b -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"
 
 xroar-coco3: $(DISK)
-	xroar -m coco3p -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"
+	$(XROAR) -m coco3p -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"
 
 xroar-ntsc: $(DISK)
-	xroar -m coco2bus -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"
+	$(XROAR) -m coco2bus -load-fd0 $(DISK) -type "RUN \"DEMO\"\r"

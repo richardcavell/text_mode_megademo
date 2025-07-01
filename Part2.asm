@@ -1879,21 +1879,21 @@ scroll_text_4:
 *************************************
 
 finger_snap_sound:
-	INCLUDEBIN "Sounds/Dot_Sounds/Finger_Snap.raw"
+	INCLUDEBIN "Sounds/Dot/Finger_Snap.raw"
 finger_snap_sound_end:
 
 now_sound:
-	INCLUDEBIN "Sounds/Dot_Sounds/Now.raw"
+	INCLUDEBIN "Sounds/Dot/Now.raw"
 now_sound_end:
 
 move_sound:
-	INCLUDEBIN "Sounds/Dot_Sounds/Move.raw"
+	INCLUDEBIN "Sounds/Dot/Move.raw"
 move_sound_end:
 
 move_more_sound:
-	INCLUDEBIN "Sounds/Dot_Sounds/Move_More.raw"
+	INCLUDEBIN "Sounds/Dot/Move_More.raw"
 move_more_sound_end:
 
 change_sound:
-	INCLUDEBIN "Sounds/Dot_Sounds/Change.raw"
+	INCLUDEBIN "Sounds/Dot/Change.raw"
 change_sound_end:

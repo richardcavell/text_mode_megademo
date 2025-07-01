@@ -21,25 +21,25 @@ RJFC_SOUND	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.raw
 RJFC_SOUND_RES	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD_resampled.raw
 RJFC_SOUND_SRC	=	Sounds/RJFC_Presents_TMD/RJFC_Presents_TMD.wav
 
-SNAP_SOUND	=	Sounds/Dot_Sounds/Finger_Snap.raw
-SNAP_SOUND_RES	=	Sounds/Dot_Sounds/Finger_Snap_resampled.raw
-SNAP_SOUND_SRC	=	Sounds/Dot_Sounds/Finger_Snap.wav
+SNAP_SOUND	=	Sounds/Dot/Finger_Snap.raw
+SNAP_SOUND_RES	=	Sounds/Dot/Finger_Snap_resampled.raw
+SNAP_SOUND_SRC	=	Sounds/Dot/Finger_Snap.wav
 
-NOW_SOUND	=	Sounds/Dot_Sounds/Now.raw
-NOW_SOUND_RES	=	Sounds/Dot_Sounds/Now_resampled.raw
-NOW_SOUND_SRC	=	Sounds/Dot_Sounds/Now.wav
+NOW_SOUND	=	Sounds/Dot/Now.raw
+NOW_SOUND_RES	=	Sounds/Dot/Now_resampled.raw
+NOW_SOUND_SRC	=	Sounds/Dot/Now.wav
 
-MOVE_SOUND	=	Sounds/Dot_Sounds/Move.raw
-MOVE_SOUND_RES	=	Sounds/Dot_Sounds/Move_resampled.raw
-MOVE_SOUND_SRC	=	Sounds/Dot_Sounds/Move.wav
+MOVE_SOUND	=	Sounds/Dot/Move.raw
+MOVE_SOUND_RES	=	Sounds/Dot/Move_resampled.raw
+MOVE_SOUND_SRC	=	Sounds/Dot/Move.wav
 
-MMORE_SOUND	=	Sounds/Dot_Sounds/Move_More.raw
-MMORE_SOUND_RES	=	Sounds/Dot_Sounds/Move_More_resampled.raw
-MMORE_SOUND_SRC	=	Sounds/Dot_Sounds/Move_More.wav
+MMORE_SOUND	=	Sounds/Dot/Move_More.raw
+MMORE_SOUND_RES	=	Sounds/Dot/Move_More_resampled.raw
+MMORE_SOUND_SRC	=	Sounds/Dot/Move_More.wav
 
-CHNGE_SOUND	=	Sounds/Dot_Sounds/Change.raw
-CHNGE_SOUND_RES	=	Sounds/Dot_Sounds/Change_resampled.raw
-CHNGE_SOUND_SRC	=	Sounds/Dot_Sounds/Change.wav
+CHNGE_SOUND	=	Sounds/Dot/Change.raw
+CHNGE_SOUND_RES	=	Sounds/Dot/Change_resampled.raw
+CHNGE_SOUND_SRC	=	Sounds/Dot/Change.wav
 
 SOUND_STR	=	sound_stripper
 SOUND_STR_SRC	=	sound_stripper.c

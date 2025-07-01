@@ -13,6 +13,8 @@ PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 PART3_SRC	=	Part3.asm
 
+# Review is up to here
+
 PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
 PLUCK_SOUND_SRC	=	Sounds/Pluck/Model_M.wav

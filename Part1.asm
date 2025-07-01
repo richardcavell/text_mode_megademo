@@ -191,7 +191,7 @@ title_screen_text:
 	FCB	8, 10
 	FCN	"PRESENTS"
 	FCB	12, 12
-	FCV	"TEXT MODE DEMO" ; FCV places green boxes for spaces
+	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
 	FCB	0		; So we manually terminate that line
 	FCB	255		; The end
 
@@ -203,8 +203,8 @@ display_text:
 	tsta
 	bne	skip_title_screen
 
-	ldx	#rjfc_presents_tmd_sound	; Start of sound
-	ldy	#rjfc_presents_tmd_sound_end	; End of sound
+	ldx	#rjfc_presents_tmm_sound	; Start of sound
+	ldy	#rjfc_presents_tmm_sound_end	; End of sound
 	lda	#8
 	jsr	play_sound		; Play the sound
 
@@ -1716,6 +1716,6 @@ pluck_sound:
 	INCLUDEBIN "Sounds/Pluck/Pluck.raw"
 pluck_sound_end:
 
-rjfc_presents_tmd_sound:
-	INCLUDEBIN "Sounds/RJFC_Presents_TMD/RJFC_Presents_TMM.raw"
-rjfc_presents_tmd_sound_end:
+rjfc_presents_tmm_sound:
+	INCLUDEBIN "Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.raw"
+rjfc_presents_tmm_sound_end:

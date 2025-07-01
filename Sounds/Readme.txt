@@ -1,5 +1,5 @@
 This file is part of Text Mode Megademo by Richard Cavell
-June 2025
+June 2025 - July 2025
 
 The sound Modelm.ogg came from Wikimedia Commons, from here:
 https://commons.wikimedia.org/wiki/File:Modelm.ogg
@@ -9,10 +9,11 @@ RJFC Presents Text Mode Megademo was created by this website:
 https://speechsynthesis.online/
 The voice is "Ryan"
 
+The original sound of Finger_Snap was created by cori at
+Wikimedia Commons
+https://commons.wikimedia.org/wiki/File:Finger_clicks.ogg
+
 All of the speech in Dot/ was created by
 https://speechsynthesis.online/
 The voice is "Maisie"
 
-The original sound in Finger_Snap was created by cori at
-Wikimedia Commons
-https://commons.wikimedia.org/wiki/File:Finger_clicks.ogg

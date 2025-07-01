@@ -57,12 +57,6 @@ WAIT_PERIOD	EQU	25
 
 	jsr	turn_off_disk_motor
 
-******************************
-* Turn on 6-bit audio circuits
-******************************
-
-	jsr	turn_6bit_audio_on
-
 *************************
 * Text buffer information
 *************************
@@ -74,9 +68,9 @@ TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
-*************************************************************
-* Display "space to skip" message at the bottom of the screen
-*************************************************************
+*********************************************
+* Display message at the bottom of the screen
+*********************************************
 
 	lda	#TEXT_LINES-1		; Bottom line of the screen
 	ldx	#skip_message
@@ -537,16 +531,16 @@ pluck_count_chars_per_line:
 _pluck_count_chars_on_one_line:
 	ldb	#COLS_PER_LINE		; There are 32 characters per line
 
-_pluck_test_char:
+_pluck_count_chars_test_char:
 	lda	,x+
 	cmpa	#GREEN_BOX		; Is it an empty green box?
-	beq	_pluck_space_char	; Yes, so don't count it
+	beq	_pluck_count_chars_space ; Yes, so don't count it
+					 ; or
+	inc	,y			 ; No, so count it
 
-	inc	,y			; No, so count it
-
-_pluck_space_char:
+_pluck_count_chars_space:
 	decb
-	bne	_pluck_test_char
+	bne	_pluck_count_chars_test_char
 
 	cmpx	#TEXTBUF+(PLUCK_LINES*COLS_PER_LINE)
 	beq	_pluck_count_chars_end
@@ -1029,6 +1023,7 @@ switch_on_irq_and_firq:
 play_sound:
 
 	pshs	a,x,y
+	jsr	turn_6bit_audio_on
 	bsr	switch_off_irq_and_firq
 	puls	a,x,y
 

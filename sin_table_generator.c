@@ -8,8 +8,10 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 const double pi = 3.14159265358979323846;
+const int COMPLETE_CIRCLE = 256;
 
 static int
 round_nearest(double f)
@@ -31,6 +33,20 @@ fprintf_error(void)
 	exit(EXIT_FAILURE);
 }
 
+static void
+print_help(const char *argv0)
+{
+	(void) printf("%s",
+	    "Sine Table Generator v1.0\n"
+	    "by Richard Cavell\n"
+	    "https://github.com/richardcavell/text_mode_megademo\n");
+
+	(void) printf("%s%s%s",
+		      "Usage: ",
+		       argv0,
+		      " outputfile\n");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -40,11 +56,25 @@ main(int argc, char *argv[])
 
 	if (argc != 2)
 	{
-		(void) fprintf(stderr, "%s%s%s", "Usage: ",
-					 argv[0],
-					 " outputfile\n");
+		print_help(argv[0]);
 		exit(EXIT_FAILURE);
 	}
+
+	if (strcmp(argv[1], "--version") == 0 ||
+	    strcmp(argv[1], "-v")        == 0 ||
+	    strcmp(argv[1], "-V")        == 0 ||
+	    strcmp(argv[1], "-version")  == 0 ||
+	    strcmp(argv[1], "--help")    == 0 ||
+	    strcmp(argv[1], "-h")        == 0 ||
+	    strcmp(argv[1], "-?")        == 0 ||
+	    strcmp(argv[1], "-help")     == 0 ||
+	    strcmp(argv[1], "--info")    == 0 ||
+	    strcmp(argv[1], "-info")     == 0)
+	{
+		print_help(argv[0]);
+		exit(EXIT_SUCCESS);
+	}
+
 
 	fp = fopen(argv[1], "w");
 
@@ -69,10 +99,10 @@ main(int argc, char *argv[])
 	if (ret < 0)
 		fprintf_error();
 
-	for (i = 0; i < 256; ++i)
+	for (i = 0; i < COMPLETE_CIRCLE; ++i)
 	{
-		double angle = i / 256.0 * 2 * pi;
-		double f = sin(angle) * 256;
+		double angle = i / (double) COMPLETE_CIRCLE * 2 * pi;
+		double f = sin(angle) * COMPLETE_CIRCLE;
 
 		int j = round_nearest(f);
 

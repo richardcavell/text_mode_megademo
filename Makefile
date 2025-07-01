@@ -205,6 +205,7 @@ version:
 	@$(DECB)   2>&1 >/dev/null | head --lines=1
 	@$(CC)     --version       | head --lines=1
 	@$(MAME)   -help           | head --lines=1
+	@./$(SIN_GENERATOR) -V	   | head --lines=1
 	@$(XROAR)  -V		   | head --lines=1
 
 mame: $(DISK)

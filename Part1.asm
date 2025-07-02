@@ -140,11 +140,11 @@ pluck_loop:
 	tsta
 	beq	_pluck_do_a_frame		; No, just keep processing
 
+; Review is up to here
+
 	jsr	pluck_a_char			; Yes, pluck a character
 
 _pluck_do_a_frame:
-
-; Review is up to here
 
 	jsr	pluck_do_frame			; Do one frame
 
@@ -282,14 +282,20 @@ skip_title_screen:		; If space was pressed
 
 	ldx	#joke_startup_messages
 	jsr	display_messages
-
+	tsta
+	bne	skip_joke
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
+	tsta
+	bne	skip_joke
 
 	jsr	clear_screen			; Just clear the screen
 						; and fallthrough
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
+
+skip_joke:
+	jsr	clear_screen			; Just clear the screen
 	lbra	loading_screen
 
 joke_startup_messages:

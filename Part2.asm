@@ -107,7 +107,22 @@ scroll_text:
 	ldx	#bird_scrollers
 	jsr	display_scroll_texts
 
+	bra	linux_spoof
+
+linux_spoof:
+	jsr	clear_screen
+
+	ldx	#linux_spoof_text
+	lbsr	display_messages
 	bra	create_dot
+
+linux_spoof_text:
+	FCV	"TEST 1234567890",0
+	FCV	"MORE TEST",0
+	FCV	"CHECKING",0
+	FCV	255
+
+
 
 **************
 * Create a dot
@@ -960,7 +975,6 @@ wait_frames:
         deca
         bne     wait_frames
 
-	lda	#0
         rts
 
 _wait_frames_skip:
@@ -1380,6 +1394,55 @@ _speech_bubble_loop:
 
 _speech_bubble_finished:
 	rts
+
+******************
+* Display messages
+*
+* Inputs:
+* X = Messages
+******************
+
+display_messages:
+
+	com	debug_mode_toggle
+        lda     #COLS_PER_LINE
+        ldy     #TEXTBUF
+
+_display_messages_loop:
+        ldb     ,x+
+        beq     _next_line
+        cmpb    #'%' + 64
+        beq     _message_pause
+        cmpb    #255
+        beq     _display_messages_end
+        stb     ,y+
+
+        bra     _display_messages_loop  ; User has not skipped
+
+_display_messages_end:
+        rts
+
+_message_pause:
+        pshs    a,x,y
+        lda     #10
+        jsr     wait_frames
+        tsta
+        puls    a,x,y
+        bne     _display_messages_end
+        bra     _display_messages_loop
+
+_next_line:
+        pshs    a,x
+        tfr     y,d
+        addd    #32
+        andb    #0b11100000
+        tfr     d,y
+        lda     #5
+        jsr     wait_frames
+        tsta
+        puls    a,x
+        bne     _display_messages_end
+        bra     _display_messages_loop
 
 *************************************************************
 * sine function

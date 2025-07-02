@@ -143,6 +143,9 @@ pluck_loop:
 	jsr	pluck_a_char			; Yes, pluck a character
 
 _pluck_do_a_frame:
+
+; Review is up to here
+
 	jsr	pluck_do_frame			; Do one frame
 
 	bra	pluck_loop

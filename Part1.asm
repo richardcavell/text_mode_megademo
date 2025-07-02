@@ -280,7 +280,7 @@ skip_title_screen:		; If space was pressed
 	ldx	#joke_startup_messages
 	jsr	display_messages
 
-	lda	#WAIT_PERIOD*3
+	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
 	jsr	clear_screen			; Just clear the screen
@@ -291,13 +291,15 @@ skip_title_screen:		; If space was pressed
 
 joke_startup_messages:
 
-	FCV	"INCLUDING CLEVER IDEAS...% DONE",0,0
+	FCV	"INCORPORATING CLEVER IDEAS...%",0
+	FCV	"%DONE",0,0
 	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
 	FCV	"SKILL...% DONE",0,0
-	FCV	"INCORPORATING EVER SO MANY",0
+	FCV	"INCLUDING EVER SO MANY",0
 	FCV	"FANCY EFFECTS...% DONE",0,0
 	FCV	"READYING ALL YOUR FAVORITE",0
-	FCV	"DEMO CLICHES...% DONE",0
+	FCV	"DEMO CLICHES...% DONE",0,0
+	FCV	"STARTING THE SHOW...% DONE"
 
 	FCB	255
 
@@ -939,7 +941,7 @@ wait_frames:
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	puls	a
-	beq	_wait_frames_skip
+	bne	_wait_frames_skip
 
 	deca
 	bne	wait_frames
@@ -1707,9 +1709,12 @@ _display_messages_loop:
 	stb	,y+
 	pshs	a,x,y
 
+	cmpb	#GREEN_BOX
+	beq	_display_messages_skip_sound
 	clra				; Play a sound
 	lbsr	pluck_play_sound
 
+_display_messages_skip_sound:
 	lda	#2
 	jsr	wait_frames
 	tsta

@@ -937,11 +937,14 @@ pluck_play_sound:
 wait_frames:
 	pshs	a
 	jsr	wait_for_vblank_and_check_for_skip
+	tsta
 	puls	a
+	beq	_wait_frames_skip
 
 	deca
 	bne	wait_frames
 
+_wait_frames_skip:
 	rts
 
 **********************************************************
@@ -1720,7 +1723,9 @@ _message_pause:
 	pshs	a,x,y
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
+	tsta
 	puls	a,x,y
+	bne	_display_messages_end
 	bra	_display_messages_loop
 
 _next_line:
@@ -1731,7 +1736,9 @@ _next_line:
 	tfr	d,y
 	lda	#5
 	jsr	wait_frames
+	tsta
 	puls	a,x
+	bne	_display_messages_end
 	bra	_display_messages_loop
 
 ************************

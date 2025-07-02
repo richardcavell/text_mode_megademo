@@ -24,7 +24,7 @@
 * Also, you can make the lower right corner character cycle when
 * the interrupt request service routine operates.
 
-DEBUG_MODE      EQU     0
+DEBUG_MODE      EQU     1
 
 * Between each section, wait this number of frames
 
@@ -113,16 +113,50 @@ linux_spoof:
 	jsr	clear_screen
 
 	ldx	#linux_spoof_text
-	lbsr	display_messages
-	bra	create_dot
+	jsr	display_messages
+
+	jsr	clear_screen
+	lda	#7
+	ldb	#13
+	ldx	#ha_ha
+	jsr	display_text_graphic
+
+	lda	#9
+	ldb	#10
+	ldx	#just_kidding
+	jsr	display_text_graphic
+
+	lda	#100
+	jsr	wait_frames
+
+	lbra	create_dot
 
 linux_spoof_text:
-	FCV	"TEST 1234567890",0
-	FCV	"MORE TEST",0
-	FCV	"CHECKING",0
+
+	FCV	"LOADING LINUX KERNEL...%%%",0
+	FCV	"[DRM:VMW-MSG-IOCTL [VMWGFX]]%",0
+	FCV	"RFKILL: INPUT HANDLER ENABLED%%",0
+	FCV	"LINUX VERSION 6.11.0-28-GENERIC%",0
+	FCV	"KERNEL SUPPORTED CPUS:",0
+	FCV	"  MOTOROLA 6809",0
+	FCV	"  HITACHI 6309",0
+	FCV	"PHYSICAL RAM MAP:%%%",0
+	FCV	"[MEM 0X0000-0X7FFF] USABLE%%%%",0
+	FCV	"[MEM 0X8000-0FFFF] RESERVED",0
+	FCV	"MAX. THREADS PER CORE: 1",0
+	FCV	"NUM. CORES PER PACKAGE: 1%%%",0
+	FCV	"SPLASH BOOT-IMAGE=/BOOT/VMLINUZ>%%%%%",0
+	FCV	"HUB 2-0:1.0: USB HUB NOT FOUND%%%%%%%",0
+
 	FCV	255
 
+ha_ha:
 
+	FCV	"HA HA!",0,255
+
+just_kidding:
+
+	FCV	"JUST KIDDING!",0,255
 
 **************
 * Create a dot
@@ -975,6 +1009,7 @@ wait_frames:
         deca
         bne     wait_frames
 
+	clra
         rts
 
 _wait_frames_skip:
@@ -1403,9 +1438,6 @@ _speech_bubble_finished:
 ******************
 
 display_messages:
-
-	com	debug_mode_toggle
-        lda     #COLS_PER_LINE
         ldy     #TEXTBUF
 
 _display_messages_loop:
@@ -1437,11 +1469,7 @@ _next_line:
         addd    #32
         andb    #0b11100000
         tfr     d,y
-        lda     #5
-        jsr     wait_frames
-        tsta
         puls    a,x
-        bne     _display_messages_end
         bra     _display_messages_loop
 
 *************************************************************

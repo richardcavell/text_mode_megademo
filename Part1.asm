@@ -291,11 +291,11 @@ skip_title_screen:		; If space was pressed
 
 joke_startup_messages:
 
-	FCV	"INCLUDING CLEVER IDEAS...% DONE",0
+	FCV	"INCLUDING CLEVER IDEAS...% DONE",0,0
 	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
-	FCV	"SKILL...% DONE",0
+	FCV	"SKILL...% DONE",0,0
 	FCV	"INCORPORATING EVER SO MANY",0
-	FCV	"FANCY EFFECTS...% DONE",0
+	FCV	"FANCY EFFECTS...% DONE",0,0
 	FCV	"READYING ALL YOUR FAVORITE",0
 	FCV	"DEMO CLICHES...% DONE",0
 
@@ -676,7 +676,7 @@ _pluck_do_one_pluck:
 				; X = Screen Position
 				; Y = Pluck Data
 
-	cmpa	#PLUCK_PHASE_NOTHING	; you could do testa instead
+	tsta			; cmpa	#PLUCK_PHASE_NOTHING
 	bne	_pluck_phase_at_least_1
 
 	rts			; Phase nothing, do nothing
@@ -898,6 +898,7 @@ _pluck_a_char_check:
 
 ; Now play the pluck sound
 
+	lda	#1
 	bsr	pluck_play_sound
 
 	rts
@@ -923,7 +924,6 @@ pluck_play_sound:
 
 	ldx	#pluck_sound	; interrupts and everything else
 	ldy	#pluck_sound_end ; pause while we're doing this
-	lda	#1
 	bsr	play_sound	; Play the pluck noise
 	rts
 
@@ -1115,9 +1115,6 @@ clear_screen:
 	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
 
 _clear_screen_loop:
-	std	,x++			; Might as well do 8 bytes at a time
-	std	,x++
-	std	,x++
 	std	,x++
 
 	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
@@ -1706,7 +1703,11 @@ _display_messages_loop:
 	beq	_display_messages_end
 	stb	,y+
 	pshs	a,x,y
-	lda	#3
+
+	clra				; Play a sound
+	lbsr	pluck_play_sound
+
+	lda	#2
 	jsr	wait_frames
 	tsta
 	puls	a,x,y
@@ -1716,17 +1717,21 @@ _display_messages_end:
 	rts
 
 _message_pause:
+	pshs	a,x,y
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
+	puls	a,x,y
 	bra	_display_messages_loop
 
 _next_line:
-	pshs	d
+	pshs	a,x
 	tfr	y,d
-	addd	#31
+	addd	#32
 	andb	#0b11100000
 	tfr	d,y
-	puls	d
+	lda	#5
+	jsr	wait_frames
+	puls	a,x
 	bra	_display_messages_loop
 
 ************************

@@ -85,7 +85,7 @@ TEXT_LINES	EQU	16
 
 skip_message:
 
-	FCV	"  PRESS SPACE TO SKIP ANY PART  "
+	FCV	"  PRESS SPACE TO SKIP ANY PART"
 	FCB	0
 
 ***********************************************************
@@ -167,13 +167,12 @@ _pluck_next_section:				; Screen is empty either way
 
 title_screen:
 
-	lda	#0
-	ldb	#0
+	clra
+	clrb
 	ldx	#title_screen_graphic
 	jsr	display_text_graphic
 
-	lda	#1
-	sta	creature_blinks			; Set up creature blinks
+	com	creature_blinks			; Set up creature blinks
 
 	bra	display_text
 
@@ -209,7 +208,7 @@ display_text:
 	jsr	play_sound		; Play the sound
 
 	lda	#5
-	ldb	#0
+	clrb
 	jsr	encase_text		; "Encase" the three text items
 	tsta
 	bne	skip_title_screen
@@ -221,7 +220,7 @@ display_text:
 	bne	skip_title_screen
 
 	lda	#12
-	ldb	#0
+	clrb
 	jsr	encase_text
 	tsta
 	bne	skip_title_screen
@@ -278,10 +277,33 @@ skip_title_screen:		; If space was pressed
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
+	ldx	#joke_startup_messages
+	jsr	display_messages
+
+	lda	#WAIT_PERIOD*3
+	jsr	wait_frames			; Wait a certain no of frames
+
+	jsr	clear_screen			; Just clear the screen
 						; and fallthrough
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+	lbra	loading_screen
+
+joke_startup_messages:
+
+	FCV	"INCLUDING CLEVER IDEAS...% DONE",0
+	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
+	FCV	"SKILL...% DONE",0
+	FCV	"INCORPORATING EVER SO MANY",0
+	FCV	"FANCY EFFECTS...% DONE",0
+	FCV	"READYING ALL YOUR FAVORITE",0
+	FCV	"DEMO CLICHES...% DONE",0
+
+	FCB	255
+
 loading_screen:
-	lda	#0
-	ldb	#0
+	clra
+	clrb
 	ldx	#ascii_art_cat
 	jsr	display_text_graphic
 
@@ -451,7 +473,7 @@ DSKREG	EQU	$FF40
 
 turn_off_disk_motor:
 
-	lda	#0
+	clra
 	sta	DSKREG		; Turn off disk motor
 
 	rts
@@ -730,7 +752,7 @@ _pluck_find_loop:
 
 _pluck_find_no_empty_slot:
 
-	ldx	#0
+;	ldx	#0
 	clra
 
 	rts
@@ -1235,7 +1257,8 @@ _creature_blink_blinks_on:
 ; Open the creature's eyes
 
 	clr	_creature_blink_is_blinking
-	ldd	#0
+	clra
+	clrb
 	std	_creature_blink_frames
 
 	ldx	#TEXTBUF+COLS_PER_LINE+1
@@ -1255,7 +1278,8 @@ _creature_blink_open_eyes:
 
 	lda	#1
 	sta	_creature_blink_is_blinking
-	ldd	#0
+	clra
+	clrb
 	std	_creature_blink_frames
 
 	ldx	#TEXTBUF+COLS_PER_LINE+1
@@ -1661,6 +1685,49 @@ _move_line_down:
 _skip_drop_screen:
 	lda	#1
 	rts
+
+******************
+* Display messages
+*
+* Inputs:
+* X = Messages
+******************
+
+display_messages:
+	lda	#COLS_PER_LINE
+	ldy	#TEXTBUF
+
+_display_messages_loop:
+	ldb	,x+
+	beq	_next_line
+	cmpb	#'%' + 64
+	beq	_message_pause
+	cmpb	#255
+	beq	_display_messages_end
+	stb	,y+
+	pshs	a,x,y
+	lda	#3
+	jsr	wait_frames
+	tsta
+	puls	a,x,y
+	beq	_display_messages_loop	; User has not skipped
+
+_display_messages_end:
+	rts
+
+_message_pause:
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+	bra	_display_messages_loop
+
+_next_line:
+	pshs	d
+	tfr	y,d
+	addd	#31
+	andb	#0b11100000
+	tfr	d,y
+	puls	d
+	bra	_display_messages_loop
 
 ************************
 * Display a text graphic

@@ -57,6 +57,12 @@ WAIT_PERIOD	EQU	25
 
 	jsr	turn_off_disk_motor
 
+******************************
+* Turn on 6-bit audio circuits
+******************************
+
+	jsr	turn_6bit_audio_on
+
 *************************
 * Text buffer information
 *************************
@@ -559,7 +565,7 @@ _pluck_count_chars_end:
 *
 * Output:
 * A = 0        -> a VBlank happened
-* A = non-zero -> user is trying to skip
+* A = Non-zero -> user is trying to skip
 *********************************************
 
 POLCAT		EQU	$A000
@@ -586,7 +592,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	beq	_wait_for_vblank_invert_toggle
 	cmpa	#'T'
 	beq	_wait_for_vblank_invert_toggle
-	ldb	debug_mode_toggle
+	ldb	_wait_for_vblank_debug_mode_toggle
 	beq	_wait_for_vblank
 
 ; If toggle is on, require an F to go forward 1 frame
@@ -609,10 +615,10 @@ _wait_for_vblank_skip:
 	rts
 
 _wait_for_vblank_invert_toggle:
-	com	debug_mode_toggle
+	com	_wait_for_vblank_debug_mode_toggle
 	bra	_wait_for_vblank
 
-debug_mode_toggle:
+_wait_for_vblank_debug_mode_toggle:
 
 	RZB	1
 
@@ -782,12 +788,12 @@ _pluck_check_data_not_empty:
 
 pluck_check_empty_lines:
 
-	ldy	#pluck_line_counts
+	ldx	#pluck_line_counts
 
 _pluck_check_empty_test_line:
-	tst	,y+
+	tst	,x+
 	bne	_pluck_check_empty_line_not_empty
-	cmpy	#pluck_line_counts_end
+	cmpx	#pluck_line_counts_end
 	bne	_pluck_check_empty_test_line
 
 	lda	#1			; Lines are now clear
@@ -813,19 +819,16 @@ pluck_a_char:
 	rts			; No more characters left
 
 _pluck_char_get_random:
-	bsr	get_random 	; Get a random number in D
-	andb	#0b00001111	; Make the random number between 0 and 15
-	cmpb	#PLUCK_LINES
-	beq	_pluck_char_get_random	; Don't choose line 15
+	bsr	pluck_char_choose_line	; Chosen line is in A
 
 	ldy	#pluck_line_counts
 
-	tst	b,y		; If there are no more characters on this line
+	tst	a,y		; If there are no more characters on this line
 	beq	_pluck_char_get_random	; choose a different one
 
-	dec	b,y		; There'll be one less character now
+	dec	a,y		; There'll be one less character now
 
-	lda	#COLS_PER_LINE
+	ldb	#COLS_PER_LINE
 	mul 			; Multiply b by 32 and put the answer in D
 
 	ldx	#TEXTBUF+COLS_PER_LINE	; Make X point to the end of the line
@@ -873,15 +876,34 @@ _pluck_a_char_check:
 
 ; Now play the pluck sound
 
-	ldx	#pluck_sound	; interrupts and everything else
-	ldy	#pluck_sound_end ; pause while we're doing this
-	lda	#1
-	bsr	play_sound	; Play the pluck noise
+	bsr	pluck_play_sound
 
 	rts
 
 _pluck_a_char_impossible:
 	bra	_pluck_a_char_impossible	; Should never get here
+
+***********************
+
+pluck_char_choose_line:
+
+	bsr	get_random 	; Get a random number in D
+	tfr	b,a
+	anda	#0b00001111	; Make the random number between 0 and 15
+	cmpa	#PLUCK_LINES
+	beq	pluck_char_choose_line	; But don't choose line 15
+
+	rts
+
+*****************
+
+pluck_play_sound:
+
+	ldx	#pluck_sound	; interrupts and everything else
+	ldy	#pluck_sound_end ; pause while we're doing this
+	lda	#1
+	bsr	play_sound	; Play the pluck noise
+	rts
 
 *****************************
 * Wait for a number of frames
@@ -907,7 +929,7 @@ wait_frames:
 * D = The random number
 **********************************************************
 
-USE_DEEKS_CODE	EQU	0
+USE_DEEKS_CODE	EQU	1
 
 	IF	(USE_DEEKS_CODE==0)
 

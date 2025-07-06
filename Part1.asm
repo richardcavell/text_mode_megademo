@@ -44,8 +44,6 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
-; Zeroth effect
-
 	jsr	display_skip_message
 
 ; First effect
@@ -332,9 +330,7 @@ _pluck_loop:
 	tsta
 	bne	_pluck_skip			; Does the user wants to skip?
 
-	lda	simultaneous_plucks
 	bsr	count_frames
-	sta	simultaneous_plucks
 
 	jsr	pluck_is_screen_empty		; Is the screen empty?
 	tsta
@@ -451,11 +447,8 @@ debug_mode_toggle:
 ***********************************
 * Count frames
 *
-* Inputs:
-* A = number of simultaneous plucks
-*
-* Outputs:
-* A = number of simultaneous plucks
+* Inputs: None
+* Outputs: None
 ***********************************
 
 count_frames:
@@ -469,11 +462,12 @@ count_frames:
 
 	clrb
 	stb	pluck_frames			; reset the counter, and
-						; increase the number of plucks
+	lda	simultaneous_plucks		; increase the number of plucks
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
 	beq	_skip_increase
 
-	inca					; fallthrough
+	inca
+	sta	simultaneous_plucks		; fallthrough to rts
 
 _skip_increase:
 	rts

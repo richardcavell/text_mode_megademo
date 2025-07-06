@@ -1,7 +1,7 @@
 # Makefile
 # Part of Text Mode Megademo by Richard Cavell
 # Still being written
-# July 2025
+# June-July 2025
 
 DISK		=	TMMGDEMO.DSK
 BASIC_PART	=	DEMO.BAS

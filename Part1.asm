@@ -52,217 +52,20 @@ WAIT_PERIOD	EQU	25
 
 	jsr	pluck_the_screen
 
-**************
-* Title screen
-**************
+; Third effect
 
-title_screen:
+	jsr	title_screen
 
-	jsr	clear_screen
+; Fourth effect
 
-	clra
-	clrb
-	ldx	#title_screen_graphic
-	jsr	display_text_graphic
+	jsr	joke_startup_screen
 
-	com	creature_blinks			; Set up creature blinks
-
-	bra	display_text
-
-; This graphic was made by Microsoft Copilot and modified by me
-
-title_screen_graphic:
-	FCV	"(\\/)",0
-	FCV	"(O-O)",0
-	FCV	"/> >\\",0
-	FCB	255
-
-title_screen_text:
-	FCB	5, 5
-	FCN	"RJFC"	; Each string ends with a zero when you use FCN
-	FCB	8, 9
-	FCN	"PRESENTS"
-	FCB	12, 11
-	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
-	FCB	0		; So we manually terminate that line
-	FCB	255		; The end
-
-display_text:
-
-	ldx	#title_screen_text
-
-	jsr	print_text
-	tsta
-	bne	skip_title_screen
-
-	ldx	#rjfc_presents_tmm_sound	; Start of sound
-	ldy	#rjfc_presents_tmm_sound_end	; End of sound
-	lda	#8
-	jsr	play_sound		; Play the sound
-
-	lda	#5
-	clrb
-	jsr	encase_text		; "Encase" the three text items
-	tsta
-	bne	skip_title_screen
-
-	lda	#8
-	ldb	#1
-	jsr	encase_text
-	tsta
-	bne	skip_title_screen
-
-	lda	#12
-	clrb
-	jsr	encase_text
-	tsta
-	bne	skip_title_screen
-
-	lda	#5
-	ldb	#3
-	jsr	flash_text_white
-	tsta
-	bne	skip_title_screen
-
-	lda	#8
-	ldb	#3
-	jsr	flash_text_white
-	tsta
-	bne	skip_title_screen
-
-	lda	#12
-	ldb	#3
-	jsr	flash_text_white
-	tsta
-	bne	skip_title_screen
-
-	jsr	flash_screen
-	tsta
-	bne	skip_title_screen
-	jsr	flash_screen
-	tsta
-	bne	skip_title_screen
-	jsr	flash_screen
-	tsta
-	bne	skip_title_screen
-
-* Drop the lines off the bottom end of the screen
-
-	lda	#11
-	jsr	drop_screen_content
-	tsta
-	bne	skip_title_screen
-
-	lda	#7
-	jsr	drop_screen_content
-	tsta
-	bne	skip_title_screen
-
-	lda	#4
-	jsr	drop_screen_content
-
-				; and fallthrough
-
-skip_title_screen:		; If space was pressed
-	clr	creature_blinks
-	jsr	clear_screen	; Just clear the screen
-
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
-
-	ldx	#joke_startup_messages
-	jsr	display_messages
-	tsta
-	bne	skip_joke
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
-	tsta
-	bne	skip_joke
-
-	jsr	clear_screen			; Just clear the screen
-						; and fallthrough
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
-
-skip_joke:
-	jsr	clear_screen			; Just clear the screen
-	lbra	loading_screen
-
-joke_startup_messages:
-
-	FCV	"INCORPORATING CLEVER IDEAS...%",0
-	FCV	"%DONE",0,0
-	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
-	FCV	"SKILL...% DONE",0,0
-	FCV	"INCLUDING EVER SO MANY",0
-	FCV	"FANCY EFFECTS...% DONE",0,0
-	FCV	"READYING ALL YOUR FAVORITE",0
-	FCV	"DEMO CLICHES...% DONE",0,0
-	FCV	"STARTING THE SHOW...%%%%%%"
-
-	FCB	255
-
-loading_screen:
-	clra
-	clrb
-	ldx	#ascii_art_cat
-	jsr	display_text_graphic
-
-	ldx	#loading_text
-	lda	#15
-	ldb	#11
-	jsr	text_appears		; Ignore the return value
-	tsta
-	bne	_skipped_loading_screen
-
-	jsr	wait_for_vblank_and_check_for_skip
-					; Display it for one frame
-	tsta
-	bne	_skipped_loading_screen
-
-	lda	#15
-	ldb	#3
-	jsr	flash_text_white	; Ignore the return value
-	tsta
-	bne	_skipped_loading_screen
-
-* This is the end of part 1!
-_part_1_end:
+; This is the end of part 1!
 
 	jsr	uninstall_irq_service_routine
 
 	clra
 	rts
-
-_skipped_loading_screen:
-
-	jsr	clear_screen
-	bra	_part_1_end
-
-* This art is modified by me from the original by Blazej Kozlowski
-* It's from https://www.asciiart.eu/animals/cats
-
-ascii_art_cat:
-	FCV	"      .",0
-	FCV	"      \\'*-.",0
-	FCV	"       )  .'-.",0
-	FCV	"      .  : '. .",0
-	FCV	"      : -   '  \\",0
-	FCV	"      ; *' ..   '*-..",0
-	FCV	"      '-.-'          '-.",0
-	FCV	"        ;       '       '.",0
-	FCV	"        :.       .        \\",0
-	FCV	"        . \\  .   :   .-'   .",0
-	FCV	"        '  '+.;  ;  '      :",0
-	FCV	"        :  '  I    ;       ;-.",0
-	FCV	"        ; '   : :'-:     ..'* ;",0
-	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
-	FCV	"     '*-*   '*-*  '*-*'",0
-	FCB	255
-ascii_art_cat_end:
-
-loading_text:
-	FCV	"LOADING...",0
 
 *****************************************************************************
 *	Subroutines
@@ -493,7 +296,7 @@ pluck_line_counts_end:
 ; character (1 byte),
 ; position (2 bytes)
 
-SIMULTANEOUS_PLUCKS	EQU	10
+MAX_SIMULTANEOUS_PLUCKS	EQU	10
 
 PLUCK_PHASE_NOTHING	EQU	0
 PLUCK_PHASE_TURN_WHITE	EQU	1
@@ -501,8 +304,14 @@ PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
 plucks_data:
-	RZB	SIMULTANEOUS_PLUCKS * 4		; Reserve 4 bytes per pluck
+	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
 plucks_data_end:
+
+simultaneous_plucks:
+	RZB	1
+
+pluck_frames:
+	RZB	1
 
 pluck_the_screen:
 
@@ -510,11 +319,34 @@ pluck_the_screen:
 
 	jsr	pluck_count_chars_per_line
 
+; Second, start the number of simultaneous plucks at 1
+
+	lda	#1
+	sta	simultaneous_plucks
+
 pluck_loop:
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	bne	_pluck_skip			; Does the user wants to skip?
 
+	lda	pluck_frames
+	adda	#1
+	sta	pluck_frames			; Keep count of the frames
+
+	cmpa	#30				; Every 30 frames,
+	bne	_skip_increase
+
+	lda	#0
+	sta	pluck_frames
+
+	lda	simultaneous_plucks		; increase the no of plucks
+	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
+	beq	_skip_increase
+
+	inca
+	sta	simultaneous_plucks
+
+_skip_increase:
 	jsr	pluck_is_screen_empty		; Is the screen empty?
 	tsta
 	bne	_pluck_finished			; Yes, we are finished
@@ -597,7 +429,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	beq	_wait_for_vblank_invert_toggle
 	cmpa	#'T'
 	beq	_wait_for_vblank_invert_toggle
-	ldb	_wait_for_vblank_debug_mode_toggle
+	ldb	debug_mode_toggle
 	beq	_wait_for_vblank
 
 ; If toggle is on, require an F to go forward 1 frame
@@ -620,10 +452,10 @@ _wait_for_vblank_skip:
 	rts
 
 _wait_for_vblank_invert_toggle:
-	com	_wait_for_vblank_debug_mode_toggle
+	com	debug_mode_toggle
 	bra	_wait_for_vblank
 
-_wait_for_vblank_debug_mode_toggle:
+debug_mode_toggle:
 
 	RZB	1
 
@@ -655,18 +487,25 @@ _pluck_screen_not_empty:
 pluck_check_empty_slots:
 
 	ldx	#plucks_data
+	lda	simultaneous_plucks
+	lsla
+	lsla
+	leay	a,x
+	pshs	y
 
 _pluck_check_data:
 	lda	,x
 	bne	_pluck_check_data_not_empty
 	leax	4,x
-	cmpx	#plucks_data_end
+	cmpx	,s
 	bne	_pluck_check_data
 
+	puls	y
 	lda	#1
 	rts
 
 _pluck_check_data_not_empty:
+	puls	y
 	clra				; Screen is not clear
 	rts
 
@@ -719,7 +558,7 @@ _pluck_do_a_frame:
 
 pluck_find_a_spare_slot:
 
-	lda	#SIMULTANEOUS_PLUCKS
+	lda	simultaneous_plucks
 	ldx	#plucks_data
 
 _pluck_find_loop:
@@ -881,7 +720,7 @@ _pluck_do_one_pluck:
 				; X = Screen Position
 				; Y = Pluck Data
 
-	tsta			; cmpa	#PLUCK_PHASE_NOTHING
+	cmpa	#PLUCK_PHASE_NOTHING	; tsta
 	bne	_pluck_phase_at_least_1
 
 	rts			; Phase nothing, do nothing
@@ -938,6 +777,7 @@ _pluck_phase_3_ended:		; Character has gone off the right side
 *****************************
 
 wait_frames:
+
 	pshs	a
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
@@ -1001,6 +841,122 @@ get_random_no_feedback:
 	rts
 
 	ENDIF
+
+**************
+* Title screen
+**************
+
+title_screen:
+
+	jsr	clear_screen
+
+	lda	#0
+	ldb	#0
+	ldx	#title_screen_graphic
+	jsr	display_text_graphic
+
+	com	creature_blinks			; Set up creature blinks
+
+	bra	display_text
+
+; This graphic was made by Microsoft Copilot and modified by me
+
+title_screen_graphic:
+	FCV	"(\\/)",0
+	FCV	"(O-O)",0
+	FCV	"/> >\\",0
+	FCB	255
+
+title_screen_text:
+	FCB	5, 5
+	FCN	"RJFC"	; Each string ends with a zero when you use FCN
+	FCB	8, 9
+	FCN	"PRESENTS"
+	FCB	12, 11
+	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
+	FCB	0		; So we manually terminate that line
+	FCB	255		; The end
+
+display_text:
+
+	ldx	#title_screen_text
+
+	jsr	print_text
+	tsta
+	bne	skip_title_screen
+
+	ldx	#rjfc_presents_tmm_sound	; Start of sound
+	ldy	#rjfc_presents_tmm_sound_end	; End of sound
+	lda	#8
+	jsr	play_sound		; Play the sound
+
+	lda	#5
+	clrb
+	jsr	encase_text		; "Encase" the three text items
+	tsta
+	bne	skip_title_screen
+
+	lda	#8
+	ldb	#1
+	jsr	encase_text
+	tsta
+	bne	skip_title_screen
+
+	lda	#12
+	clrb
+	jsr	encase_text
+	tsta
+	bne	skip_title_screen
+
+	lda	#5
+	ldb	#3
+	jsr	flash_text_white
+	tsta
+	bne	skip_title_screen
+
+	lda	#8
+	ldb	#3
+	jsr	flash_text_white
+	tsta
+	bne	skip_title_screen
+
+	lda	#12
+	ldb	#3
+	jsr	flash_text_white
+	tsta
+	bne	skip_title_screen
+
+	jsr	flash_screen
+	tsta
+	bne	skip_title_screen
+	jsr	flash_screen
+	tsta
+	bne	skip_title_screen
+	jsr	flash_screen
+	tsta
+	bne	skip_title_screen
+
+* Drop the lines off the bottom end of the screen
+
+	lda	#11
+	jsr	drop_screen_content
+	tsta
+	bne	skip_title_screen
+
+	lda	#7
+	jsr	drop_screen_content
+	tsta
+	bne	skip_title_screen
+
+	lda	#4
+	jsr	drop_screen_content
+
+				; and fallthrough
+
+skip_title_screen:
+
+	clr	creature_blinks
+	rts
 
 ***********************************
 * Print text
@@ -1788,6 +1744,106 @@ _text_graphic_new_line:
 
 _display_text_graphic_finished:
 	rts
+
+*********************
+* Joke startup screen
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+joke_startup_screen:
+
+	jsr	clear_screen	; Just clear the screen
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+
+	ldx	#joke_startup_messages
+	jsr	display_messages
+	tsta
+	bne	skip_joke
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+	tsta
+	bne	skip_joke
+
+	jsr	clear_screen			; Just clear the screen
+						; and fallthrough
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+
+skip_joke:
+	jsr	clear_screen			; Just clear the screen
+
+	rts
+
+joke_startup_messages:
+
+	FCV	"INCORPORATING CLEVER IDEAS...%",0
+	FCV	"%DONE",0,0
+	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
+	FCV	"SKILL...% DONE",0,0
+	FCV	"INCLUDING EVER SO MANY",0
+	FCV	"FANCY EFFECTS...% DONE",0,0
+	FCV	"READYING ALL YOUR FAVORITE",0
+	FCV	"DEMO CLICHES...% DONE",0,0
+	FCV	"STARTING THE SHOW...%%%%%%"
+
+	FCB	255
+
+loading_screen:
+
+	clra
+	clrb
+	ldx	#ascii_art_cat
+	jsr	display_text_graphic
+
+	ldx	#loading_text
+	lda	#15
+	ldb	#11
+	jsr	text_appears		; Ignore the return value
+	tsta
+	bne	_skipped_loading_screen
+
+	jsr	wait_for_vblank_and_check_for_skip
+					; Display it for one frame
+	tsta
+	bne	_skipped_loading_screen
+
+	lda	#15
+	ldb	#3
+	jsr	flash_text_white	; Ignore the return value
+
+_skipped_loading_screen:
+
+	jsr	clear_screen
+	rts
+
+* This art is modified by me from the original by Blazej Kozlowski
+* It's from https://www.asciiart.eu/animals/cats
+
+ascii_art_cat:
+	FCV	"      .",0
+	FCV	"      \\'*-.",0
+	FCV	"       )  .'-.",0
+	FCV	"      .  : '. .",0
+	FCV	"      : -   '  \\",0
+	FCV	"      ; *' ..   '*-..",0
+	FCV	"      '-.-'          '-.",0
+	FCV	"        ;       '       '.",0
+	FCV	"        :.       .        \\",0
+	FCV	"        . \\  .   :   .-'   .",0
+	FCV	"        '  '+.;  ;  '      :",0
+	FCV	"        :  '  I    ;       ;-.",0
+	FCV	"        ; '   : :'-:     ..'* ;",0
+	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
+	FCV	"     '*-*   '*-*  '*-*'",0
+	FCB	255
+ascii_art_cat_end:
+
+loading_text:
+	FCV	"LOADING...",0
 
 ***********************************
 * Uninstall our IRQ service routine

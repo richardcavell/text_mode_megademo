@@ -19,7 +19,7 @@
 * https://www.asciiart.eu/animals/birds-land
 * The sound Pluck.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
 * here: https://commons.wikimedia.org/wiki/File:Modelm.ogg
-* RJFC Presents Text Mode Megademo was created by this website:
+* "RJFC Presents Text Mode Megademo" was created by this website:
 * https://speechsynthesis.online/
 * The voice is "Ryan"
 
@@ -39,136 +39,26 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-**********************
-* Zero the DP register
-**********************
+	jsr	zero_dp_register		; Zero the DP register
+	jsr	install_irq_service_routine	; Install our IRQ handler
+	jsr	turn_off_disk_motor		; Silence the disk drive
+	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
-	jsr	zero_dp_register
+; First effect
 
-*************************
-* Install our IRQ handler
-*************************
+	jsr	display_skip_message		; Put a message at the bottom
 
-	jsr	install_irq_service_routine
+; Second effect
 
-*************************
-* Turn off the disk motor
-*************************
-
-	jsr	turn_off_disk_motor
-
-******************************
-* Turn on 6-bit audio circuits
-******************************
-
-	jsr	turn_6bit_audio_on
-
-*************************
-* Text buffer information
-*************************
-
-TEXTBUF		EQU	$400		; We're not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
-TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE	EQU	32
-TEXT_LINES	EQU	16
-
-*********************************************
-* Display message at the bottom of the screen
-*********************************************
-
-	lda	#TEXT_LINES-1		; Bottom line of the screen
-	ldx	#skip_message
-	jsr	display_message
-	bra	pluck
-
-skip_message:
-
-	FCV	"  PRESS SPACE TO SKIP ANY PART"
-	FCB	0
-
-***********************************************************
-* Pluck routine - make characters disappear from the screen
-***********************************************************
-
-pluck:
-
-PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
-					; the screen is for
-					; our skip message
-
-GREEN_BOX	EQU	($60)
-WHITE_BOX	EQU	($cf)
-
-; First, count the number of characters on each line of the screen
-
-	jsr	pluck_count_chars_per_line
-	bra	pluck_loop
-
-pluck_line_counts:
-	RZB PLUCK_LINES			; 15 zeroes
-pluck_line_counts_end:
-
-; The structure of an entry in plucks_data is:
-; phase (1 byte),
-; character (1 byte),
-; position (2 bytes)
-
-SIMULTANEOUS_PLUCKS	EQU	6
-
-PLUCK_PHASE_NOTHING	EQU	0
-PLUCK_PHASE_TURN_WHITE	EQU	1
-PLUCK_PHASE_PLAIN	EQU	2
-PLUCK_PHASE_PULLING	EQU	3
-
-plucks_data:
-	RZB	SIMULTANEOUS_PLUCKS * 4		; Reserve 4 bytes per pluck
-plucks_data_end:
-
-pluck_loop:
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	bne	_pluck_skip			; If the user wants to skip,
-						; go here
-
-	jsr	pluck_check_empty_screen	; Is the screen empty?
-	tsta
-	bne	_pluck_finished			; Yes, we are finished
-
-	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
-	tsta
-	beq	_pluck_do_a_frame		; No, just keep processing
-
-; Review is up to here
-
-	jsr	pluck_a_char			; Yes, pluck a character
-
-_pluck_do_a_frame:
-
-	jsr	pluck_do_frame			; Do one frame
-
-	bra	pluck_loop
-
-_pluck_skip:
-
-	jsr	clear_screen
-	bra	_pluck_next_section
-
-_pluck_finished:
-	lda	#15
-	jsr	clear_line			; and fallthrough
-
-_pluck_next_section:				; Screen is empty either way
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a number of frames
-	bra	title_screen
+	jsr	pluck_the_screen
 
 **************
 * Title screen
 **************
 
 title_screen:
+
+	jsr	clear_screen
 
 	clra
 	clrb
@@ -459,7 +349,7 @@ irq_service_routine:
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
-	inc	TEXTBUFEND-1
+	inc	TEXTBUFEND-1	; The lower-right corner character cycles
 
 _skip_debug_visual_indication:
 
@@ -527,6 +417,33 @@ turn_6bit_audio_on:
 
 	rts
 
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF		EQU	$400		; We're not double-buffering
+TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE	EQU	32
+TEXT_LINES	EQU	16
+
+*********************************************
+* Display message at the bottom of the screen
+*********************************************
+
+display_skip_message:
+
+	lda	#TEXT_LINES-1		; Bottom line of the screen
+	ldx	#skip_message
+	bsr	display_message
+	rts
+
+skip_message:
+
+	FCV	"  PRESS SPACE TO SKIP ANY PART"
+	FCB	0
+
 *****************************************************
 * Display a message on the screen
 *
@@ -545,14 +462,69 @@ display_message:
 	leay	d,y	; Y = starting point on the screen
 
 _display_message_loop:
+	cmpy	#TEXTBUFEND
+	bhs	_display_message_finished
 	lda	,x+
 	beq	_display_message_finished
 	sta	,y+
-	cmpy	#TEXTBUFEND
-	blo	_display_message_loop
+	bra	_display_message_loop
 
 _display_message_finished:
 
+	rts
+
+***********************************************************
+* Pluck routine - make characters disappear from the screen
+***********************************************************
+
+PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
+					; the screen is for
+					; our skip message
+
+GREEN_BOX	EQU	($60)
+WHITE_BOX	EQU	($cf)
+
+pluck_line_counts:
+	RZB PLUCK_LINES			; 15 zeroes
+pluck_line_counts_end:
+
+; The structure of an entry in plucks_data is:
+; phase (1 byte),
+; character (1 byte),
+; position (2 bytes)
+
+SIMULTANEOUS_PLUCKS	EQU	10
+
+PLUCK_PHASE_NOTHING	EQU	0
+PLUCK_PHASE_TURN_WHITE	EQU	1
+PLUCK_PHASE_PLAIN	EQU	2
+PLUCK_PHASE_PULLING	EQU	3
+
+plucks_data:
+	RZB	SIMULTANEOUS_PLUCKS * 4		; Reserve 4 bytes per pluck
+plucks_data_end:
+
+pluck_the_screen:
+
+; First, count the number of characters on each line of the screen
+
+	jsr	pluck_count_chars_per_line
+
+pluck_loop:
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	bne	_pluck_skip			; Does the user wants to skip?
+
+	jsr	pluck_is_screen_empty		; Is the screen empty?
+	tsta
+	bne	_pluck_finished			; Yes, we are finished
+
+	jsr	pluck_continue			; No, continue plucking
+
+	bra	pluck_loop
+
+_pluck_finished:
+_pluck_skip:
 	rts
 
 ***********************************
@@ -572,7 +544,7 @@ _pluck_count_chars_on_one_line:
 
 _pluck_count_chars_test_char:
 	lda	,x+
-	cmpa	#GREEN_BOX		; Is it an empty green box?
+	cmpa	#GREEN_BOX		 ; Is it an empty green box?
 	beq	_pluck_count_chars_space ; Yes, so don't count it
 					 ; or
 	inc	,y			 ; No, so count it
@@ -591,7 +563,7 @@ _pluck_count_chars_end:
 
 	rts
 
-*********************************************
+****************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
@@ -599,7 +571,7 @@ _pluck_count_chars_end:
 * Output:
 * A = 0        -> a VBlank happened
 * A = Non-zero -> user is trying to skip
-*********************************************
+****************************************
 
 POLCAT		EQU	$A000
 
@@ -654,6 +626,228 @@ _wait_for_vblank_invert_toggle:
 _wait_for_vblank_debug_mode_toggle:
 
 	RZB	1
+
+*************************************************
+* Pluck - check to see if the screen is empty yet
+*
+* Inputs: None
+*
+* Outputs:
+* A = 1 if empty
+* A = 0 if not empty
+*************************************************
+
+pluck_is_screen_empty:
+
+	bsr	pluck_check_empty_slots
+	tsta
+	beq	_pluck_screen_not_empty
+
+	bsr	pluck_check_empty_lines
+	rts
+
+_pluck_screen_not_empty:
+	clra				; Screen is not clear
+	rts
+
+************************
+
+pluck_check_empty_slots:
+
+	ldx	#plucks_data
+
+_pluck_check_data:
+	lda	,x
+	bne	_pluck_check_data_not_empty
+	leax	4,x
+	cmpx	#plucks_data_end
+	bne	_pluck_check_data
+
+	lda	#1
+	rts
+
+_pluck_check_data_not_empty:
+	clra				; Screen is not clear
+	rts
+
+************************
+
+pluck_check_empty_lines:
+
+	ldx	#pluck_line_counts
+
+_pluck_check_empty_test_line:
+	tst	,x+
+	bne	_pluck_check_empty_line_not_empty
+	cmpx	#pluck_line_counts_end
+	bne	_pluck_check_empty_test_line
+
+	lda	#1			; Lines are now clear
+	rts
+
+_pluck_check_empty_line_not_empty:
+	clra				; Lines are not clear
+	rts
+
+******************
+* Pluck - Continue
+******************
+
+pluck_continue:
+
+	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
+	tsta
+	beq	_pluck_do_a_frame		; No, just keep processing
+
+	jsr	pluck_a_char			; Yes, pluck a character
+
+_pluck_do_a_frame:
+
+	jsr	pluck_do_frame			; Do one frame
+
+	rts
+
+*****************************************
+* Pluck - Find a spare slot
+*
+* Inputs: None
+*
+* Outputs:
+* A = (Non-zero) there is a spare slot
+* X = (If A is non-zero) the slot address
+*****************************************
+
+pluck_find_a_spare_slot:
+
+	lda	#SIMULTANEOUS_PLUCKS
+	ldx	#plucks_data
+
+_pluck_find_loop:
+	ldb	,x
+	cmpb	#PLUCK_PHASE_NOTHING	; tstb
+	beq	_pluck_find_found_empty
+
+	deca
+	beq	_pluck_find_no_empty_slot
+	leax	4,x
+	bra	_pluck_find_loop
+
+_pluck_find_no_empty_slot:
+
+	ldx	#0
+	clra
+
+	rts
+
+_pluck_find_found_empty:
+
+	lda	#1		; We return X as well
+
+	rts
+
+***************************
+* Pluck - Pluck a character
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+pluck_a_char:
+
+	bsr	pluck_check_empty_lines
+	tsta
+	beq	_pluck_char_get_random
+
+	rts			; No more characters left
+
+_pluck_char_get_random:
+	bsr	pluck_char_choose_line	; Chosen line is in A
+
+	ldy	#pluck_line_counts
+
+	tst	a,y		; If there are no more characters on this line
+	beq	_pluck_char_get_random	; choose a different one
+
+	dec	a,y		; There'll be one less character now
+
+	ldb	#COLS_PER_LINE
+	mul 			; Multiply b by 32 and put the answer in D
+
+	ldx	#TEXTBUF+COLS_PER_LINE	; Make X point to the end of the line
+	leax	d,x		; that we will pluck from
+
+	lda	#GREEN_BOX	; Green box (space)
+
+_pluck_a_char_find_non_space:
+	cmpa	,-x		; Go backwards until we find a non-space
+	beq	_pluck_a_char_find_non_space
+
+	ldu	#plucks_data+2	; This checks whether the found char is
+				; already being plucked
+_pluck_a_char_check:
+	cmpx	,u
+	beq	_pluck_a_char_find_non_space
+
+	leau	4,u
+	cmpu	#plucks_data_end
+	blo	_pluck_a_char_check
+
+				; X = position of the character we're plucking
+	ldb	,x		; B = the character
+
+; Now register with plucks_data
+
+	tfr	x,y
+	pshs	b,y
+	jsr	pluck_find_a_spare_slot
+	tsta
+	beq	_pluck_a_char_impossible
+
+	puls	b,y		; B is the character
+				; X is the slot
+				; Y is the screen position
+	lda	#PLUCK_PHASE_TURN_WHITE		; This is our new phase
+	sta	,x+		; Store our new phase
+	stb	,x+		; the character
+	sty	,x		; And where it is
+
+; Now turn it into a white box
+
+	lda	#WHITE_BOX
+	sta	,y
+
+; Now play the pluck sound
+
+	bsr	pluck_play_sound
+
+	rts
+
+*************************
+
+_pluck_a_char_impossible:
+	bra	_pluck_a_char_impossible	; Should never get here
+
+***********************
+
+pluck_char_choose_line:
+
+	bsr	get_random 	; Get a random number in D
+	tfr	b,a
+	anda	#0b00001111	; Make the random number between 0 and 15
+	cmpa	#PLUCK_LINES
+	beq	pluck_char_choose_line	; But don't choose line 15
+
+	rts
+
+*****************
+
+pluck_play_sound:
+
+	lda	#1
+	ldx	#pluck_sound	; interrupts and everything else
+	ldy	#pluck_sound_end ; pause while we're doing this
+	lbsr	play_sound	; Play the pluck noise
+	rts
 
 ********************
 * Pluck - Do a frame
@@ -734,208 +928,6 @@ _pluck_phase_3_ended:		; Character has gone off the right side
 	lda	#PLUCK_PHASE_NOTHING	; clra
 	sta	,y		; Store it
 
-	rts
-
-*****************************************
-* Pluck - Find a spare slot
-*
-* Inputs: None
-*
-* Outputs:
-* A = (Non-zero) there is a spare slot
-* X = (If A is non-zero) the slot address
-*****************************************
-
-pluck_find_a_spare_slot:
-
-	lda	#SIMULTANEOUS_PLUCKS
-	ldx	#plucks_data
-
-_pluck_find_loop:
-	ldb	,x
-	cmpb	#PLUCK_PHASE_NOTHING	; tstb
-	beq	_pluck_find_found_empty
-
-	deca
-	beq	_pluck_find_no_empty_slot
-	leax	4,x
-	bra	_pluck_find_loop
-
-_pluck_find_no_empty_slot:
-
-;	ldx	#0
-	clra
-
-	rts
-
-_pluck_find_found_empty:
-
-	lda	#1		; We return X as well
-
-	rts
-
-*************************************************
-* Pluck - check to see if the screen is empty yet
-*
-* Inputs: None
-*
-* Outputs:
-* A = 1 if empty
-* A = 0 if not empty
-*************************************************
-
-pluck_check_empty_screen:
-
-	bsr	pluck_check_empty_slots
-	tsta
-	beq	_pluck_check_empty_not_empty
-
-	bsr	pluck_check_empty_lines
-	rts
-
-_pluck_check_empty_not_empty:
-	clra				; Screen is not clear
-	rts
-
-************************
-
-pluck_check_empty_slots:
-
-	ldx	#plucks_data
-
-_pluck_check_data:
-	lda	,x
-	bne	_pluck_check_data_not_empty
-	leax	4,x
-	cmpx	#plucks_data_end
-	bne	_pluck_check_data
-
-	lda	#1
-	rts
-
-_pluck_check_data_not_empty:
-	clra				; Screen is not clear
-	rts
-
-************************
-
-pluck_check_empty_lines:
-
-	ldx	#pluck_line_counts
-
-_pluck_check_empty_test_line:
-	tst	,x+
-	bne	_pluck_check_empty_line_not_empty
-	cmpx	#pluck_line_counts_end
-	bne	_pluck_check_empty_test_line
-
-	lda	#1			; Lines are now clear
-	rts
-
-_pluck_check_empty_line_not_empty:
-	clra				; Lines are not clear
-	rts
-
-***************************
-* Pluck - Pluck a character
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-pluck_a_char:
-
-	bsr	pluck_check_empty_lines
-	tsta
-	beq	_pluck_char_get_random
-
-	rts			; No more characters left
-
-_pluck_char_get_random:
-	bsr	pluck_char_choose_line	; Chosen line is in A
-
-	ldy	#pluck_line_counts
-
-	tst	a,y		; If there are no more characters on this line
-	beq	_pluck_char_get_random	; choose a different one
-
-	dec	a,y		; There'll be one less character now
-
-	ldb	#COLS_PER_LINE
-	mul 			; Multiply b by 32 and put the answer in D
-
-	ldx	#TEXTBUF+COLS_PER_LINE	; Make X point to the end of the line
-	leax	d,x		; that we will pluck from
-
-	lda	#GREEN_BOX	; Green box (space)
-
-_pluck_a_char_find_non_space:
-	cmpa	,-x		; Go backwards until we find a non-space
-	beq	_pluck_a_char_find_non_space
-
-	ldu	#plucks_data+2	; This checks whether the found char is
-				; already being plucked
-_pluck_a_char_check:
-	cmpx	,u
-	beq	_pluck_a_char_find_non_space
-
-	leau	4,u
-	cmpu	#plucks_data_end
-	blo	_pluck_a_char_check
-
-				; X = position of the character we're plucking
-	ldb	,x		; B = the character
-
-; Now register with plucks_data
-
-	tfr	x,y
-	pshs	b,y
-	jsr	pluck_find_a_spare_slot
-	tsta
-	beq	_pluck_a_char_impossible
-
-	puls	b,y		; B is the character
-				; X is the slot
-				; Y is the screen position
-	lda	#PLUCK_PHASE_TURN_WHITE		; This is our new phase
-	sta	,x+		; Store our new phase
-	stb	,x+		; the character
-	sty	,x		; And where it is
-
-; Now turn it into a white box
-
-	lda	#WHITE_BOX
-	sta	,y
-
-; Now play the pluck sound
-
-	lda	#1
-	bsr	pluck_play_sound
-
-	rts
-
-_pluck_a_char_impossible:
-	bra	_pluck_a_char_impossible	; Should never get here
-
-***********************
-
-pluck_char_choose_line:
-
-	bsr	get_random 	; Get a random number in D
-	tfr	b,a
-	anda	#0b00001111	; Make the random number between 0 and 15
-	cmpa	#PLUCK_LINES
-	beq	pluck_char_choose_line	; But don't choose line 15
-
-	rts
-
-*****************
-
-pluck_play_sound:
-
-	ldx	#pluck_sound	; interrupts and everything else
-	ldy	#pluck_sound_end ; pause while we're doing this
-	bsr	play_sound	; Play the pluck noise
 	rts
 
 *****************************

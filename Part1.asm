@@ -1,6 +1,6 @@
 * This is Part 1 of Text Mode Demo
 * by Richard Cavell
-* June 2025
+* June - July 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -84,6 +84,31 @@ zero_dp_register:
 
 	rts
 
+*********************************
+* Install our IRQ service routine
+*
+* Inputs: None
+* Outputs: None
+*********************************
+
+IRQ_HANDLER	EQU	$10d
+
+install_irq_service_routine:
+
+	bsr	switch_off_irq		; Switch off IRQ interrupts for now
+
+	ldx	IRQ_HANDLER		; Load the current vector into X
+	stx	decb_irq_service_routine	; We will call it at the end
+						; of our own handler
+
+	ldx	#irq_service_routine
+	stx	IRQ_HANDLER		; Our own interrupt service routine
+					; is installed
+
+	bsr	switch_on_irq		; Switch IRQ interrupts back on
+
+	rts
+
 ***************************
 * Switch IRQ interrupts off
 *
@@ -107,31 +132,6 @@ switch_off_irq:
 switch_on_irq:
 
 	andcc	#0b11101111		; Switch IRQ interrupts back on
-
-	rts
-
-*********************************
-* Install our IRQ service routine
-*
-* Inputs: None
-* Outputs: None
-*********************************
-
-IRQ_HANDLER	EQU	$10d
-
-install_irq_service_routine:
-
-	bsr	switch_off_irq		; Switch off IRQ interrupts for now
-
-	ldy	IRQ_HANDLER		; Load the current vector into y
-	sty	decb_irq_service_routine	; We will call it at the end
-						; of our own handler
-
-	ldx	#irq_service_routine
-	stx	IRQ_HANDLER		; Our own interrupt service routine
-					; is installed
-
-	bsr	switch_on_irq		; Switch IRQ interrupts back on
 
 	rts
 

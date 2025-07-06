@@ -11,7 +11,7 @@
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by a number of other authors.
-* You can see it here:
+* You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner.
 * The ASCII art of the small creature is by Microsoft Copilot.
@@ -54,11 +54,11 @@ WAIT_PERIOD	EQU	25
 
 ; Third effect
 
-	jsr	title_screen
+	jsr	joke_startup_screen
 
 ; Fourth effect
 
-	jsr	joke_startup_screen
+	jsr	title_screen
 
 ; Fifth effect
 
@@ -69,7 +69,7 @@ WAIT_PERIOD	EQU	25
 	jsr	uninstall_irq_service_routine
 
 	clra
-	rts
+	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************
 *	Subroutines
@@ -280,9 +280,9 @@ _display_message_finished:
 
 	rts
 
-***********************************************************
-* Pluck routine - make characters disappear from the screen
-***********************************************************
+***************
+* Pluck routine
+***************
 
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
@@ -859,6 +859,44 @@ get_random_no_feedback:
 
 	ENDIF
 
+*********************
+* Joke startup screen
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+joke_startup_screen:
+
+	jsr	clear_screen	; Just clear the screen
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+
+	ldx	#joke_startup_messages
+	jsr	display_messages
+	tsta
+	bne	skip_joke
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+
+skip_joke:
+	rts
+
+joke_startup_messages:
+
+	FCV	"INCORPORATING CLEVER IDEAS...%",0
+	FCV	"%DONE",0,0
+	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
+	FCV	"SKILL...% DONE",0,0
+	FCV	"INCLUDING EVER SO MANY",0
+	FCV	"AWESOME EFFECTS...% DONE",0,0
+	FCV	"READYING ALL YOUR FAVORITE",0
+	FCV	"DEMO CLICHES...% DONE",0,0
+	FCV	"STARTING THE SHOW...%%%%%%"
+
+	FCB	255
+
 **************
 * Title screen
 **************
@@ -928,6 +966,8 @@ display_text:
 	tsta
 	bne	skip_title_screen
 
+* Now flash the text white
+
 	lda	#5
 	ldb	#3
 	jsr	flash_text_white
@@ -945,6 +985,8 @@ display_text:
 	jsr	flash_text_white
 	tsta
 	bne	skip_title_screen
+
+* Now flash the whole screen
 
 	jsr	flash_screen
 	tsta
@@ -1097,6 +1139,9 @@ clear_screen:
 
 _clear_screen_loop:
 	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
 
 	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
 	bne	_clear_screen_loop
@@ -1191,8 +1236,8 @@ _text_appears_skip_decrement:
 	lda	#GREEN_BOX	; Put a green box in A
 
 _text_appears_store_char:
-	sta	,x+		; Put the relevant character (green box or char) into
-				;   the relevant position
+	sta	,x+	; Put the relevant character (green box or char) into
+			;   the relevant position
 
 	pshs	d
 	tfr	x,d
@@ -1763,44 +1808,6 @@ _text_graphic_new_line:
 
 _display_text_graphic_finished:
 	rts
-
-*********************
-* Joke startup screen
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-joke_startup_screen:
-
-	jsr	clear_screen	; Just clear the screen
-
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
-
-	ldx	#joke_startup_messages
-	jsr	display_messages
-	tsta
-	bne	skip_joke
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
-
-skip_joke:
-	rts
-
-joke_startup_messages:
-
-	FCV	"INCORPORATING CLEVER IDEAS...%",0
-	FCV	"%DONE",0,0
-	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
-	FCV	"SKILL...% DONE",0,0
-	FCV	"INCLUDING EVER SO MANY",0
-	FCV	"FANCY EFFECTS...% DONE",0,0
-	FCV	"READYING ALL YOUR FAVORITE",0
-	FCV	"DEMO CLICHES...% DONE",0,0
-	FCV	"STARTING THE SHOW...%%%%%%"
-
-	FCB	255
 
 loading_screen:
 

@@ -277,7 +277,6 @@ _display_message_loop:
 	bra	_display_message_loop
 
 _display_message_finished:
-
 	rts
 
 ***************

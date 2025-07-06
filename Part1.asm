@@ -44,23 +44,23 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
-; First effect
+; Zeroth effect
 
 	jsr	display_skip_message
 
-; Second effect
+; First effect
 
 	jsr	pluck_the_screen
 
-; Third effect
+; Second effect
 
 	jsr	joke_startup_screen
 
-; Fourth effect
+; Third effect
 
 	jsr	title_screen
 
-; Fifth effect
+; Fourth effect
 
 	jsr	loading_screen
 
@@ -350,38 +350,6 @@ _pluck_skip:
 	rts
 
 ***********************************
-* Count frames
-*
-* Inputs:
-*
-* A = number of simultaneous plucks
-*
-* Outputs:
-*
-* A = number of simultaneous plucks
-***********************************
-
-count_frames:
-
-	ldb	pluck_frames
-	incb
-	stb	pluck_frames			; Keep count of the frames
-
-	cmpb	#25				; Every 25 frames,
-	bne	_skip_increase
-
-	clrb
-	stb	pluck_frames			; reset the counter, and
-
-	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
-	beq	_skip_increase
-
-	inca					; fallthrough
-
-_skip_increase:
-	rts
-
-***********************************
 * Pluck - Count characters per line
 *
 * Inputs: None
@@ -480,6 +448,36 @@ _wait_for_vblank_invert_toggle:
 debug_mode_toggle:
 
 	RZB	1
+
+***********************************
+* Count frames
+*
+* Inputs:
+* A = number of simultaneous plucks
+*
+* Outputs:
+* A = number of simultaneous plucks
+***********************************
+
+count_frames:
+
+	ldb	pluck_frames
+	incb
+	stb	pluck_frames			; Keep count of the frames
+
+	cmpb	#25				; Every 25 frames,
+	bne	_skip_increase
+
+	clrb
+	stb	pluck_frames			; reset the counter, and
+						; increase the number of plucks
+	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
+	beq	_skip_increase
+
+	inca					; fallthrough
+
+_skip_increase:
+	rts
 
 *************************************************
 * Pluck - check to see if the screen is empty yet

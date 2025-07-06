@@ -46,7 +46,7 @@ WAIT_PERIOD	EQU	25
 
 ; First effect
 
-	jsr	display_skip_message		; Put a message at the bottom
+	jsr	display_skip_message
 
 ; Second effect
 
@@ -59,6 +59,10 @@ WAIT_PERIOD	EQU	25
 ; Fourth effect
 
 	jsr	joke_startup_screen
+
+; Fifth effect
+
+	jsr	loading_screen
 
 ; This is the end of part 1!
 
@@ -324,20 +328,43 @@ pluck_the_screen:
 	lda	#1
 	sta	simultaneous_plucks
 
-pluck_loop:
+_pluck_loop:
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	bne	_pluck_skip			; Does the user wants to skip?
 
+	bsr	count_frames
+
+	jsr	pluck_is_screen_empty		; Is the screen empty?
+	tsta
+	bne	_pluck_finished			; Yes, we are finished
+
+	jsr	pluck_continue			; No, continue plucking
+
+	bra	_pluck_loop
+
+_pluck_finished:
+_pluck_skip:
+	rts
+
+***************
+* Count frames
+*
+* Inputs: None
+* Outputs: None
+***************
+
+count_frames:
+
 	lda	pluck_frames
-	adda	#1
+	inca
 	sta	pluck_frames			; Keep count of the frames
 
-	cmpa	#30				; Every 30 frames,
+	cmpa	#25				; Every 25 frames,
 	bne	_skip_increase
 
-	lda	#0
-	sta	pluck_frames
+	clra
+	sta	pluck_frames			; reset the counter, and
 
 	lda	simultaneous_plucks		; increase the no of plucks
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
@@ -347,16 +374,6 @@ pluck_loop:
 	sta	simultaneous_plucks
 
 _skip_increase:
-	jsr	pluck_is_screen_empty		; Is the screen empty?
-	tsta
-	bne	_pluck_finished			; Yes, we are finished
-
-	jsr	pluck_continue			; No, continue plucking
-
-	bra	pluck_loop
-
-_pluck_finished:
-_pluck_skip:
 	rts
 
 ***********************************
@@ -487,7 +504,7 @@ _pluck_screen_not_empty:
 pluck_check_empty_slots:
 
 	ldx	#plucks_data
-	lda	simultaneous_plucks
+	lda	simultaneous_plucks	; Multiply by 4
 	lsla
 	lsla
 	leay	a,x
@@ -850,6 +867,9 @@ title_screen:
 
 	jsr	clear_screen
 
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+
 	lda	#0
 	ldb	#0
 	ldx	#title_screen_graphic
@@ -1029,7 +1049,6 @@ switch_on_irq_and_firq:
 play_sound:
 
 	pshs	a,x,y
-	jsr	turn_6bit_audio_on
 	bsr	switch_off_irq_and_firq
 	puls	a,x,y
 
@@ -1765,17 +1784,8 @@ joke_startup_screen:
 	bne	skip_joke
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
-	tsta
-	bne	skip_joke
-
-	jsr	clear_screen			; Just clear the screen
-						; and fallthrough
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
 
 skip_joke:
-	jsr	clear_screen			; Just clear the screen
-
 	rts
 
 joke_startup_messages:
@@ -1793,6 +1803,8 @@ joke_startup_messages:
 	FCB	255
 
 loading_screen:
+
+	jsr	clear_screen
 
 	clra
 	clrb
@@ -1814,6 +1826,8 @@ loading_screen:
 	lda	#15
 	ldb	#3
 	jsr	flash_text_white	; Ignore the return value
+
+	rts
 
 _skipped_loading_screen:
 

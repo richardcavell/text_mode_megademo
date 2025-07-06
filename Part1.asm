@@ -45,24 +45,10 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
 	jsr	display_skip_message
-
-; First effect
-
-	jsr	pluck_the_screen
-
-; Second effect
-
-	jsr	joke_startup_screen
-
-; Third effect
-
-	jsr	title_screen
-
-; Fourth effect
-
-	jsr	loading_screen
-
-; This is the end of part 1!
+	jsr	pluck_the_screen		; First section
+	jsr	joke_startup_screen		; Second section
+	jsr	title_screen			; Third section
+	jsr	loading_screen			; Fourth section
 
 	jsr	uninstall_irq_service_routine
 
@@ -268,9 +254,9 @@ display_message:
 
 _display_message_loop:
 	cmpy	#TEXTBUFEND
-	bhs	_display_message_finished
+	bhs	_display_message_finished	; End of text buffer
 	lda	,x+
-	beq	_display_message_finished
+	beq	_display_message_finished	; Terminating zero
 	sta	,y+
 	bra	_display_message_loop
 

@@ -333,7 +333,9 @@ _pluck_loop:
 	tsta
 	bne	_pluck_skip			; Does the user wants to skip?
 
+	lda	simultaneous_plucks
 	bsr	count_frames
+	sta	simultaneous_plucks
 
 	jsr	pluck_is_screen_empty		; Is the screen empty?
 	tsta
@@ -347,31 +349,34 @@ _pluck_finished:
 _pluck_skip:
 	rts
 
-***************
+***********************************
 * Count frames
 *
-* Inputs: None
-* Outputs: None
-***************
+* Inputs:
+*
+* A = number of simultaneous plucks
+*
+* Outputs:
+*
+* A = number of simultaneous plucks
+***********************************
 
 count_frames:
 
-	lda	pluck_frames
-	inca
-	sta	pluck_frames			; Keep count of the frames
+	ldb	pluck_frames
+	incb
+	stb	pluck_frames			; Keep count of the frames
 
-	cmpa	#25				; Every 25 frames,
+	cmpb	#25				; Every 25 frames,
 	bne	_skip_increase
 
-	clra
-	sta	pluck_frames			; reset the counter, and
+	clrb
+	stb	pluck_frames			; reset the counter, and
 
-	lda	simultaneous_plucks		; increase the no of plucks
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
 	beq	_skip_increase
 
-	inca
-	sta	simultaneous_plucks
+	inca					; fallthrough
 
 _skip_increase:
 	rts

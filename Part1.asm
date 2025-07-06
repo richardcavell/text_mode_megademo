@@ -1809,6 +1809,9 @@ loading_screen:
 
 	jsr	clear_screen
 
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+
 	clra
 	clrb
 	ldx	#ascii_art_cat

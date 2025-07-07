@@ -862,6 +862,7 @@ joke_startup_screen:
 	jsr	display_messages
 	tsta
 	bne	skip_joke
+
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
@@ -881,6 +882,66 @@ joke_startup_messages:
 	FCV	"STARTING THE SHOW...%%%%%%"
 
 	FCB	255
+
+******************
+* Display messages
+*
+* Inputs:
+* X = Messages
+******************
+
+display_messages:
+
+	lda	#COLS_PER_LINE
+	ldy	#TEXTBUF
+
+_display_messages_loop:
+	ldb	,x+
+	beq	_next_line
+	cmpb	#'%' + 64
+	beq	_message_pause
+	cmpb	#255
+	beq	_display_messages_end
+	stb	,y+
+
+	pshs	a,x,y
+
+	cmpb	#GREEN_BOX
+	beq	_display_messages_skip_sound
+	clra				; Play a sound
+	jsr	pluck_play_sound
+
+_display_messages_skip_sound:
+	lda	#2
+	jsr	wait_frames
+	tsta
+	puls	a,x,y
+	beq	_display_messages_loop	; User has not skipped
+
+_display_messages_end:
+	rts
+
+_message_pause:
+	pshs	a,x,y
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+	tsta
+	puls	a,x,y
+	bne	_display_messages_end
+	bra	_display_messages_loop
+
+_next_line:
+	pshs	a,x
+	tfr	y,d
+	addd	#32
+	andb	#0b11100000
+	tfr	d,y
+	lda	#5
+	jsr	wait_frames
+	tsta
+	puls	a,x
+	bne	_display_messages_end
+	bra	_display_messages_loop
 
 **************
 * Title screen
@@ -1693,64 +1754,6 @@ _move_line_down:
 _skip_drop_screen:
 	lda	#1
 	rts
-
-******************
-* Display messages
-*
-* Inputs:
-* X = Messages
-******************
-
-display_messages:
-	lda	#COLS_PER_LINE
-	ldy	#TEXTBUF
-
-_display_messages_loop:
-	ldb	,x+
-	beq	_next_line
-	cmpb	#'%' + 64
-	beq	_message_pause
-	cmpb	#255
-	beq	_display_messages_end
-	stb	,y+
-	pshs	a,x,y
-
-	cmpb	#GREEN_BOX
-	beq	_display_messages_skip_sound
-	clra				; Play a sound
-	lbsr	pluck_play_sound
-
-_display_messages_skip_sound:
-	lda	#2
-	jsr	wait_frames
-	tsta
-	puls	a,x,y
-	beq	_display_messages_loop	; User has not skipped
-
-_display_messages_end:
-	rts
-
-_message_pause:
-	pshs	a,x,y
-	lda	#WAIT_PERIOD
-	jsr	wait_frames
-	tsta
-	puls	a,x,y
-	bne	_display_messages_end
-	bra	_display_messages_loop
-
-_next_line:
-	pshs	a,x
-	tfr	y,d
-	addd	#32
-	andb	#0b11100000
-	tfr	d,y
-	lda	#5
-	jsr	wait_frames
-	tsta
-	puls	a,x
-	bne	_display_messages_end
-	bra	_display_messages_loop
 
 ************************
 * Display a text graphic

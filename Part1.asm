@@ -439,15 +439,15 @@ debug_mode_toggle:
 
 count_frames:
 
-	ldb	pluck_frames
-	incb
-	stb	pluck_frames			; Keep count of the frames
+	lda	pluck_frames
+	inca
+	sta	pluck_frames			; Keep count of the frames
 
-	cmpb	#25				; Every 25 frames,
+	cmpa	#30				; Every 30 frames,
 	bne	_skip_increase
 
-	clrb
-	stb	pluck_frames			; reset the counter, and
+	clra
+	sta	pluck_frames			; reset the counter, and
 	lda	simultaneous_plucks		; increase the number of plucks
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
 	beq	_skip_increase
@@ -490,7 +490,7 @@ pluck_check_empty_slots:
 	lsla
 	lsla
 	leay	a,x
-	pshs	y
+	pshs	y			; ,s is end of plucks data
 
 _pluck_check_data:
 	lda	,x
@@ -500,7 +500,7 @@ _pluck_check_data:
 	bne	_pluck_check_data
 
 	puls	y
-	lda	#1
+	lda	#1			; There are no plucks
 	rts
 
 _pluck_check_data_not_empty:

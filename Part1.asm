@@ -529,6 +529,9 @@ _pluck_check_empty_line_not_empty:
 
 ******************
 * Pluck - Continue
+*
+* Inputs: None
+* Outputs: None
 ******************
 
 pluck_continue:

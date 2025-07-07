@@ -959,8 +959,6 @@ title_screen:
 	ldx	#title_screen_graphic
 	jsr	display_text_graphic
 
-	com	creature_blinks			; Set up creature blinks
-
 	bra	display_text
 
 ; This graphic was made by Microsoft Copilot and modified by me
@@ -1063,7 +1061,6 @@ display_text:
 
 skip_title_screen:
 
-	clr	creature_blinks
 	rts
 
 ***********************************
@@ -1301,17 +1298,8 @@ _text_appears_store_char:
 * Outputs: None
 *****************
 
-creature_blinks:
-
-	RZB	1
-
 creature_blink:
-	lda	creature_blinks
-	bne	_creature_blink_blinks_on
 
-	rts		; creature is not blinking
-
-_creature_blink_blinks_on:
 	ldd	_creature_blink_frames
 	addd	#1
 	std	_creature_blink_frames
@@ -1847,7 +1835,7 @@ ascii_art_cat:
 	FCV	"        :.       .        \\",0
 	FCV	"        . \\  .   :   .-'   .",0
 	FCV	"        '  '+.;  ;  '      :",0
-	FCV	"        :  '  I    ;       ;-.",0
+	FCV	"        :  '  !    ;       ;-.",0
 	FCV	"        ; '   : :'-:     ..'* ;",0
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0

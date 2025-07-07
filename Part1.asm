@@ -685,9 +685,9 @@ pluck_char_choose_line:
 pluck_play_sound:
 
 	lda	#1
-	ldx	#pluck_sound	; interrupts and everything else
+	ldx	#pluck_sound	 ; interrupts and everything else
 	ldy	#pluck_sound_end ; pause while we're doing this
-	lbsr	play_sound	; Play the pluck noise
+	lbsr	play_sound	 ; Play the pluck noise
 	rts
 
 ********************
@@ -784,7 +784,7 @@ wait_frames:
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	puls	a
-	bne	_wait_frames_skip
+	bne	_wait_frames_skip	; User wants to skip
 
 	deca
 	bne	wait_frames

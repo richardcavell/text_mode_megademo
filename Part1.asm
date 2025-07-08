@@ -53,6 +53,7 @@ WAIT_PERIOD	EQU	25
 	jsr	uninstall_irq_service_routine
 
 	clra
+	clrb
 	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************

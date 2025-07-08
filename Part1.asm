@@ -446,7 +446,7 @@ count_frames:
 	clra
 	sta	_pluck_frames			; reset the counter, and
 	lda	simultaneous_plucks		; increase the number of plucks
-	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
+	cmpa	#(MAX_SIMULTANEOUS_PLUCKS)	; happening at the same time
 	beq	_skip_increase
 
 	inca
@@ -1118,7 +1118,7 @@ baby_elephant:
 	FCV	" \\\\      '.                  !#",0
 	FCV	"  \\\\       \\   -.           /",0
 	FCV	"   \\\\       !    ).......'   \\",0
-	FCV	"    \"        !   /  \\  !  \\   )",0
+	FCV	"    \"        !   /  \\  /  \\   )",0
 	FCV	"      SND   !   !./'  :.. \.-'",0
 	FCV	"            '--'",0
 	FCB	255

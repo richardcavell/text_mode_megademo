@@ -82,12 +82,12 @@ install_irq_service_routine:
 
 	bsr	switch_off_irq		; Switch off IRQ interrupts for now
 
-	ldx	IRQ_HANDLER		; Load the current vector into X
+	ldx	(IRQ_HANDLER)		; Load the current vector into X
 	stx	decb_irq_service_routine	; We will call it at the end
 						; of our own handler
 
 	ldx	#irq_service_routine
-	stx	IRQ_HANDLER		; Our own interrupt service routine
+	stx	(IRQ_HANDLER)		; Our own interrupt service routine
 					; is installed
 
 	bsr	switch_on_irq		; Switch IRQ interrupts back on
@@ -131,13 +131,13 @@ irq_service_routine:
 	lda	#1
 	sta	vblank_happened
 
-	lda	#DEBUG_MODE
+	lda	#(DEBUG_MODE)
 	beq	_skip_debug_visual_indication
 
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
-	inc	TEXTBUFEND-1	; The lower-right corner character cycles
+	inc	(TEXTBUFEND)-1	; The lower-right corner character cycles
 
 _skip_debug_visual_indication:
 
@@ -163,7 +163,7 @@ DSKREG	EQU	$FF40
 turn_off_disk_motor:
 
 	clra
-	sta	DSKREG		; Turn off disk motor
+	sta	(DSKREG)		; Turn off disk motor
 
 	rts
 
@@ -183,9 +183,9 @@ turn_6bit_audio_on:
 
 * This code was modified from code written by Trey Tomes
 
-	lda	AUDIO_PORT_ON
+	lda	(AUDIO_PORT_ON)
 	ora	#0b00001000
-	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
+	sta	(AUDIO_PORT_ON)	; Turn on 6-bit audio
 
 * End code modified from code written by Trey Tomes
 
@@ -196,7 +196,7 @@ turn_6bit_audio_on:
 	stb	PIA2_CRA
 
 	lda	#0b11111100
-	sta	DDRA
+	sta	(DDRA)
 
 	orb	#0b00000100
 	stb	PIA2_CRA
@@ -222,7 +222,7 @@ TEXT_LINES	EQU	16
 
 display_skip_message:
 
-	lda	#TEXT_LINES-1		; Bottom line of the screen
+	lda	#(TEXT_LINES)-1		; Bottom line of the screen
 	ldx	#skip_message
 	bsr	display_message
 	rts
@@ -244,13 +244,13 @@ skip_message:
 
 display_message:
 
-	ldb	#COLS_PER_LINE
+	ldb	#(COLS_PER_LINE)
 	mul
-	ldy	#TEXTBUF
+	ldy	#(TEXTBUF)
 	leay	d,y	; Y = starting point on the screen
 
 _display_message_loop:
-	cmpy	#TEXTBUFEND
+	cmpy	#(TEXTBUFEND)
 	bhs	_display_message_finished	; End of text buffer
 	lda	,x+
 	beq	_display_message_finished	; Terminating zero

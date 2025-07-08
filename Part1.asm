@@ -294,9 +294,6 @@ plucks_data_end:
 simultaneous_plucks:
 	RZB	1
 
-pluck_frames:
-	RZB	1
-
 pluck_the_screen:
 
 ; First, count the number of characters on each line of the screen
@@ -386,18 +383,18 @@ wait_for_vblank_and_check_for_skip:
 	clr	vblank_happened
 
 _wait_for_vblank_and_check_for_skip_loop:
-	jsr	[POLCAT]
+	jsr	[(POLCAT)]
 	cmpa	#' '			; Space bar
 	beq	_wait_for_vblank_skip
-	cmpa	#BREAK_KEY		; Break key
+	cmpa	#(BREAK_KEY)		; Break key
 	beq	_wait_for_vblank_skip
-	ldb	#DEBUG_MODE
+	ldb	#(DEBUG_MODE)
 	beq	_wait_for_vblank
 	cmpa	#'t'			; T key
 	beq	_wait_for_vblank_invert_toggle
 	cmpa	#'T'
 	beq	_wait_for_vblank_invert_toggle
-	ldb	debug_mode_toggle
+	ldb	_debug_mode_toggle
 	beq	_wait_for_vblank
 
 ; If toggle is on, require an F to go forward 1 frame
@@ -420,10 +417,10 @@ _wait_for_vblank_skip:
 	rts
 
 _wait_for_vblank_invert_toggle:
-	com	debug_mode_toggle
+	com	_debug_mode_toggle
 	bra	_wait_for_vblank
 
-debug_mode_toggle:
+_debug_mode_toggle:
 
 	RZB	1
 
@@ -434,17 +431,20 @@ debug_mode_toggle:
 * Outputs: None
 ***********************************
 
+_pluck_frames:
+	RZB	1
+
 count_frames:
 
-	lda	pluck_frames
+	lda	_pluck_frames
 	inca
-	sta	pluck_frames			; Keep count of the frames
+	sta	_pluck_frames			; Keep count of the frames
 
 	cmpa	#30				; Every 30 frames,
 	bne	_skip_increase
 
 	clra
-	sta	pluck_frames			; reset the counter, and
+	sta	_pluck_frames			; reset the counter, and
 	lda	simultaneous_plucks		; increase the number of plucks
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
 	beq	_skip_increase

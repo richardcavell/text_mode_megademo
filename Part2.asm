@@ -477,6 +477,7 @@ bird_scrollers:
 	FDB	#scroller_2
 	FDB	#scroller_3
 	FDB	#scroller_4
+
 	FDB	#scroller_9
 	FDB	#scroller_10
 	FDB	#scroller_11
@@ -705,7 +706,6 @@ switch_on_irq_and_firq:
 * X = The sound data
 * Y = The end of the sound data
 *******************************
-
 
 play_sound:
 

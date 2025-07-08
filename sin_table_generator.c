@@ -17,7 +17,7 @@ static int
 round_nearest(double f)
 {
 	 /* This is C89 */
-	return (int) ((f >= 0) ? f + 0.5 : f - 0.5);
+	return (int) ((f >= 0.0) ? f + 0.5 : f - 0.5);
 
 	/* This is C99 */
 /*	return (int) (round(f)); */

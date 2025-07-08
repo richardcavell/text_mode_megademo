@@ -18,7 +18,7 @@
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
 * The sound Type.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
 * here: https://commons.wikimedia.org/wiki/File:Modelm.ogg
-* The art of the baby elephant is by Shanaka Dias at asciiart.eu
+* The ASCII art of the baby elephant is by Shanaka Dias at asciiart.eu
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -682,8 +682,8 @@ pluck_char_choose_line:
 pluck_play_sound:
 
 	lda	#1
-	ldx	#pluck_sound	 ; interrupts and everything else
-	ldy	#pluck_sound_end ; pause while we're doing this
+	ldx	#pop_sound	 ; interrupts and everything else
+	ldy	#pop_sound_end ; pause while we're doing this
 	jsr	play_sound	 ; Play the pluck noise
 	rts
 
@@ -906,7 +906,7 @@ _display_messages_loop:
 	cmpb	#GREEN_BOX
 	beq	_display_messages_skip_sound
 	clra				; Play a sound
-	jsr	pluck_play_sound
+	jsr	display_messages_play_sound
 
 _display_messages_skip_sound:
 	lda	#2
@@ -939,6 +939,14 @@ _next_line:
 	puls	a,x
 	bne	_display_messages_end
 	bra	_display_messages_loop
+
+display_messages_play_sound:
+	lda	#1
+	ldx	#pluck_sound	 ; interrupts and everything else
+	ldy	#pluck_sound_end   ; pause while we're doing this
+	jsr	play_sound	 ; Play the pluck noise
+	rts
+
 
 ******************************************
 * Switch IRQ and FIRQ interrupts on or off
@@ -1143,5 +1151,5 @@ pop_sound:
 pop_sound_end:
 
 pluck_sound:
-	INCLUDEBIN "Sounds/Pluck/Pluck.raw"
+	INCLUDEBIN "Sounds/Type/Type.raw"
 pluck_sound_end:

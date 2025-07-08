@@ -9,6 +9,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void
+print_help(const char *argv0)
+{
+	(void) printf("%s",
+		"Sound Stripper v1.0\n"
+		"by Richard Cavell\n"
+		"https://github.com/richardcavell/sound_stripper\n");
+
+	(void) printf("%s%s%s",
+	        "Usage: ",
+		 argv0,
+		" inputfile outputfile\n");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -16,18 +30,26 @@ main(int argc, char *argv[])
 	FILE *output_fp = NULL;
 	int c = EOF;
 
+	if ((argc > 1) &&
+               (strcmp(argv[0], "--help") == 0    ||
+            	strcmp(argv[0], "-help") == 0     ||
+            	strcmp(argv[0], "-h") == 0        ||
+            	strcmp(argv[0], "-?") == 0        ||
+            	strcmp(argv[0], "--info") == 0    ||
+            	strcmp(argv[0], "-i") == 0        ||
+            	strcmp(argv[0], "--usage") == 0   ||
+            	strcmp(argv[0], "--version") == 0 ||
+		strcmp(argv[0], "-v") == 0        ||
+		strcmp(argv[0], "-V") == 0))
+	{
+		print_help(argv[0]);
+		exit(EXIT_SUCCESS);
+	}
+
 	if (argc != 3)
 	{
-		(void) printf("%s",
-			"Sound Stripper v1.0\n"
-			"by Richard Cavell\n"
-			"https://github.com/richardcavell/sound_stripper\n");
-
-		(void) printf("%s%s%s",
-		        "Usage: ",
-			 argv[0],
-			" inputfile outputfile\n");
-			exit(EXIT_FAILURE);
+		print_help(argv[0]);
+		exit(EXIT_FAILURE);
 	}
 
 	input_fp  = fopen(argv[1], "r");

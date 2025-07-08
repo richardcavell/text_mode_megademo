@@ -1,6 +1,6 @@
 * This is Part 2 of Text Mode Demo
 * by Richard Cavell
-* June 2025
+* June - July 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -35,28 +35,9 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-**********************
-* Zero the DP register
-**********************
-
         jsr     zero_dp_register
-
-*************************
-* Install our IRQ handler
-*************************
-
 	jsr	install_irq_service_routine
-
-*************************
-* Turn off the disk motor
-*************************
-
 	jsr	turn_off_disk_motor
-
-******************************
-* Turn on 6-bit audio circuits
-******************************
-
         jsr     turn_6bit_audio_on
 
 *************************

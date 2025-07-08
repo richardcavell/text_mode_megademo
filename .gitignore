@@ -5,6 +5,7 @@ TMMGDEMO.DSK
 PART1.BIN
 PART2.BIN
 PART3.BIN
+PART4.BIN
 sin_table.asm
 sin_table_generator
 sound_stripper
@@ -22,4 +23,5 @@ Sounds/Dot/Move_More_resampled.raw
 Sounds/Dot/Move_More.raw
 Sounds/Dot/Change_resampled.raw
 Sounds/Dot/Change.raw
-Music/1bit.bin
+Music/
+Music/*

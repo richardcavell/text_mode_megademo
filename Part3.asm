@@ -468,7 +468,7 @@ _display_scroll_texts_loop:
 	ldx	,y
 	beq	_display_scroll_texts_finished
 
-	lbsr	display_scroll_text
+	jsr	display_scroll_text
 	puls	y
 	leay	2,y
 	bra	_display_scroll_texts_loop

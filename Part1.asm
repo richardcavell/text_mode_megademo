@@ -1062,6 +1062,7 @@ display_text:
 				; and fallthrough
 
 skip_title_screen:
+	com	creature_blink_finished
 
 	rts
 
@@ -1303,7 +1304,13 @@ _text_appears_store_char:
 * Outputs: None
 *****************
 
+creature_blink_finished:
+	RZB	1
+
 creature_blink:
+
+	tst	creature_blink_finished
+	bne	_creature_blink_skip
 
 	ldd	_creature_blink_frames
 	addd	#1
@@ -1328,6 +1335,7 @@ creature_blink:
 	sta	,x
 	sta	2,x
 
+_creature_blink_skip:
 	rts
 
 _creature_blink_open_eyes:

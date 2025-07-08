@@ -83,7 +83,7 @@ XROAR		=	xroar
 
 .DEFAULT: all
 
-.PHONY:	all clean disk help info license list version
+.PHONY:	all clean disk help info license list test version
 .PHONY: mame mame-debug xroar xroar-coco3 xroar-ntsc
 
 all:	$(DISK) $(PART1) $(PART2) $(PART3)
@@ -198,6 +198,8 @@ license:
 	@cat LICENSE
 
 list:	info
+
+test:	xroar
 
 version:
 	@$(ECHO)   "Text Mode Demo source: unversioned"

@@ -977,7 +977,15 @@ dot_start:
 	jsr	dot_moves
 
 skip_dot:
-	rts
+	jsr	clear_screen
+
+        lda     #9
+        ldb     #11
+        ldx     #loading_message
+        jsr     display_text_graphic
+
+        rts
+
 
 *************************************************************
 * sine function

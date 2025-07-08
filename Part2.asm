@@ -331,17 +331,24 @@ _wait_frames_skip:
 *************
 
 linux_spoof:
+
 	jsr	clear_screen
 
         lda     #WAIT_PERIOD
         jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	bne	skip_linux_spoof
 
 	ldx	#linux_spoof_text
 	jsr	display_messages
+	tsta
+	bne	skip_linux_spoof
 
 	jsr	clear_screen
         lda     #WAIT_PERIOD
         jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	bne	skip_linux_spoof
 
 	lda	#7
 	ldb	#13
@@ -349,6 +356,8 @@ linux_spoof:
 	jsr	display_text_graphic
         lda     #WAIT_PERIOD
         jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	bne	skip_linux_spoof
 
 	lda	#9
 	ldb	#10
@@ -358,6 +367,7 @@ linux_spoof:
 	lda	#100
 	jsr	wait_frames
 
+skip_linux_spoof:
 	rts
 
 linux_spoof_text:
@@ -863,7 +873,7 @@ _display_messages_end:
 
 _message_pause:
         pshs    a,x,y
-        lda     #10
+        lda     #WAIT_PERIOD
         jsr     wait_frames
         tsta
         puls    a,x,y
@@ -892,7 +902,7 @@ dot_routine:
 	tsta
 	lbne	skip_dot
 
-	lda	#0
+	clra
 	ldb	#24
 	ldx	#dot_graphic
 	jsr	display_text_graphic
@@ -912,7 +922,7 @@ dot_start:
         lda     #WAIT_PERIOD * 3
         jsr     wait_frames                     ; Wait a number of frames
 	tsta
-	lbne	skip_dot
+	bne	skip_dot
 
 	ldx	#DOT_START	; in the middle of the screen
 
@@ -927,7 +937,7 @@ dot_start:
 	lda	#WAIT_PERIOD*4		; Wait this number of frames
 	lbsr	wait_frames
 	tsta
-	lbne	skip_dot
+	bne	skip_dot
 
 	jsr	dot_mouth_open
 
@@ -943,9 +953,9 @@ dot_start:
 	jsr	dot_mouth_close
 
 	lda	#WAIT_PERIOD		; Wait this number of frames
-	lbsr	wait_frames
+	jsr	wait_frames
 	tsta
-	lbne	skip_dot
+	bne	skip_dot
 
 	jsr	dot_mouth_open
 
@@ -960,9 +970,11 @@ dot_start:
 	jsr	dot_mouth_close
 
 	lda	#WAIT_PERIOD		; Wait this number of frames
-	lbsr	wait_frames
+	jsr	wait_frames
 	tsta
-	lbne	skip_dot
+	bne	skip_dot
+
+	jsr	dot_moves
 
 skip_dot:
 	rts

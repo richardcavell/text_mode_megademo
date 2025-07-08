@@ -10,13 +10,14 @@
 *
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
-* Part of this code was written by a number of other authors.
+* Part of this code was written by a number of other authors
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
-* Part of this code was written by Sean Conner.
-* The ASCII art of the small creature is by Microsoft Copilot.
+* Part of this code was written by Sean Conner
+* The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
+* Both have been modified by me
 * The sound Pluck.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
 * here: https://commons.wikimedia.org/wiki/File:Modelm.ogg
 * "RJFC Presents Text Mode Megademo" was created by this website:

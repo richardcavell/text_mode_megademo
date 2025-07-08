@@ -14,11 +14,11 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 *
-* ASCII art in the second section was made by an unknown person from
+* ASCII art in the first section was made by an unknown person from
 * https://www.asciiart.eu/animals/birds-land
 * and then modified by me
-* ASCII art in the third section was made by Microsoft Copilot and
-* modified by me
+* ASCII art of the Batman logo was made by an unknown person, possibly
+* Joan Stark, at https://www.asciiart.eu/comics/batman
 *
 * The sound of the finger snap in the dot routine is by cori at
 * Wikimedia Commons
@@ -49,6 +49,7 @@ WAIT_PERIOD	EQU	25
 
 	jsr	linux_spoof		; First section
 	jsr	multi_scroller		; Second section
+	jsr	loading_screen
 
 	jsr	uninstall_irq_service_routine
 
@@ -752,6 +753,45 @@ _play_sound_delay_loop:
         decb                            ; If not, then wait some more
 
         bra     _play_sound_delay_loop
+
+***************
+* Loading screen
+****************
+
+loading_screen:
+
+        jsr     clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames
+
+        lda     #3
+        clrb
+        ldx     #batman_logo
+        jsr     display_text_graphic
+
+        ldx     #loading_text
+        lda     #15
+        ldb     #11
+        jsr     display_text_graphic
+        rts
+
+loading_text:
+
+        FCV     "LOADING...",0
+
+batman_logo:
+	FCV	"       .,    .   .    ,.",0
+	FCV	"  .O888P     Y8O8Y     Y888O.",0
+	FCV	" D88888      88888      88888B",0
+	FCV	"D888888B.  .D88888B.  .D888888B",0
+	FCV	"8888888888888888888888888888888",0
+	FCV	"8888888888888888888888888888888",0
+	FCV	"YJGS8P\"Y888P\"Y888P\"Y888P\"Y8888P",0
+	FCV	" Y888   '8'   Y8P   '8'   888Y",0
+	FCV	"  '8O          V          O8'",0
+	FCV	"    '                     '",0
+	FCB	255
 
 ************************
 * Display a text graphic

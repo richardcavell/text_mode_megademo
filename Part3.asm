@@ -1,4 +1,4 @@
-* This is Part 2 of Text Mode Demo
+* This is Part 3 of Text Mode Demo
 * by Richard Cavell
 * June - July 2025
 *
@@ -19,7 +19,6 @@
 * and then modified by me
 * ASCII art of the Batman logo was made by an unknown person, possibly
 * Joan Stark, at https://www.asciiart.eu/comics/batman
-*
 * The sound of the finger snap in the dot routine is by cori at
 * Wikimedia Commons
 * All of the speech in the dot routine was created by
@@ -31,7 +30,7 @@
 * Also, you can make the lower right corner character cycle when
 * the interrupt request service routine operates.
 
-DEBUG_MODE      EQU     1
+DEBUG_MODE      EQU     0
 
 * Between each section, wait this number of frames
 
@@ -221,7 +220,7 @@ turn_6bit_audio_on:
 * Outputs: None
 ******************
 
-GREEN_BOX       EQU     ($60)
+GREEN_BOX       EQU     $60
 
 clear_screen:
 
@@ -272,7 +271,7 @@ _wait_for_vblank_and_check_for_skip_loop:
         beq     _wait_for_vblank_invert_toggle
         cmpa    #'T'
         beq     _wait_for_vblank_invert_toggle
-        ldb     debug_mode_toggle
+        ldb     _debug_mode_toggle
         beq     _wait_for_vblank
 
 ; If toggle is on, require an F to go forward 1 frame
@@ -295,10 +294,10 @@ _wait_for_vblank_skip:
         rts
 
 _wait_for_vblank_invert_toggle:
-        com     debug_mode_toggle
+        com     _debug_mode_toggle
         bra     _wait_for_vblank
 
-debug_mode_toggle:
+_debug_mode_toggle:
 
         RZB     1
 

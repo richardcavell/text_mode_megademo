@@ -14,7 +14,9 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner
-* The sound Pluck.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
+* The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
+* https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
+* The sound Type.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
 * here: https://commons.wikimedia.org/wiki/File:Modelm.ogg
 * The art of the baby elephant is by Shanaka Dias at asciiart.eu
 
@@ -1107,8 +1109,8 @@ baby_elephant:
 	FCV	"(  /    \\                     !",0
 	FCV	" \\\\      '.                  !#",0
 	FCV	"  \\\\       \\   -.           /",0
-	FCV	"    \\       !    ).......'   \\",0
-	FCV	"    \"       !   /  \\  !  \\    )",0
+	FCV	"   \\\\       !    ).......'   \\",0
+	FCV	"    \"        !   /  \\  !  \\   )",0
 	FCV	"      SND   !   !./'  :.. \.-'",0
 	FCV	"            '--'",0
 	FCB	255
@@ -1135,6 +1137,10 @@ uninstall_irq_service_routine:
 *************************************
 * Here is our raw data for our sounds
 *************************************
+
+pop_sound:
+	INCLUDEBIN "Sounds/Pop/Pop.raw"
+pop_sound_end:
 
 pluck_sound:
 	INCLUDEBIN "Sounds/Pluck/Pluck.raw"

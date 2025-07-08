@@ -8,9 +8,16 @@
 * This code is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* ASCII art in the first section was made by an unknown person from
+* Part of this code was written by Trey Tomes. You can see it here:
+* https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
+* Part of this code was written by a number of other authors.
+* You can see here:
+* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
+*
+* ASCII art in the second section was made by an unknown person from
 * https://www.asciiart.eu/animals/birds-land
-* ASCII art in the second section was made by Microsoft Copilot and
+* and then modified by me
+* ASCII art in the third section was made by Microsoft Copilot and
 * modified by me
 *
 * The sound of the finger snap in the dot routine is by cori at
@@ -40,705 +47,15 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor
         jsr     turn_6bit_audio_on
 
-*************************
-* Text buffer information
-*************************
+	jsr	linux_spoof		; First section
+	jsr	multi_scroller		; Second section
+	jsr	dot_routine		; Third section
 
-TEXTBUF         EQU     $400            ; We're not double-buffering
-TEXTBUFSIZE     EQU     $200            ; so there's only one text screen
-TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE   EQU     32
-TEXT_LINES      EQU     16
-
-******************
-* Clear the screen
-******************
-
-	jsr	clear_screen
-
-        lda     #WAIT_PERIOD
-        jsr     wait_frames                     ; Wait a number of frames
-
-***********************
-* Output a bird graphic
-***********************
-
-	lda	#5
-	ldb	#8
-        ldx     #birds_graphic
-	jsr	display_text_graphic
-
-	bra	scroll_text
-
-; This came from https://www.asciiart.eu/animals/birds-land
-; Original artist unknown
-; I have modified the graphic a little bit. All the animations are by me.
-
-birds_graphic:
-
-	FCV	"   ---     ---",0
-	FCV	"  (O O)   (O O)",0
-	FCV	" (  V  ) (  V  ) ",0
-	FCV	"/--M-M- /--M-M-",0
-	FCB	255
-
-scroll_text:
-
-	ldx	#bird_scrollers
-	jsr	display_scroll_texts
-
-	bra	linux_spoof
-
-linux_spoof:
-	jsr	clear_screen
-
-	ldx	#linux_spoof_text
-	jsr	display_messages
-
-	jsr	clear_screen
-	lda	#7
-	ldb	#13
-	ldx	#ha_ha
-	jsr	display_text_graphic
-
-	lda	#9
-	ldb	#10
-	ldx	#just_kidding
-	jsr	display_text_graphic
-
-	lda	#100
-	jsr	wait_frames
-
-	lbra	create_dot
-
-linux_spoof_text:
-
-	FCV	"LOADING LINUX KERNEL...%%%",0
-	FCV	"[DRM:VMW-MSG-IOCTL [VMWGFX]]%",0
-	FCV	"RFKILL: INPUT HANDLER ENABLED%%",0
-	FCV	"LINUX VERSION 6.11.0-28-GENERIC%",0
-	FCV	"KERNEL SUPPORTED CPUS:",0
-	FCV	"  MOTOROLA 6809",0
-	FCV	"  HITACHI 6309",0
-	FCV	"PHYSICAL RAM MAP:%%%",0
-	FCV	"[MEM 0X0000-0X7FFF] USABLE%%%%",0
-	FCV	"[MEM 0X8000-0FFFF] RESERVED",0
-	FCV	"MAX. THREADS PER CORE: 1",0
-	FCV	"NUM. CORES PER PACKAGE: 1%%%",0
-	FCV	"SPLASH BOOT-IMAGE=/BOOT/VMLINUZ>%%%%%",0
-	FCV	"HUB 2-0:1.0: USB HUB NOT FOUND%%%%%%%",0
-
-	FCV	255
-
-ha_ha:
-
-	FCV	"HA HA!",0,255
-
-just_kidding:
-
-	FCV	"JUST KIDDING!",0,255
-
-**************
-* Create a dot
-**************
-
-create_dot:
-
-	jsr	clear_screen
-
-	lda	#WAIT_PERIOD
-	jsr	wait_frames
-	tsta
-	lbne	skip_dot
-
-	lda	#0
-	ldb	#24
-	ldx	#dot_graphic
-	jsr	display_text_graphic
-	bra	dot_start
-
-; Made by Microsoft Copilot and modified by me, animated by me
-
-dot_graphic:
-	FCV	" /\\-/\\",0
-	FCV	"( O.O )",0
-	FCV	" > - <",0
-	FCB	255
-
-DOT_START	EQU	(TEXTBUF+9*COLS_PER_LINE+16)
-
-dot_start:
-        lda     #WAIT_PERIOD * 3
-        jsr     wait_frames                     ; Wait a number of frames
-	tsta
-	lbne	skip_dot
-
-	ldx	#DOT_START	; in the middle of the screen
-
-	lda	#'*' + 64	; Non-inverted asterisk
-	sta	,x
-
-	lda	#8
-	ldx	#finger_snap_sound
-	ldy	#finger_snap_sound_end
-	jsr	play_sound
-
-	lda	#WAIT_PERIOD*4		; Wait this number of frames
-	lbsr	wait_frames
-	tsta
-	lbne	skip_dot
-
-	jsr	dot_mouth_open
-
-	lda	#25
-	ldx	#now_message
-	jsr	speech_bubble
-
-	lda	#8
-	ldx	#now_sound
-	ldy	#now_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
-
-	lda	#WAIT_PERIOD		; Wait this number of frames
-	lbsr	wait_frames
-	tsta
-	lbne	skip_dot
-
-	jsr	dot_mouth_open
-
-	lda	#25
-	ldx	#move_message
-	jsr	speech_bubble
-
-	lda	#8
-	ldx	#move_sound
-	ldy	#move_sound_end
-	jsr	play_sound
-	jsr	dot_mouth_close
-
-	lda	#WAIT_PERIOD		; Wait this number of frames
-	lbsr	wait_frames
-	tsta
-	lbne	skip_dot
-
-***************
-* The dot moves
-***************
-
-	bra	move_dot
-
-now_message:
-	FCV	"\"NOW\""
-	FCB	0
-
-move_message:
-	FCV	"\"MOVE\""
-	FCB	0
-
-move_more_message:
-	FCV	"\"MOVE MORE\""
-	FCB	0
-
-change_message:
-	FCV	"\"CHANGE\""
-	FCB	0
-
-dot_frames:
-	RZB	2
-
-horizontal_scale_factor:
-	RZB	2		; Fixed point scale factor
-
-vertical_scale_factor:
-	RZB	2		; Fixed point scale factor
-
-horizontal_angle:
-	RZB	1		; 0-255 out of 256
-
-vertical_angle:
-	RZB	1		; 0-255 out of 256
-
-horizontal_angular_speed:
-	RZB	1
-
-vertical_angular_speed:
-	RZB	1
-
-displacement:
-	RZB	2		; The amount that the dot moves
-
-rotation_speed:
-	RZB	1
-
-rotation_angle:
-	RZB	1
-
-move_dot:
-	ldd	#1000
-	std	horizontal_scale_factor
-	lda	#1
-	sta	horizontal_angular_speed
-
-move_dot_loop:
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	lbne	skip_dot
-
-	lda	phase
-	cmpa	#9
-	lbeq	dot_end
-
-	ldd	dot_frames		; Add 1 to dot_frames
-	addd	#1
-	std	dot_frames
-
-	ldb	horizontal_angle
-	addb	horizontal_angular_speed
-	stb	horizontal_angle
-
-	jsr	sin			; Get the sin of our angle
-	ldx	horizontal_scale_factor	; X = scale factor, D is sine
-	jsr	multiply_fixed_point	; multiply D by X (scale by sine)
-	jsr	round_to_nearest	; Need to round D up or down
-	tfr	a,b
-	sex
-	std	displacement		; This is the horizontal displacement
-
-	ldb	vertical_angle
-	addb	vertical_angular_speed
-	stb	vertical_angle
-
-	jsr	sin
-	ldx	vertical_scale_factor
-	jsr	multiply_fixed_point
-	jsr	round_to_nearest
-	tfr	a,b
-	lda	#32
-	jsr	b_signed_mul
-	addd	displacement
-	std	displacement
-
-	lda	rotation_angle
-	adda	rotation_speed
-	sta	rotation_angle
-
-	jsr	consider_phase
-	jsr	clear_area
-	jsr	draw_dot
-
-	bra	move_dot_loop
-
-
-phase:
-	RZB	1		; 0 = Starting to move
-				; 1 = Moving more
-				; 2 = Moving even more
-				; 3 = Changing to X
-				; 4 = Changing to !
-				; 5 = Changing to smiley
-				; 6 = Changing to 3 asterisks
-				; 7 = Changing to 5 asterisks
-				; 8 = Spinning
-				; 9 = Loading
-
-consider_phase:
-	lda	phase
-	cmpa	#0
-	beq	_phase_0
-	cmpa	#1
-	beq	_phase_1
-	cmpa	#2
-	lbeq	_phase_2
-	cmpa	#3
-	lbeq	_phase_3
-	cmpa	#4
-	lbeq	_phase_4
-	cmpa	#5
-	lbeq	_phase_5
-	cmpa	#6
-	lbeq	_phase_6
-	cmpa	#7
-	lbeq	_phase_7
-	cmpa	#8
-	lbeq	_phase_8
-	cmpa	#9
-	lbeq	_phase_9
-
-	; Impossible to get here
-	rts
-
-_phase_0:
-	ldd	dot_frames
-	cmpd	#512
-	bne	_phase_0_return
-
-	jsr	dot_mouth_open
-
-	lda	#20
-	ldx	#move_more_message
-	jsr	speech_bubble
-
-	lda	#8
-	ldx	#move_more_sound
-	ldy	#move_more_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
-
-	ldd	#0
-	std	dot_frames
-	lda	#1
-	sta	phase
-	ldd	#2000
-	std	horizontal_scale_factor
-	lda	#2
-	sta	horizontal_angular_speed
-
-_phase_0_return:
-	rts
-
-_phase_1:
-	ldd	dot_frames
-	cmpd	#200
-	blo	_phase_1_return
-	lda	horizontal_angle
-	bne	_phase_1_return
-
-	jsr	dot_mouth_open
-
-	lda	#20
-	ldx	#move_more_message
-	jsr	speech_bubble
-
-	lda	#7
-	ldx	#move_more_sound
-	ldy	#move_more_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
-
-	lda	#2
-	sta	phase
-	ldd	#0
-	std	dot_frames
-	ldd	#2500
-	std	horizontal_scale_factor
-	lda	#3
-	sta	horizontal_angular_speed
-	lda	#2
-	sta	vertical_angular_speed
-	ldd	#1000
-	std	vertical_scale_factor
-
-_phase_1_return:
-	rts
-
-_phase_2:
-	ldd	dot_frames
-	cmpd	#150
-	blo	_phase_2_return
-	lda	horizontal_angle
-	bne	_phase_2_return
-
-	lda	#8
-	jsr	change
-
-	lda	#3
-	sta	phase
-	ldd	#0
-	std	dot_frames
-	lda	#4
-	sta	horizontal_angular_speed
-
-_phase_2_return:
-	rts
-
-_phase_3:
-	ldd	dot_frames
-	cmpd	#150
-	blo	_phase_3_return
-	lda	horizontal_angle
-	bne	_phase_3_return
-
-	lda	#7
-	jsr	change
-
-	lda	#4
-	sta	phase
-	lda	#5
-	sta	horizontal_angular_speed
-	ldd	#0
-	std	dot_frames
-
-_phase_3_return:
-	rts
-
-_phase_4:
-	ldd	dot_frames
-	cmpd	#150
-	blo	_phase_4_return
-	lda	horizontal_angle
-	bne	_phase_4_return
-
-	jsr	dot_mouth_open
-
-	lda	#7
-	jsr	change
-
-	lda	#5
-	sta	phase
-	lda	#3
-	sta	vertical_angular_speed
-	lda	#6
-	sta	horizontal_angular_speed
-	ldd	#0
-	std	dot_frames
-
-_phase_4_return:
-	rts
-
-_phase_5:
-	ldd	dot_frames
-	cmpd	#150
-	blo	_phase_5_return
-	lda	horizontal_angle
-	bne	_phase_5_return
-
-	lda	#7
-	jsr	change
-
-	lda	#6
-	sta	phase
-	ldd	#0
-	std	dot_frames
-	lda	#7
-	sta	horizontal_angular_speed
-
-_phase_5_return:
-	rts
-
-_phase_6:
-	ldd	dot_frames
-	cmpd	#100
-	blo	_phase_6_return
-	lda	horizontal_angle
-	bne	_phase_6_return
-
-	lda	#7
-	jsr	change
-
-	lda	#7
-	sta	phase
-	ldd	#0
-	std	dot_frames
-	lda	#3
-	sta	vertical_angular_speed
-	lda	#5
-	sta	horizontal_angular_speed
-
-_phase_6_return:
-	rts
-
-_phase_7:
-	ldd	dot_frames
-	cmpd	#150
-	blo	_phase_7_return
-
-	lda	#7
-	ldx	#finger_snap_sound
-	ldy	#finger_snap_sound_end
-	jsr	play_sound
-
-	lda	#8
-	sta	phase
-	ldd	#0
-	std	dot_frames
-	lda	#1
-	sta	vertical_angular_speed
-	lda	#4
-	sta	horizontal_angular_speed
-
-	lda	#3
-	sta	rotation_speed
-
-_phase_7_return:
-	rts
-
-_phase_8:
-	ldd	dot_frames
-	cmpd	#194
-	blo	_phase_8_return
-
-	lda	#8
-	ldx	#finger_snap_sound
-	ldy	#finger_snap_sound_end
-	jsr	play_sound
-
-	lda	#9
-	sta	phase
-
-_phase_8_return:
-	rts
-
-_phase_9:
-	rts
-
-********
-* Change
-********
-
-change:
-	pshs	a
-	jsr	dot_mouth_open
-
-	lda	#23
-	ldx	#change_message
-	jsr	speech_bubble
-
-	puls	a
-	ldx	#change_sound
-	ldy	#change_sound_end
-	jsr	play_sound
-
-	jsr	dot_mouth_close
-	rts
-
-**********
-* Draw dot
-**********
-
-draw_dot:
-	ldd	displacement
-	ldx	#DOT_START
-	leax	d,x
-
-	lda	phase
-	cmpa	#0
-	beq	_draw_asterisk
-	cmpa	#1
-	beq	_draw_asterisk
-	cmpa	#2
-	beq	_draw_asterisk
-	cmpa	#3
-	beq	_draw_x
-	cmpa	#4
-	beq	_draw_bang
-	cmpa	#5
-	beq	_draw_smiley
-	cmpa	#6
-	beq	_draw_3_asterisks
-	cmpa	#7
-	beq	_draw_5_asterisks
-	cmpa	#8
-	beq	_draw_spinning
-	cmpa	#9
-	beq	_draw_loading
-
-	; Should never get here
-	rts
-
-_draw_asterisk:
-	lda	#'*' + 64
-	sta	,x
-
-	rts
-
-_draw_x:
-	lda	#'X'
-	sta	,x
-
-	rts
-
-_draw_bang:
-	lda	#'!' + 64
-	sta	,x
-
-	rts
-
-_draw_smiley:
-	lda	#':' + 64
-	sta	-1,x
-	lda	#'-' + 64
-	sta	,x
-	lda	#')' + 64
-	sta	1,x
-
-	rts
-
-_draw_3_asterisks:
-	lda	#'*' + 64
-	sta	-32,x
-	sta	,x
-	sta	32,x
-
-	rts
-
-_draw_5_asterisks:
-	lda	#'*' + 64
-	sta	-64,x
-	sta	-32,x
-	sta	,x
-	sta	32,x
-	sta	64,x
-
-	rts
-
-_draw_spinning:
-	lda	#'*' + 64
-	ldb	rotation_angle
-
-	jsr	draw_32
-	rts
-
-_draw_loading:
-	lda	#9
-	ldb	#11
-	ldx	#loading_message
-	jsr	display_text_graphic
-	rts
-
-loading_message:
-	FCV	"LOADING..."
-	FCB	0
-	FCV	255
-
-************
-* Clear area
-************
-
-clear_area:
-	ldx	#TEXTBUF+3*COLS_PER_LINE
-	ldd	#GREEN_BOX << 8 | GREEN_BOX
-
-clear_area_loop:
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	cmpx	#TEXTBUFEND
-	bne	clear_area_loop
-
-	rts
-
-; If any part of the dot routine has been skipped, we end up here
-skip_dot:
-	bsr	clear_screen
-
-	lda	#9
-	ldb	#11
-	ldx	#loading_message
-	jsr	display_text_graphic
-
-dot_end:
-
-; End of part 2!
-end:
 	jsr	uninstall_irq_service_routine
 
-	rts
+	clra
+	clrb
+	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************
 *	Subroutines
@@ -794,8 +111,8 @@ install_irq_service_routine:
 
 	bsr	switch_off_irq		; Switch off interrupts for now
 
-	ldy	IRQ_HANDLER		; Load the current vector into y
-	sty	decb_irq_service_routine	; We will call it at the
+	ldx	IRQ_HANDLER		; Load the current vector into y
+	stx	decb_irq_service_routine	; We will call it at the
 						; end of our own handler
 
 	ldx	#irq_service_routine
@@ -805,6 +122,17 @@ install_irq_service_routine:
 	bsr	switch_on_irq		; Switch interrupts back on
 
 	rts
+
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF         EQU     $400            ; We're not double-buffering
+TEXTBUFSIZE     EQU     $200            ; so there's only one text screen
+TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE   EQU     32
+TEXT_LINES      EQU     16
 
 ***************************************************
 * Our IRQ handler
@@ -823,7 +151,7 @@ irq_service_routine:
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
-;       inc     TEXTBUFEND-1
+	inc     TEXTBUFEND-1
 
 _skip_debug_visual_indication:
                 ; In the interests of making our IRQ handler run fast,
@@ -844,7 +172,8 @@ DSKREG	EQU	$FF40
 
 turn_off_disk_motor:
 
-	clr	DSKREG		; Turn off disk motor
+	clra
+	sta	DSKREG		; Turn off disk motor
 	rts
 
 *********************
@@ -997,6 +326,103 @@ _wait_frames_skip:
 	lda	#1
 	rts
 
+*************
+* Linux spoof
+*************
+
+linux_spoof:
+	jsr	clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+
+	ldx	#linux_spoof_text
+	jsr	display_messages
+
+	jsr	clear_screen
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+
+	lda	#7
+	ldb	#13
+	ldx	#ha_ha
+	jsr	display_text_graphic
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+
+	lda	#9
+	ldb	#10
+	ldx	#just_kidding
+	jsr	display_text_graphic
+
+	lda	#100
+	jsr	wait_frames
+
+	rts
+
+linux_spoof_text:
+
+	FCV	"LOADING LINUX KERNEL...%%%",0
+	FCV	"[DRM:VMW-MSG-IOCTL [VMWGFX]]%",0
+	FCV	"RFKILL: INPUT HANDLER ENABLED%%",0
+	FCV	"LINUX VERSION 6.11.0-28-GENERIC%",0
+	FCV	"KERNEL SUPPORTED CPUS:",0
+	FCV	"  MOTOROLA 6809",0
+	FCV	"  HITACHI 6309",0
+	FCV	"PHYSICAL RAM MAP:%%%",0
+	FCV	"[MEM 0X0000-0X7FFF] USABLE%%%%",0
+	FCV	"[MEM 0X8000-0FFFF] RESERVED",0
+	FCV	"MAX. THREADS PER CORE: 1",0
+	FCV	"NUM. CORES PER PACKAGE: 1%%%",0
+	FCV	"SPLASH BOOT-IMAGE=/BOOT/VMLINUZ>%%%%%",0
+	FCV	"HUB 2-0:1.0: USB HUB NOT FOUND%%%%%%%",0
+
+	FCV	255
+
+ha_ha:
+
+	FCV	"HA HA!",0,255
+
+just_kidding:
+
+	FCV	"JUST KIDDING!",0,255
+
+***********************
+* Multiscroller routine
+***********************
+
+multi_scroller:
+
+	jsr	clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+
+	lda	#5
+	ldb	#8
+        ldx     #birds_graphic
+	jsr	display_text_graphic
+
+	bra	scroll_text
+
+; This came from https://www.asciiart.eu/animals/birds-land
+; Original artist unknown
+; I have modified the graphic a little bit. All the animations are by me.
+
+birds_graphic:
+
+	FCV	"   ---     ---",0
+	FCV	"  (O O)   (O O)",0
+	FCV	" (  V  ) (  V  ) ",0
+	FCV	"/--M-M- /--M-M-",0
+	FCB	255
+
+scroll_text:
+
+	ldx	#bird_scrollers
+	jsr	display_scroll_texts
+	rts
+
 ***********************
 * Display scroll texts
 *
@@ -1009,7 +435,7 @@ _wait_frames_skip:
 display_scroll_texts:
 
 	pshs	x
-	bsr	wait_for_vblank_and_check_for_skip
+	jsr	wait_for_vblank_and_check_for_skip
 	puls	x
 	tsta
 	bne	_display_scroll_skip
@@ -1453,6 +879,94 @@ _next_line:
         puls    a,x
         bra     _display_messages_loop
 
+**************
+* Create a dot
+**************
+
+dot_routine:
+
+	jsr	clear_screen
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+	tsta
+	lbne	skip_dot
+
+	lda	#0
+	ldb	#24
+	ldx	#dot_graphic
+	jsr	display_text_graphic
+	bra	dot_start
+
+; Made by Microsoft Copilot and modified by me, animated by me
+
+dot_graphic:
+	FCV	" /\\-/\\",0
+	FCV	"( O.O )",0
+	FCV	" > - <",0
+	FCB	255
+
+DOT_START	EQU	(TEXTBUF+9*COLS_PER_LINE+16)
+
+dot_start:
+        lda     #WAIT_PERIOD * 3
+        jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	lbne	skip_dot
+
+	ldx	#DOT_START	; in the middle of the screen
+
+	lda	#'*' + 64	; Non-inverted asterisk
+	sta	,x
+
+	lda	#8
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
+	lda	#WAIT_PERIOD*4		; Wait this number of frames
+	lbsr	wait_frames
+	tsta
+	lbne	skip_dot
+
+	jsr	dot_mouth_open
+
+	lda	#25
+	ldx	#now_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#now_sound
+	ldy	#now_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#WAIT_PERIOD		; Wait this number of frames
+	lbsr	wait_frames
+	tsta
+	lbne	skip_dot
+
+	jsr	dot_mouth_open
+
+	lda	#25
+	ldx	#move_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#move_sound
+	ldy	#move_sound_end
+	jsr	play_sound
+	jsr	dot_mouth_close
+
+	lda	#WAIT_PERIOD		; Wait this number of frames
+	lbsr	wait_frames
+	tsta
+	lbne	skip_dot
+
+skip_dot:
+	rts
+
 *************************************************************
 * sine function
 *
@@ -1730,6 +1244,515 @@ forward_slash:
 	sta	,x
 	sta	31,x
 	sta	62,x
+	rts
+
+***************
+* The dot moves
+***************
+
+dot_moves:
+	bra	move_dot
+
+now_message:
+	FCV	"\"NOW\""
+	FCB	0
+
+move_message:
+	FCV	"\"MOVE\""
+	FCB	0
+
+move_more_message:
+	FCV	"\"MOVE MORE\""
+	FCB	0
+
+change_message:
+	FCV	"\"CHANGE\""
+	FCB	0
+
+dot_frames:
+	RZB	2
+
+horizontal_scale_factor:
+	RZB	2		; Fixed point scale factor
+
+vertical_scale_factor:
+	RZB	2		; Fixed point scale factor
+
+horizontal_angle:
+	RZB	1		; 0-255 out of 256
+
+vertical_angle:
+	RZB	1		; 0-255 out of 256
+
+horizontal_angular_speed:
+	RZB	1
+
+vertical_angular_speed:
+	RZB	1
+
+displacement:
+	RZB	2		; The amount that the dot moves
+
+rotation_speed:
+	RZB	1
+
+rotation_angle:
+	RZB	1
+
+move_dot:
+	ldd	#1000
+	std	horizontal_scale_factor
+	lda	#1
+	sta	horizontal_angular_speed
+
+move_dot_loop:
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	lbne	skip_dot
+
+	lda	phase
+	cmpa	#9
+	lbeq	skip_dot
+
+	ldd	dot_frames		; Add 1 to dot_frames
+	addd	#1
+	std	dot_frames
+
+	ldb	horizontal_angle
+	addb	horizontal_angular_speed
+	stb	horizontal_angle
+
+	jsr	sin			; Get the sin of our angle
+	ldx	horizontal_scale_factor	; X = scale factor, D is sine
+	jsr	multiply_fixed_point	; multiply D by X (scale by sine)
+	jsr	round_to_nearest	; Need to round D up or down
+	tfr	a,b
+	sex
+	std	displacement		; This is the horizontal displacement
+
+	ldb	vertical_angle
+	addb	vertical_angular_speed
+	stb	vertical_angle
+
+	jsr	sin
+	ldx	vertical_scale_factor
+	jsr	multiply_fixed_point
+	jsr	round_to_nearest
+	tfr	a,b
+	lda	#32
+	jsr	b_signed_mul
+	addd	displacement
+	std	displacement
+
+	lda	rotation_angle
+	adda	rotation_speed
+	sta	rotation_angle
+
+	jsr	consider_phase
+	jsr	clear_area
+	jsr	draw_dot
+
+	bra	move_dot_loop
+
+
+phase:
+	RZB	1		; 0 = Starting to move
+				; 1 = Moving more
+				; 2 = Moving even more
+				; 3 = Changing to X
+				; 4 = Changing to !
+				; 5 = Changing to smiley
+				; 6 = Changing to 3 asterisks
+				; 7 = Changing to 5 asterisks
+				; 8 = Spinning
+				; 9 = Loading
+
+consider_phase:
+	lda	phase
+	cmpa	#0
+	beq	_phase_0
+	cmpa	#1
+	beq	_phase_1
+	cmpa	#2
+	lbeq	_phase_2
+	cmpa	#3
+	lbeq	_phase_3
+	cmpa	#4
+	lbeq	_phase_4
+	cmpa	#5
+	lbeq	_phase_5
+	cmpa	#6
+	lbeq	_phase_6
+	cmpa	#7
+	lbeq	_phase_7
+	cmpa	#8
+	lbeq	_phase_8
+	cmpa	#9
+	lbeq	_phase_9
+
+	; Impossible to get here
+	rts
+
+_phase_0:
+	ldd	dot_frames
+	cmpd	#512
+	bne	_phase_0_return
+
+	jsr	dot_mouth_open
+
+	lda	#20
+	ldx	#move_more_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#move_more_sound
+	ldy	#move_more_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	ldd	#0
+	std	dot_frames
+	lda	#1
+	sta	phase
+	ldd	#2000
+	std	horizontal_scale_factor
+	lda	#2
+	sta	horizontal_angular_speed
+
+_phase_0_return:
+	rts
+
+_phase_1:
+	ldd	dot_frames
+	cmpd	#200
+	blo	_phase_1_return
+	lda	horizontal_angle
+	bne	_phase_1_return
+
+	jsr	dot_mouth_open
+
+	lda	#20
+	ldx	#move_more_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#move_more_sound
+	ldy	#move_more_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#2
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	ldd	#2500
+	std	horizontal_scale_factor
+	lda	#3
+	sta	horizontal_angular_speed
+	lda	#2
+	sta	vertical_angular_speed
+	ldd	#1000
+	std	vertical_scale_factor
+
+_phase_1_return:
+	rts
+
+_phase_2:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_2_return
+	lda	horizontal_angle
+	bne	_phase_2_return
+
+	lda	#8
+	jsr	change
+
+	lda	#3
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#4
+	sta	horizontal_angular_speed
+
+_phase_2_return:
+	rts
+
+_phase_3:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_3_return
+	lda	horizontal_angle
+	bne	_phase_3_return
+
+	lda	#7
+	jsr	change
+
+	lda	#4
+	sta	phase
+	lda	#5
+	sta	horizontal_angular_speed
+	ldd	#0
+	std	dot_frames
+
+_phase_3_return:
+	rts
+
+_phase_4:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_4_return
+	lda	horizontal_angle
+	bne	_phase_4_return
+
+	jsr	dot_mouth_open
+
+	lda	#7
+	jsr	change
+
+	lda	#5
+	sta	phase
+	lda	#3
+	sta	vertical_angular_speed
+	lda	#6
+	sta	horizontal_angular_speed
+	ldd	#0
+	std	dot_frames
+
+_phase_4_return:
+	rts
+
+_phase_5:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_5_return
+	lda	horizontal_angle
+	bne	_phase_5_return
+
+	lda	#7
+	jsr	change
+
+	lda	#6
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#7
+	sta	horizontal_angular_speed
+
+_phase_5_return:
+	rts
+
+_phase_6:
+	ldd	dot_frames
+	cmpd	#100
+	blo	_phase_6_return
+	lda	horizontal_angle
+	bne	_phase_6_return
+
+	lda	#7
+	jsr	change
+
+	lda	#7
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#3
+	sta	vertical_angular_speed
+	lda	#5
+	sta	horizontal_angular_speed
+
+_phase_6_return:
+	rts
+
+_phase_7:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_7_return
+
+	lda	#7
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
+	lda	#8
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#1
+	sta	vertical_angular_speed
+	lda	#4
+	sta	horizontal_angular_speed
+
+	lda	#3
+	sta	rotation_speed
+
+_phase_7_return:
+	rts
+
+_phase_8:
+	ldd	dot_frames
+	cmpd	#194
+	blo	_phase_8_return
+
+	lda	#8
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
+	lda	#9
+	sta	phase
+
+_phase_8_return:
+	rts
+
+_phase_9:
+	rts
+
+********
+* Change
+********
+
+change:
+	pshs	a
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	puls	a
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+	rts
+
+**********
+* Draw dot
+**********
+
+draw_dot:
+	ldd	displacement
+	ldx	#DOT_START
+	leax	d,x
+
+	lda	phase
+	cmpa	#0
+	beq	_draw_asterisk
+	cmpa	#1
+	beq	_draw_asterisk
+	cmpa	#2
+	beq	_draw_asterisk
+	cmpa	#3
+	beq	_draw_x
+	cmpa	#4
+	beq	_draw_bang
+	cmpa	#5
+	beq	_draw_smiley
+	cmpa	#6
+	beq	_draw_3_asterisks
+	cmpa	#7
+	beq	_draw_5_asterisks
+	cmpa	#8
+	beq	_draw_spinning
+	cmpa	#9
+	beq	_draw_loading
+
+	; Should never get here
+	rts
+
+_draw_asterisk:
+	lda	#'*' + 64
+	sta	,x
+
+	rts
+
+_draw_x:
+	lda	#'X'
+	sta	,x
+
+	rts
+
+_draw_bang:
+	lda	#'!' + 64
+	sta	,x
+
+	rts
+
+_draw_smiley:
+	lda	#':' + 64
+	sta	-1,x
+	lda	#'-' + 64
+	sta	,x
+	lda	#')' + 64
+	sta	1,x
+
+	rts
+
+_draw_3_asterisks:
+	lda	#'*' + 64
+	sta	-32,x
+	sta	,x
+	sta	32,x
+
+	rts
+
+_draw_5_asterisks:
+	lda	#'*' + 64
+	sta	-64,x
+	sta	-32,x
+	sta	,x
+	sta	32,x
+	sta	64,x
+
+	rts
+
+_draw_spinning:
+	lda	#'*' + 64
+	ldb	rotation_angle
+
+	jsr	draw_32
+	rts
+
+_draw_loading:
+	lda	#9
+	ldb	#11
+	ldx	#loading_message
+	jsr	display_text_graphic
+	rts
+
+loading_message:
+	FCV	"LOADING..."
+	FCB	0
+	FCV	255
+
+************
+* Clear area
+************
+
+clear_area:
+	ldx	#TEXTBUF+3*COLS_PER_LINE
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+
+clear_area_loop:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	cmpx	#TEXTBUFEND
+	bne	clear_area_loop
+
+	rts
+
+; If any part of the dot routine has been skipped, we end up here
+	jsr	clear_screen
+
+	lda	#9
+	ldb	#11
+	ldx	#loading_message
+	jsr	display_text_graphic
 	rts
 
 ***********************************

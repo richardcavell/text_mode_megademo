@@ -562,7 +562,7 @@ pluck_find_a_spare_slot:
 
 _pluck_find_loop:
 	ldb	,x
-	cmpb	#PLUCK_PHASE_NOTHING	; tstb
+	cmpb	#(PLUCK_PHASE_NOTHING)	; tstb
 	beq	_pluck_find_found_empty
 
 	deca
@@ -608,13 +608,13 @@ _pluck_char_get_random:
 
 	dec	a,y		; There'll be one less character now
 
-	ldb	#COLS_PER_LINE
+	ldb	#(COLS_PER_LINE)
 	mul 			; Multiply b by 32 and put the answer in D
 
-	ldx	#TEXTBUF+COLS_PER_LINE	; Make X point to the end of the line
+	ldx	#(TEXTBUF+COLS_PER_LINE) ; Make X point to the end of the line
 	leax	d,x		; that we will pluck from
 
-	lda	#GREEN_BOX	; Green box (space)
+	lda	#(GREEN_BOX)	; Green box (space)
 
 _pluck_a_char_find_non_space:
 	cmpa	,-x		; Go backwards until we find a non-space
@@ -644,14 +644,14 @@ _pluck_a_char_check:
 	puls	b,y		; B is the character
 				; X is the slot
 				; Y is the screen position
-	lda	#PLUCK_PHASE_TURN_WHITE		; This is our new phase
+	lda	#(PLUCK_PHASE_TURN_WHITE)	; This is our new phase
 	sta	,x+		; Store our new phase
 	stb	,x+		; the character
 	sty	,x		; And where it is
 
 ; Now turn it into a white box
 
-	lda	#WHITE_BOX
+	lda	#(WHITE_BOX)
 	sta	,y
 
 ; Now play the pluck sound
@@ -682,9 +682,9 @@ pluck_char_choose_line:
 pluck_play_sound:
 
 	lda	#1
-	ldx	#pop_sound	 ; interrupts and everything else
-	ldy	#pop_sound_end ; pause while we're doing this
-	jsr	play_sound	 ; Play the pluck noise
+	ldx	#pop_sound	; interrupts and everything else
+	ldy	#pop_sound_end 	; pause while we're doing this
+	jsr	play_sound	; Play the pluck noise
 	rts
 
 ********************
@@ -719,36 +719,36 @@ _pluck_do_one_pluck:
 				; X = Screen Position
 				; Y = Pluck Data
 
-	cmpa	#PLUCK_PHASE_NOTHING	; tsta
+	cmpa	#(PLUCK_PHASE_NOTHING)	; tsta
 	bne	_pluck_phase_at_least_1
 
 	rts			; Phase nothing, do nothing
 
 _pluck_phase_at_least_1:
 
-	cmpa	#PLUCK_PHASE_TURN_WHITE
+	cmpa	#(PLUCK_PHASE_TURN_WHITE)
 	bne	_pluck_phase_at_least_2
 				; We are white
-	lda	#PLUCK_PHASE_PLAIN
+	lda	#(PLUCK_PHASE_PLAIN)
 	sta	,y
 	rts
 
 _pluck_phase_at_least_2:
 
-	cmpa	#PLUCK_PHASE_PLAIN
+	cmpa	#(PLUCK_PHASE_PLAIN)
 	bne	_pluck_phase_3
 
 				; We are plain
 	stb	,x		; Show the plain character
 
-	lda	#PLUCK_PHASE_PULLING	; Go to phase 3
+	lda	#(PLUCK_PHASE_PULLING)	; Go to phase 3
 	sta	,y
 
 	rts
 
 _pluck_phase_3:
 				; We are pulling
-	lda	#GREEN_BOX
+	lda	#(GREEN_BOX)
 	sta	,x+		; Erase the drawn character
 
 	pshs	b,x,y
@@ -763,7 +763,7 @@ _pluck_phase_3:
 	rts
 
 _pluck_phase_3_ended:		; Character has gone off the right side
-	lda	#PLUCK_PHASE_NOTHING	; clra
+	lda	#(PLUCK_PHASE_NOTHING)	; clra
 	sta	,y		; Store it
 
 	rts
@@ -810,10 +810,10 @@ SEED:
 
 get_random:
 
-	ldd	SEED
+	ldd	(SEED)
 	mul
 	addd	#3037
-	std	SEED
+	std	(SEED)
 	rts
 
 	ENDIF
@@ -830,13 +830,13 @@ SEED:
 
 get_random:
 
-	ldd	SEED
+	ldd	(SEED)
 	lsra
 	rorb
 	bcc	get_random_no_feedback
 	eora	#$b4
 get_random_no_feedback:
-	std	SEED
+	std	(SEED)
 	rts
 
 	ENDIF
@@ -852,7 +852,7 @@ joke_startup_screen:
 
 	jsr	clear_screen	; Just clear the screen
 
-	lda	#WAIT_PERIOD
+	lda	#(WAIT_PERIOD)
 	jsr	wait_frames			; Wait a certain no of frames
 
 	ldx	#joke_startup_messages
@@ -860,7 +860,7 @@ joke_startup_screen:
 	tsta
 	bne	_skip_joke_startup
 
-	lda	#WAIT_PERIOD
+	lda	#(WAIT_PERIOD)
 	jsr	wait_frames			; Wait a certain no of frames
 
 _skip_joke_startup:
@@ -889,8 +889,8 @@ joke_startup_messages:
 
 display_messages:
 
-	lda	#COLS_PER_LINE
-	ldy	#TEXTBUF
+	lda	#(COLS_PER_LINE)
+	ldy	#(TEXTBUF)
 
 _display_messages_loop:
 	ldb	,x+
@@ -903,10 +903,9 @@ _display_messages_loop:
 
 	pshs	a,x,y
 
-	cmpb	#GREEN_BOX
+	cmpb	#(GREEN_BOX)
 	beq	_display_messages_skip_sound
-	clra				; Play a sound
-	jsr	display_messages_play_sound
+	bsr	display_messages_play_sound
 
 _display_messages_skip_sound:
 	lda	#2

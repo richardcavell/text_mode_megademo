@@ -49,7 +49,6 @@ WAIT_PERIOD	EQU	25
 
 	jsr	linux_spoof		; First section
 	jsr	multi_scroller		; Second section
-	jsr	dot_routine		; Third section
 
 	jsr	uninstall_irq_service_routine
 

@@ -1,6 +1,6 @@
-* This is Part 3 of Text Mode Demo
+* This is Part 2 of Text Mode Demo
 * by Richard Cavell
-* June 2025
+* June - July 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -8,8 +8,23 @@
 * This code is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* ASCII art in the first section was made by Matzec from
+* Part of this code was written by Trey Tomes. You can see it here:
+* https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
+* Part of this code was written by a number of other authors.
+* You can see here:
+* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
+*
+* ASCII art in the second section was made by an unknown person from
 * https://www.asciiart.eu/animals/birds-land
+* and then modified by me
+* ASCII art in the third section was made by Microsoft Copilot and
+* modified by me
+*
+* The sound of the finger snap in the dot routine is by cori at
+* Wikimedia Commons
+* All of the speech in the dot routine was created by
+* https://speechsynthesis.online/
+* The voice is "Maisie"
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -27,212 +42,18 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-**********************
-* Zero the DP register
-**********************
-
         jsr     zero_dp_register
-
-*************************
-* Install our IRQ handler
-*************************
-
 	jsr	install_irq_service_routine
-
-*************************
-* Turn off the disk motor
-*************************
-
 	jsr	turn_off_disk_motor
-
-******************************
-* Turn on 6-bit audio circuits
-******************************
-
         jsr     turn_6bit_audio_on
 
-*************************
-* Text buffer information
-*************************
+	jsr	dot_routine		; First section
 
-TEXTBUF         EQU     $400            ; We're not double-buffering
-TEXTBUFSIZE     EQU     $200            ; so there's only one text screen
-TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE   EQU     32
-TEXT_LINES      EQU     16
-
-******************
-* Clear the screen
-******************
-
-	jsr	clear_screen
-
-        lda     #WAIT_PERIOD
-        jsr     wait_frames                     ; Wait a number of frames
-
-	bra	large_text_graphic_viewer_loop
-
-***************************
-* Large text graphic viewer
-***************************
-
-graphic:
-	RZB	1	; 0 = Cartman
-			; 1 = Floppy disk
-			; 2 = Earth
-			; 3 = Red Dwarf
-
-horizontal_coord:	; of the graphic
-
-	RZB	1
-
-vertical_coord:		; of the graphic
-
-	RZB	1
-
-cartman_frames:
-	RZB	2
-
-cartman_horizontal_angle:
-	RZB	1
-
-cartman_vertical_angle:
-	RZB	1
-
-CARTMAN_TEXT_GRAPHIC_HEIGHT		EQU	27
-DISK_TEXT_GRAPHIC_HEIGHT		EQU	28
-EARTH_TEXT_GRAPHIC_HEIGHT		EQU	23
-RED_DWARF_GRAPHIC_HEIGHT		EQU	23
-
-CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	4
-CARTMAN_VERTICAL_ANGLE_SPEED		EQU	2
-
-CARTMAN_HORIZONTAL_SCALE		EQU	4200
-CARTMAN_VERTICAL_SCALE			EQU	3000
-
-CARTMAN_HORIZONTAL_DISPLACEMENT		EQU	-11
-CARTMAN_VERTICAL_DISPLACEMENT		EQU	-6
-
-large_text_graphic_viewer_loop:
-
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	lbne	skip_large_text_graphic_viewer
-
-	ldd	cartman_frames
-	addd	#1
-	std	cartman_frames
-
-	cmpd	#250
-	blo	_large_text_animate_cartman
-
-	lda	cartman_horizontal_angle
-	cmpa	#0
-	bne	_large_text_animate_cartman
-
-	lda	graphic
-	cmpa	#0
-	beq	_large_text_graphic_1
-	cmpa	#1
-	beq	_large_text_graphic_2
-	cmpa	#2
-	beq	_large_text_graphic_3
-	cmpa	#3
-	lbeq	skip_large_text_graphic_viewer
-	jmp	skip_large_text_graphic_viewer
-
-_large_text_graphic_1:
-	lda	#1
-	sta	graphic
-	ldd	#0
-	std	cartman_frames
-
-	bra	_large_text_animate_cartman
-
-_large_text_graphic_2:
-	lda	#2
-	sta	graphic
-	ldd	#0
-	std	cartman_frames
-	bra	_large_text_animate_cartman
-
-_large_text_graphic_3:
-	lda	#3
-	sta	graphic
-	ldd	#0
-	std	cartman_frames
-	bra	_large_text_animate_cartman
-
-_large_text_animate_cartman:
-	ldb	cartman_horizontal_angle
-	addb	#CARTMAN_HORIZONTAL_ANGLE_SPEED
-	stb	cartman_horizontal_angle
-
-	jsr	sin			; Get the sine of our angle
-	ldx	#CARTMAN_HORIZONTAL_SCALE
-	jsr	multiply_fixed_point
-	jsr	round_to_nearest
-	adda	#CARTMAN_HORIZONTAL_DISPLACEMENT
-	sta	horizontal_coord
-
-	ldb	cartman_vertical_angle
-	addb	#CARTMAN_VERTICAL_ANGLE_SPEED
-	stb	cartman_vertical_angle
-
-	jsr	sin
-	ldx	#CARTMAN_VERTICAL_SCALE
-	jsr	multiply_fixed_point
-	jsr	round_to_nearest
-	adda	#CARTMAN_VERTICAL_DISPLACEMENT
-	sta	vertical_coord
-
-	lda	graphic
-	cmpa	#0
-	beq	_cartman
-	cmpa	#1
-	beq	_floppy_disk
-	cmpa	#2
-	beq	_earth
-	cmpa	#3
-	beq	_red_dwarf
-
-_cartman:
-	ldx	#cartman_text_graphic
-	ldy	#CARTMAN_TEXT_GRAPHIC_HEIGHT
-	bra	_display_graphic
-
-_floppy_disk:
-	ldx	#disk_text_graphic
-	ldy	#DISK_TEXT_GRAPHIC_HEIGHT
-	bra	_display_graphic
-
-_earth:
-	ldx	#earth_text_graphic
-	ldy	#EARTH_TEXT_GRAPHIC_HEIGHT
-	bra	_display_graphic
-
-_red_dwarf:
-	ldx	#red_dwarf_graphic
-	ldy	#RED_DWARF_GRAPHIC_HEIGHT
-	bra	_display_graphic
-
-_display_graphic:
-	lda	horizontal_coord
-	ldb	vertical_coord
-	jsr	large_text_graphic_display
-
-	jmp	large_text_graphic_viewer_loop
-
-skip_large_text_graphic_viewer:
-
-	jsr	clear_screen
-
-; End of part 3!
-end:
 	jsr	uninstall_irq_service_routine
 
-	rts
+	clra
+	clrb
+	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************
 *	Subroutines
@@ -288,8 +109,8 @@ install_irq_service_routine:
 
 	bsr	switch_off_irq		; Switch off interrupts for now
 
-	ldy	IRQ_HANDLER		; Load the current vector into y
-	sty	decb_irq_service_routine	; We will call it at the
+	ldx	IRQ_HANDLER		; Load the current vector into y
+	stx	decb_irq_service_routine	; We will call it at the
 						; end of our own handler
 
 	ldx	#irq_service_routine
@@ -299,6 +120,17 @@ install_irq_service_routine:
 	bsr	switch_on_irq		; Switch interrupts back on
 
 	rts
+
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF         EQU     $400            ; We're not double-buffering
+TEXTBUFSIZE     EQU     $200            ; so there's only one text screen
+TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE   EQU     32
+TEXT_LINES      EQU     16
 
 ***************************************************
 * Our IRQ handler
@@ -317,7 +149,7 @@ irq_service_routine:
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
-;       inc     TEXTBUFEND-1
+	inc     TEXTBUFEND-1
 
 _skip_debug_visual_indication:
                 ; In the interests of making our IRQ handler run fast,
@@ -338,7 +170,8 @@ DSKREG	EQU	$FF40
 
 turn_off_disk_motor:
 
-	clr	DSKREG		; Turn off disk motor
+	clra
+	sta	DSKREG		; Turn off disk motor
 	rts
 
 *********************
@@ -472,9 +305,6 @@ debug_mode_toggle:
 *
 * Inputs:
 * A = number of frames
-*
-* Outputs:
-* None
 *****************************
 
 wait_frames:
@@ -482,330 +312,327 @@ wait_frames:
         jsr     wait_for_vblank_and_check_for_skip
 	tsta
         puls    a
-	bne	_wait_frames_skipped
+	bne	_wait_frames_skip
 
         deca
         bne     wait_frames
 
-	lda	#0
-	rts
-
-_wait_frames_skipped:
-	lda	#1
+	clra
         rts
 
-*****************************************
-* Large text graphic display
+_wait_frames_skip:
+	lda	#1
+	rts
+
+*************
+* Linux spoof
+*************
+
+linux_spoof:
+
+	jsr	clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	bne	skip_linux_spoof
+
+	ldx	#linux_spoof_text
+	jsr	display_messages
+	tsta
+	bne	skip_linux_spoof
+
+	jsr	clear_screen
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	bne	skip_linux_spoof
+
+	lda	#7
+	ldb	#13
+	ldx	#ha_ha
+	jsr	display_text_graphic
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	bne	skip_linux_spoof
+
+	lda	#9
+	ldb	#10
+	ldx	#just_kidding
+	jsr	display_text_graphic
+
+	lda	#100
+	jsr	wait_frames
+
+skip_linux_spoof:
+	rts
+
+linux_spoof_text:
+
+	FCV	"LOADING LINUX KERNEL...%%%",0
+	FCV	"[DRM:VMW-MSG-IOCTL [VMWGFX]]%",0
+	FCV	"RFKILL: INPUT HANDLER ENABLED%%",0
+	FCV	"LINUX VERSION 6.11.0-28-GENERIC%",0
+	FCV	"KERNEL SUPPORTED CPUS:",0
+	FCV	"  MOTOROLA 6809",0
+	FCV	"  HITACHI 6309",0
+	FCV	"PHYSICAL RAM MAP:%%%",0
+	FCV	"[MEM 0X0000-0X7FFF] USABLE%%%%",0
+	FCV	"[MEM 0X8000-0FFFF] RESERVED",0
+	FCV	"MAX. THREADS PER CORE: 1",0
+	FCV	"NUM. CORES PER PACKAGE: 1%%%",0
+	FCV	"SPLASH BOOT-IMAGE=/BOOT/VMLINUZ>%%%%%",0
+	FCV	"HUB 2-0:1.0: USB HUB NOT FOUND%%%%%%%",0
+
+	FCV	255
+
+ha_ha:
+
+	FCV	"HA HA!",0,255
+
+just_kidding:
+
+	FCV	"JUST KIDDING!",0,255
+
+***********************
+* Multiscroller routine
+***********************
+
+multi_scroller:
+
+	jsr	clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+
+	lda	#5
+	ldb	#8
+        ldx     #birds_graphic
+	jsr	display_text_graphic
+
+	bra	scroll_text
+
+; This came from https://www.asciiart.eu/animals/birds-land
+; Original artist unknown
+; I have modified the graphic a little bit. All the animations are by me.
+
+birds_graphic:
+
+	FCV	"   ---     ---",0
+	FCV	"  (O O)   (O O)",0
+	FCV	" (  V  ) (  V  ) ",0
+	FCV	"/--M-M- /--M-M-",0
+	FCB	255
+
+scroll_text:
+
+	ldx	#bird_scrollers
+	jsr	display_scroll_texts
+	rts
+
+***********************
+* Display scroll texts
 *
 * Inputs:
-*
-* A = Horizontal coordinate
-* B = Vertical coordinate
-* X = Graphic data
-* Y = Graphic height
+* X = List of scrollers
 *
 * Outputs: None
-*****************************************
+***********************
 
-large_text_horizontal_coordinate:
-	RZB	1
+display_scroll_texts:
 
-large_text_vertical_coordinate:
-	RZB	1
-
-large_text_graphic_data:
-	RZB	2
-
-large_text_buffer:
-	RZB	2
-
-large_text_graphic_height:
-	RZB	1
-
-large_text_graphic_display:
-
-	sta	large_text_horizontal_coordinate
-	stb	large_text_vertical_coordinate
-	stx	large_text_graphic_data
-	ldx	#TEXTBUF
-	stx	large_text_buffer
-	tfr	y,d
-	stb	large_text_graphic_height
-
-	ldx	#TEXTBUF
-
-	bsr	blank_lines_at_top
-	jsr	skip_graphic_data_vertical
-
-	bsr	do_lines
-
-	bsr	blank_lines_at_bottom
-	rts
-
-**************************
-* Blank lines at top
-*
-* Input:
-* X = start of text buffer
-*
-* Output:
-* X = where we are up to
-**************************
-
-blank_lines_at_top:
-
-	lda	large_text_vertical_coordinate
-
-_blank_lines_at_top_loop:
-	cmpa	#0
-	ble	_blank_lines_at_top_return
-
-	pshs	a
-	jsr	output_clear_line	; Input = X, Output = X
-	puls	a
-
-	deca
-	bra	_blank_lines_at_top_loop
-
-_blank_lines_at_top_return:		; Return X
-
-	rts
-
-************************
-* Blank lines at bottom
-*
-* Input:
-* X = where we are up to
-*
-* Output: None
-************************
-
-blank_lines_at_bottom:
-
-_blank_lines_clear_loop:
-	cmpx	#TEXTBUFEND
-	beq	_blank_lines_none
-
-	jsr	output_clear_line
-	bra	_blank_lines_clear_loop
-
-_blank_lines_none:
-	rts
-
-**********************************
-* Do lines
-*
-* Input:
-* X = where we are up to
-*
-* Output:
-* X = where we are up to (updated)
-**********************************
-
-do_lines:
-	lda	large_text_horizontal_coordinate
-
-_do_lines_loop:
-	cmpx	#TEXTBUFEND
-	beq	_do_lines_done
-
-	bsr	left_margin
-	bsr	skip_graphic_data_horizontal
-	bsr	print_text
-	bsr	right_margin
-
-	bra	_do_lines_loop
-
-_do_lines_done:
-
-	rts
-
-**********************************
-* Left margin
-*
-* Inputs:
-* X = where we are up to
-*
-* Outputs:
-* X = where we are up to (updated)
-**********************************
-
-left_margin:
-
-	lda	large_text_horizontal_coordinate
-
-_left_margin_loop:
-	cmpa	#0
-	ble	_left_margin_none
-
-	ldb	#GREEN_BOX
-	stb	,x+
-	deca
-	bra	_left_margin_loop
-
-_left_margin_none:		; Return X
-
-	rts
-
-**********************************
-* Print text
-*
-* Inputs:
-* X = where we are up to
-*
-* Outputs:
-* A = right margin
-* X = where we are up to (updated)
-**********************************
-
-print_text:
-	lda	large_text_horizontal_coordinate
-	cmpa	#0
-	bpl	_print_text_start_at_zero
-
-	lda	#0
-
-_print_text_start_at_zero:
-	ldy	large_text_graphic_data
-
-_print_text_loop:
-	ldb	,y+
-	beq	_print_text_found_zero
-	cmpb	#255
-	bne	_print_text_char
-
-	leay	-1,y
-	ldb	#GREEN_BOX
-
-_print_text_char:
-	stb	,x+
-	inca
-	cmpa	#32
-	beq	_print_text_finished
-	bra	_print_text_loop
-
-_print_text_finished:
-	lda	,y+			; Find the zero
-	bne	_print_text_finished
-	sty	large_text_graphic_data	; Return A and X
-	lda	#0
-	rts
-
-_print_text_found_zero:
-	sty	large_text_graphic_data	; Return A and X
-	pshs	a
-	ldb	#32
-	subb	,s+
-	tfr	b,a
-	rts
-
-****************************
-* Skip graphic data vertical
-*
-* Input:
-* X = start of text buffer
-*
-* Output:
-* X = where we are up to
-****************************
-
-skip_graphic_data_vertical:
-
-	lda	large_text_vertical_coordinate
-	bpl	_skip_graphic_data_return
-
-	ldy	large_text_graphic_data
-_skip_graphic_loop:
-	tst	,y+
-	bne	_skip_graphic_loop
-	inca
-	bne	_skip_graphic_loop
-
-	sty	large_text_graphic_data
-
-_skip_graphic_data_return:
-	rts
-
-******************************
-* Skip graphic data horizontal
-*
-* Input:
-* X = start of text buffer
-*
-* Output:
-* X = where we are up to
-******************************
-
-skip_graphic_data_horizontal:
-
-	lda	large_text_horizontal_coordinate
-
-	ldy	large_text_graphic_data
-_skip_graphic_horizontal_loop:
+	pshs	x
+	jsr	wait_for_vblank_and_check_for_skip
+	puls	x
 	tsta
-	bpl	_skip_graphic_data_horizontal_return
+	bne	_display_scroll_skip
 
-	tst	,y+
-	beq	_skip_graphic_data_hit_zero
-	inca
-	bra	_skip_graphic_horizontal_loop
+	pshs	x
+	bsr	_display_scroll_texts_all_scrollers
+	bsr	bird_movements
+	puls	x
 
-_skip_graphic_data_hit_zero:
-	leay	-1,y
+	bra	display_scroll_texts
 
-_skip_graphic_data_horizontal_return:
-	sty	large_text_graphic_data
-	rts				; Return X
-
-
-************************
-* Right margin
-*
-* Inputs:
-* A = size of right margin
-* X = where we are up to
-*
-* Outputs:
-* X = where we are up to
-************************
-
-right_margin:
-
-_right_margin_loop:
-	tsta
-	beq	_right_margin_finished
-	ldb	#GREEN_BOX
-	stb	,x+
-	deca
-	bra	_right_margin_loop
-
-_right_margin_finished:		; Return X
+_display_scroll_skip:
+	lda	#1
 	rts
 
-*******************************
-* Output clear line
+_display_scroll_texts_all_scrollers:
+
+	tfr	x,y
+
+_display_scroll_texts_loop:
+	pshs	y
+	ldx	,y
+	beq	_display_scroll_texts_finished
+
+	lbsr	display_scroll_text
+	puls	y
+	leay	2,y
+	bra	_display_scroll_texts_loop
+
+_display_scroll_texts_finished:
+	puls	y	; Reset the stack
+
+	rts
+
+bird_scrollers:
+
+	FDB	#scroller_0
+	FDB	#scroller_1
+	FDB	#scroller_2
+	FDB	#scroller_3
+	FDB	#scroller_4
+
+	FDB	#scroller_9
+	FDB	#scroller_10
+	FDB	#scroller_11
+	FDB	#scroller_12
+	FDB	#scroller_13
+	FDB	#scroller_14
+	FDB	#scroller_15
+	FDB	0
+
+****************
+* Bird movements
 *
-* Inputs:
-* X = start of text buffer line
-*
-* Outputs:
-* X = start of the next line
-*******************************
+* Inputs: None
+* Outputs: None
+****************
 
-output_clear_line:
+bird_movement_frame_counter:
 
-	lda	#GREEN_BOX
-	ldb	#8
+	FDB	0
 
-_output_clear_line_loop:
+bird_movements:
+	ldd	bird_movement_frame_counter
+	addd	#1
+	std	bird_movement_frame_counter
+
+	cmpd	#200
+	beq	left_bird_blinks
+	cmpd	#210
+	beq	left_bird_unblinks
+
+	cmpd	#500
+	beq	right_bird_blinks
+	cmpd	#510
+	beq	right_bird_unblinks
+
+	cmpd	#700
+	beq	left_bird_foot_moves
+	cmpd	#1300
+	beq	left_bird_foot_unmoves
+
+	cmpd	#980
+	beq	right_bird_foot_moves
+	cmpd	#1010
+	beq	right_bird_foot_unmoves
+
+	cmpd	#1400
+	beq	left_bird_moves_wings
+	cmpd	#1450
+	beq	left_bird_unmoves_wings
+
+	cmpd	#1500
+	beq	reset_counter
+
+	rts
+
+left_bird_blinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+11
+	lda	#'-' + 64
+	sta	,x++
+	sta	,x
+	rts
+
+left_bird_unblinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+11
+	lda	#'O'
+	sta	,x++
+	sta	,x
+	rts
+
+right_bird_blinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+19
+	lda	#'-' + 64
+	sta	,x++
+	sta	,x
+	rts
+
+right_bird_unblinks:
+
+	ldx	#TEXTBUF+6*COLS_PER_LINE+19
+	lda	#'O'
+	sta	,x++
+	sta	,x
+	rts
+
+left_bird_foot_moves:
+
+	ldx	#TEXTBUF+8*COLS_PER_LINE+10
+	lda	#'M'
 	sta	,x+
-	sta	,x+
-	sta	,x+
-	sta	,x+
+	lda	#'-' + 64
+	sta	,x
+	rts
 
-	decb
-	bne	_output_clear_line_loop
+left_bird_foot_unmoves:
 
+	ldx	#TEXTBUF+8*COLS_PER_LINE+10
+	lda	#'-' + 64
+	sta	,x+
+	lda	#'M'
+	sta	,x
+	rts
+
+right_bird_foot_moves:
+
+	ldx	#TEXTBUF+8*COLS_PER_LINE+18
+	lda	#'M'
+	sta	,x+
+	lda	#'-' + 64
+	sta	,x
+	rts
+
+right_bird_foot_unmoves:
+
+	ldx	#TEXTBUF+8*COLS_PER_LINE+18
+	lda	#'-' + 64
+	sta	,x+
+	lda	#'M'
+	sta	,x
+	rts
+
+left_bird_moves_wings:
+
+	ldx	#TEXTBUF+7*COLS_PER_LINE+9
+	lda	#'/' + 64
+	sta	,x
+	ldx	#TEXTBUF+7*COLS_PER_LINE+15
+	lda	#'\\' + 64
+	sta	,x
+	rts
+
+left_bird_unmoves_wings:
+
+	ldx	#TEXTBUF+7*COLS_PER_LINE+9
+	lda	#'(' + 64
+	sta	,x
+	ldx	#TEXTBUF+7*COLS_PER_LINE+15
+	lda	#')' + 64
+	sta	,x
+	rts
+
+reset_counter:
+
+	ldd	#0
+	std	bird_movement_frame_counter
 	rts
 
 **********************
@@ -966,6 +793,197 @@ _text_graphic_new_line:
 
 _display_text_graphic_finished:
         rts
+
+****************
+* Dot mouth open
+*
+* Inputs: None
+* Outputs: None
+****************
+
+dot_mouth_open:
+
+	lda	#'O'
+	ldx	#TEXTBUF + 2 * COLS_PER_LINE + 27
+	sta	,x
+	rts
+
+*****************
+* Dot mouth close
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+dot_mouth_close:
+
+	lda	#'-' + 64
+	ldx	#TEXTBUF + 2 * COLS_PER_LINE + 27
+	sta	,x
+	rts
+
+***************
+* Speech bubble
+*
+* Inputs:
+* A = column to start in
+* X = text
+*
+* Outputs: None
+***************
+
+speech_bubble:
+	ldy	#TEXTBUF+3*COLS_PER_LINE
+	leay	a,y
+
+_speech_bubble_loop:
+	lda	,x+
+	beq	_speech_bubble_finished
+	sta	,y+
+	bra	_speech_bubble_loop
+
+_speech_bubble_finished:
+	rts
+
+******************
+* Display messages
+*
+* Inputs:
+* X = Messages
+******************
+
+display_messages:
+        ldy     #TEXTBUF
+
+_display_messages_loop:
+        ldb     ,x+
+        beq     _next_line
+        cmpb    #'%' + 64
+        beq     _message_pause
+        cmpb    #255
+        beq     _display_messages_end
+        stb     ,y+
+
+        bra     _display_messages_loop  ; User has not skipped
+
+_display_messages_end:
+        rts
+
+_message_pause:
+        pshs    a,x,y
+        lda     #WAIT_PERIOD
+        jsr     wait_frames
+        tsta
+        puls    a,x,y
+        bne     _display_messages_end
+        bra     _display_messages_loop
+
+_next_line:
+        pshs    a,x
+        tfr     y,d
+        addd    #32
+        andb    #0b11100000
+        tfr     d,y
+        puls    a,x
+        bra     _display_messages_loop
+
+**************
+* Create a dot
+**************
+
+dot_routine:
+
+	jsr	clear_screen
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+	tsta
+	lbne	skip_dot
+
+	clra
+	ldb	#24
+	ldx	#dot_graphic
+	jsr	display_text_graphic
+	bra	dot_start
+
+; Made by Microsoft Copilot and modified by me, animated by me
+
+dot_graphic:
+	FCV	" /\\-/\\",0
+	FCV	"( O.O )",0
+	FCV	" > - <",0
+	FCB	255
+
+DOT_START	EQU	(TEXTBUF+9*COLS_PER_LINE+16)
+
+dot_start:
+        lda     #WAIT_PERIOD * 3
+        jsr     wait_frames                     ; Wait a number of frames
+	tsta
+	bne	skip_dot
+
+	ldx	#DOT_START	; in the middle of the screen
+
+	lda	#'*' + 64	; Non-inverted asterisk
+	sta	,x
+
+	lda	#8
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
+	lda	#WAIT_PERIOD*4		; Wait this number of frames
+	lbsr	wait_frames
+	tsta
+	bne	skip_dot
+
+	jsr	dot_mouth_open
+
+	lda	#25
+	ldx	#now_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#now_sound
+	ldy	#now_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#WAIT_PERIOD		; Wait this number of frames
+	jsr	wait_frames
+	tsta
+	bne	skip_dot
+
+	jsr	dot_mouth_open
+
+	lda	#25
+	ldx	#move_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#move_sound
+	ldy	#move_sound_end
+	jsr	play_sound
+	jsr	dot_mouth_close
+
+	lda	#WAIT_PERIOD		; Wait this number of frames
+	jsr	wait_frames
+	tsta
+	bne	skip_dot
+
+	jsr	dot_moves
+
+skip_dot:
+	jsr	clear_screen
+
+        lda     #9
+        ldb     #11
+        ldx     #loading_message
+        jsr     display_text_graphic
+
+        rts
+
 
 *************************************************************
 * sine function
@@ -1187,6 +1205,574 @@ _b_signed_is_negative:
 	addd	#1
 	rts
 
+*********************************
+* Draw 32
+*
+* Inputs:
+* A = the symbol to be drawn
+* B = the input angle
+* X = the fulcrum screen position
+*********************************
+
+draw_32:
+	sta	,x
+	cmpb	#32
+	blo	vertical
+	cmpb	#64
+	blo	backward_slash
+	cmpb	#96
+	blo	horizontal
+	cmpb	#128
+	blo	forward_slash
+	cmpb	#160
+	blo	vertical
+	cmpb	#192
+	blo	backward_slash
+	cmpb	#228
+	blo	horizontal
+	bra	forward_slash
+
+vertical:
+	sta	-64,x
+	sta	-32,x
+	sta	,x
+	sta	32,x
+	sta	64,x
+	rts
+
+horizontal:
+	sta	-2,x
+	sta	-1,x
+	sta	,x
+	sta	1,x
+	sta	2,x
+	rts
+
+backward_slash:
+	sta	-66,x
+	sta	-33,x
+	sta	,x
+	sta	33,x
+	sta	66,x
+	rts
+
+forward_slash:
+	sta	-62,x
+	sta	-31,x
+	sta	,x
+	sta	31,x
+	sta	62,x
+	rts
+
+***************
+* The dot moves
+***************
+
+dot_moves:
+	bra	move_dot
+
+now_message:
+	FCV	"\"NOW\""
+	FCB	0
+
+move_message:
+	FCV	"\"MOVE\""
+	FCB	0
+
+move_more_message:
+	FCV	"\"MOVE MORE\""
+	FCB	0
+
+change_message:
+	FCV	"\"CHANGE\""
+	FCB	0
+
+dot_frames:
+	RZB	2
+
+horizontal_scale_factor:
+	RZB	2		; Fixed point scale factor
+
+vertical_scale_factor:
+	RZB	2		; Fixed point scale factor
+
+horizontal_angle:
+	RZB	1		; 0-255 out of 256
+
+vertical_angle:
+	RZB	1		; 0-255 out of 256
+
+horizontal_angular_speed:
+	RZB	1
+
+vertical_angular_speed:
+	RZB	1
+
+displacement:
+	RZB	2		; The amount that the dot moves
+
+rotation_speed:
+	RZB	1
+
+rotation_angle:
+	RZB	1
+
+move_dot:
+	ldd	#1000
+	std	horizontal_scale_factor
+	lda	#1
+	sta	horizontal_angular_speed
+
+move_dot_loop:
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	lbne	skip_dot
+
+	lda	phase
+	cmpa	#9
+	lbeq	skip_dot
+
+	ldd	dot_frames		; Add 1 to dot_frames
+	addd	#1
+	std	dot_frames
+
+	ldb	horizontal_angle
+	addb	horizontal_angular_speed
+	stb	horizontal_angle
+
+	jsr	sin			; Get the sin of our angle
+	ldx	horizontal_scale_factor	; X = scale factor, D is sine
+	jsr	multiply_fixed_point	; multiply D by X (scale by sine)
+	jsr	round_to_nearest	; Need to round D up or down
+	tfr	a,b
+	sex
+	std	displacement		; This is the horizontal displacement
+
+	ldb	vertical_angle
+	addb	vertical_angular_speed
+	stb	vertical_angle
+
+	jsr	sin
+	ldx	vertical_scale_factor
+	jsr	multiply_fixed_point
+	jsr	round_to_nearest
+	tfr	a,b
+	lda	#32
+	jsr	b_signed_mul
+	addd	displacement
+	std	displacement
+
+	lda	rotation_angle
+	adda	rotation_speed
+	sta	rotation_angle
+
+	jsr	consider_phase
+	jsr	clear_area
+	jsr	draw_dot
+
+	bra	move_dot_loop
+
+
+phase:
+	RZB	1		; 0 = Starting to move
+				; 1 = Moving more
+				; 2 = Moving even more
+				; 3 = Changing to X
+				; 4 = Changing to !
+				; 5 = Changing to smiley
+				; 6 = Changing to 3 asterisks
+				; 7 = Changing to 5 asterisks
+				; 8 = Spinning
+				; 9 = Loading
+
+consider_phase:
+	lda	phase
+	cmpa	#0
+	beq	_phase_0
+	cmpa	#1
+	beq	_phase_1
+	cmpa	#2
+	lbeq	_phase_2
+	cmpa	#3
+	lbeq	_phase_3
+	cmpa	#4
+	lbeq	_phase_4
+	cmpa	#5
+	lbeq	_phase_5
+	cmpa	#6
+	lbeq	_phase_6
+	cmpa	#7
+	lbeq	_phase_7
+	cmpa	#8
+	lbeq	_phase_8
+	cmpa	#9
+	lbeq	_phase_9
+
+	; Impossible to get here
+	rts
+
+_phase_0:
+	ldd	dot_frames
+	cmpd	#512
+	bne	_phase_0_return
+
+	jsr	dot_mouth_open
+
+	lda	#20
+	ldx	#move_more_message
+	jsr	speech_bubble
+
+	lda	#8
+	ldx	#move_more_sound
+	ldy	#move_more_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	ldd	#0
+	std	dot_frames
+	lda	#1
+	sta	phase
+	ldd	#2000
+	std	horizontal_scale_factor
+	lda	#2
+	sta	horizontal_angular_speed
+
+_phase_0_return:
+	rts
+
+_phase_1:
+	ldd	dot_frames
+	cmpd	#200
+	blo	_phase_1_return
+	lda	horizontal_angle
+	bne	_phase_1_return
+
+	jsr	dot_mouth_open
+
+	lda	#20
+	ldx	#move_more_message
+	jsr	speech_bubble
+
+	lda	#7
+	ldx	#move_more_sound
+	ldy	#move_more_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+
+	lda	#2
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	ldd	#2500
+	std	horizontal_scale_factor
+	lda	#3
+	sta	horizontal_angular_speed
+	lda	#2
+	sta	vertical_angular_speed
+	ldd	#1000
+	std	vertical_scale_factor
+
+_phase_1_return:
+	rts
+
+_phase_2:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_2_return
+	lda	horizontal_angle
+	bne	_phase_2_return
+
+	lda	#8
+	jsr	change
+
+	lda	#3
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#4
+	sta	horizontal_angular_speed
+
+_phase_2_return:
+	rts
+
+_phase_3:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_3_return
+	lda	horizontal_angle
+	bne	_phase_3_return
+
+	lda	#7
+	jsr	change
+
+	lda	#4
+	sta	phase
+	lda	#5
+	sta	horizontal_angular_speed
+	ldd	#0
+	std	dot_frames
+
+_phase_3_return:
+	rts
+
+_phase_4:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_4_return
+	lda	horizontal_angle
+	bne	_phase_4_return
+
+	jsr	dot_mouth_open
+
+	lda	#7
+	jsr	change
+
+	lda	#5
+	sta	phase
+	lda	#3
+	sta	vertical_angular_speed
+	lda	#6
+	sta	horizontal_angular_speed
+	ldd	#0
+	std	dot_frames
+
+_phase_4_return:
+	rts
+
+_phase_5:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_5_return
+	lda	horizontal_angle
+	bne	_phase_5_return
+
+	lda	#7
+	jsr	change
+
+	lda	#6
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#7
+	sta	horizontal_angular_speed
+
+_phase_5_return:
+	rts
+
+_phase_6:
+	ldd	dot_frames
+	cmpd	#100
+	blo	_phase_6_return
+	lda	horizontal_angle
+	bne	_phase_6_return
+
+	lda	#7
+	jsr	change
+
+	lda	#7
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#3
+	sta	vertical_angular_speed
+	lda	#5
+	sta	horizontal_angular_speed
+
+_phase_6_return:
+	rts
+
+_phase_7:
+	ldd	dot_frames
+	cmpd	#150
+	blo	_phase_7_return
+
+	lda	#7
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
+	lda	#8
+	sta	phase
+	ldd	#0
+	std	dot_frames
+	lda	#1
+	sta	vertical_angular_speed
+	lda	#4
+	sta	horizontal_angular_speed
+
+	lda	#3
+	sta	rotation_speed
+
+_phase_7_return:
+	rts
+
+_phase_8:
+	ldd	dot_frames
+	cmpd	#194
+	blo	_phase_8_return
+
+	lda	#8
+	ldx	#finger_snap_sound
+	ldy	#finger_snap_sound_end
+	jsr	play_sound
+
+	lda	#9
+	sta	phase
+
+_phase_8_return:
+	rts
+
+_phase_9:
+	rts
+
+********
+* Change
+********
+
+change:
+	pshs	a
+	jsr	dot_mouth_open
+
+	lda	#23
+	ldx	#change_message
+	jsr	speech_bubble
+
+	puls	a
+	ldx	#change_sound
+	ldy	#change_sound_end
+	jsr	play_sound
+
+	jsr	dot_mouth_close
+	rts
+
+**********
+* Draw dot
+**********
+
+draw_dot:
+	ldd	displacement
+	ldx	#DOT_START
+	leax	d,x
+
+	lda	phase
+	cmpa	#0
+	beq	_draw_asterisk
+	cmpa	#1
+	beq	_draw_asterisk
+	cmpa	#2
+	beq	_draw_asterisk
+	cmpa	#3
+	beq	_draw_x
+	cmpa	#4
+	beq	_draw_bang
+	cmpa	#5
+	beq	_draw_smiley
+	cmpa	#6
+	beq	_draw_3_asterisks
+	cmpa	#7
+	beq	_draw_5_asterisks
+	cmpa	#8
+	beq	_draw_spinning
+	cmpa	#9
+	beq	_draw_loading
+
+	; Should never get here
+	rts
+
+_draw_asterisk:
+	lda	#'*' + 64
+	sta	,x
+
+	rts
+
+_draw_x:
+	lda	#'X'
+	sta	,x
+
+	rts
+
+_draw_bang:
+	lda	#'!' + 64
+	sta	,x
+
+	rts
+
+_draw_smiley:
+	lda	#':' + 64
+	sta	-1,x
+	lda	#'-' + 64
+	sta	,x
+	lda	#')' + 64
+	sta	1,x
+
+	rts
+
+_draw_3_asterisks:
+	lda	#'*' + 64
+	sta	-32,x
+	sta	,x
+	sta	32,x
+
+	rts
+
+_draw_5_asterisks:
+	lda	#'*' + 64
+	sta	-64,x
+	sta	-32,x
+	sta	,x
+	sta	32,x
+	sta	64,x
+
+	rts
+
+_draw_spinning:
+	lda	#'*' + 64
+	ldb	rotation_angle
+
+	jsr	draw_32
+	rts
+
+_draw_loading:
+	lda	#9
+	ldb	#11
+	ldx	#loading_message
+	jsr	display_text_graphic
+	rts
+
+loading_message:
+	FCV	"LOADING..."
+	FCB	0
+	FCV	255
+
+************
+* Clear area
+************
+
+clear_area:
+	ldx	#TEXTBUF+3*COLS_PER_LINE
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+
+clear_area_loop:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	cmpx	#TEXTBUFEND
+	bne	clear_area_loop
+
+	rts
+
+; If any part of the dot routine has been skipped, we end up here
+	jsr	clear_screen
+
+	lda	#9
+	ldb	#11
+	ldx	#loading_message
+	jsr	display_text_graphic
+	rts
+
 ***********************************
 * Uninstall our IRQ service routine
 *
@@ -1225,160 +1811,202 @@ scroll_text_15:
 	FCV	"                                "
 	FCB	0
 
-***************
-* Text graphics
-***************
+scroller_14:
 
-* Art by Joan Stark
+	FDB	100	; Starting frame
+	FCB	0	; Frame counter
+	FCB	8	; Frames to pause
+	FDB	scroll_text_14
+	FDB	TEXTBUF+14*32
 
-face_graphic:
-	FCV	"      ..-'''''-..",0
-	FCV	"    .'  .     .  '.",0
-	FCV	"   /   (.)   (.)   \\",0
-	FCV	"  !  ,           ,  !",0
-	FCV	"  !  \\`.       .`/  !",0
-	FCV	"   \\  '.`'\"\"'\"`.'  /",0
-	FCV	"    '.  `'---'`  .'",0
-	FCV	"JGS   '-.......-'",0
-	FCB	255
+scroll_text_14:
 
-happy_face_graphic:
+	FCV	"                                "
+	FCV	"THIS IS ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
 
-* Art by Joan Stark
+scroller_13:
 
-	FCV	"      ..-'''''-..",0
-	FCV	"    .'  .     .  '.",0
-	FCV	"   /   (o)   (o)   \\",0
-	FCV	"  !                 !",0
-	FCV	"  !  \\           /  !",0
-	FCV	"   \\  '.       .'  /",0
-	FCV	"    '.  `'---'`  .'",0
-	FCV	"JGS   '-.......-'",0
-	FCB	255
+	FDB	150	; Starting frame
+	FCB	0	; Frame counter
+	FCB	10	; Frames to pause
+	FDB	scroll_text_13
+	FDB	TEXTBUF+13*32
 
-* Art by Matzec, modified by me
+scroll_text_13:
 
-cartman_text_graphic:
-	FCV	"                       ..-**-..",0
-	FCV	"                    .,(        ),.",0
-	FCV	"                 .-\"   '-'----'   \"-.",0
-	FCV	"              .-'                    '-.",0
-	FCV	"            .'                          '.",0
-	FCV	"          .'    ...--**'\"\"\"\"\"\"'**--...    '.",0
-	FCV	"         /..-*\"'...--**'\"\"\"\"\"\"'**--...'\"*-..\\",0
-	FCV	"        /...-*\"'   .-*\"*-.  .-*\"*-.   '\"*-...\\",0
-	FCV	"       :          /       ;:       \\          ;",0
-	FCV	"       :         :     *  !!  *     :         ;",0
-	FCV	"        \        '.     .'  '.     .'        /",0
-	FCV	"         \         '-.-'      '-.-'         /",0
-	FCV	"      .-*''.                              .'-.",0
-	FCV	"   .-'      '.                          .'    '.",0
-	FCV	"  :           '-.        ....        .-'        '..",0
-	FCV	" ;\"*-..          '-..  --... '   ..-'        ..*'  '*.",0
-	FCV	":      '.            '\"*-....-*\"'           (        :",0
-	FCV	" ;      ;                 *!                 '-.     ;",0
-	FCV	"  '...*'                   !                    \"\"--'",0
-	FCV	"   :                      *!                      :",0
-	FCV	"   '.                      !                     .'",0
-	FCV	"     '...                 *!        ....----...-'",0
-	FCV	"      \  \"\"\"----.....------'-----\"\"\"         /",0
-	FCV	"       \  ....-------...        .....---..  /",0
-	FCV	"       :'\"              '-..--''          \"';",0
-	FCV	"        '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"'",0
-	FCV	"              C A R T M A N BY MATZEC",0
-cartman_text_graphic_end:
+	FCV	"                                "
+	FCV	"THIS IS YET ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
 
-* Art by Normand Veilleux, modified by me
+scroller_12:
 
-disk_text_graphic:
-	FCV	"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",0
-	FCV	"8                                                   8",0
-	FCV	"8  A---------------A                                8",0
-	FCV	"8  !               !                                8",0
-	FCV	"8  !               !                                8",0
-	FCV	"8  !               !                               8\"",0
-	FCV	"8  \"---------------\"                               8A",0
-	FCV	"8                                                   8",0
-	FCV	"8                                                   8",0
-	FCV	"8                      ,AAAAA,                      8",0
-	FCV	"8                    AD\":::::\"BA                    8",0
-	FCV	"8                  ,D::;GPPRG;::B,                  8",0
-	FCV	"8                  D::DP'   'YB::B                  8",0
-	FCV	"8                  8::8)     (8::8                  8",0
-	FCV	"8                  Y;:YB     DP:;P  O               8",0
-	FCV	"8                  'Y;:\"8GGG8\":;P'                  8",0
-	FCV	"8                    \"YAA:::AAP\"                    8",0
-	FCV	"8                       \"\"\"\"\"                       8",0
-	FCV	"8                                                   8",0
-	FCV	"8                       ,D\"B,                       8",0
-	FCV	"8                       B:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                       8:::8                       8",0
-	FCV	"8                  AAA  'BAD'  AAA                  8",0
-	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
-	FCV	"                                   NORMAND  VEILLEUX",0
-disk_text_graphic_end:
+	FDB	200	; Starting frame
+	FCB	0	; Frame counter
+	FCB	12	; Frames to pause
+	FDB	scroll_text_12
+	FDB	TEXTBUF+12*32
 
-* Art by anonymous at asciiart.eu/space/planets
-* Modified by me
+scroll_text_12:
 
-earth_text_graphic:
-	FCV	"              .-O#&&*''''?D:>B\\.",0
-	FCV	"          .O/\"'''  '',, DMF9MMMMMHO.",0
-	FCV	"       .O&#'        '\"MBHMMMMMMMMMMMHO.",0
-	FCV	"     .O\"\" '         VODM*$&&HMMMMMMMMMM?.",0
-	FCV	"    ,'              $M&OOD,-''(&##MMMMMMH\\",0
-	FCV	"   /               ,MMMMMMM#B?#BOBMMMMHMMML",0
-	FCV	"  &              ?MMMMMMMMMMMMMMMMM7MMM$R*HK",0
-	FCV	" ?$.            :MMMMMMMMMMMMMMMMMMM/HMMMI'*L",0
-	FCV	"1               IMMMMMMMMMMMMMMMMMMMMBMH'   T,",0
-	FCV	"$H#:            '*MMMMMMMMMMMMMMMMMMMMB#)'  '?",0
-	FCV	"]MMH#             \"\"*\"\"\"\"*#MMMMMMMMMMMMM'    -",0
-	FCV	"MMMMMB.                   IMMMMMMMMMMMP'     :",0
-	FCV	"HMMMMMMMHO                 'MMMMMMMMMT       .",0
-	FCV	"?MMMMMMMMP                  9MMMMMMMM)       -",0
-	FCV	"-?MMMMMMM                  IMMMMMMMMM?,D-    '",0
-	FCV	" :IMMMMMM-                 'MMMMMMMT .MI.   :",0
-	FCV	"  .9MMM[                    &MMMMM*' ''    .",0
-	FCV	"   :9MMK                    'MMM#\"        -",0
-	FCV	"     &M)                     '          .-",0
-	FCV	"      '&.                             .",0
-	FCV	"        '-,   .                     ./",0
-	FCV	"            . .                  .-",0
-	FCV	"              ''--..,DD###PP=\"\"'",0
-earth_text_graphic_end:
+	FCV	"                                "
+	FCV	"BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
 
-* Art by name unknown at asciiart.eu
-* Modified by me
+scroller_11:
 
-red_dwarf_graphic:
-	FCV	"       ..                                   ,--------.",0
-	FCV	"      / /                                 ,' /.!    /",0
-	FCV	"    RED'                                ,'    !!   /",0
-	FCV	"   DWARF                                \     !!  /",0
-	FCV	"  / /                                    \.....---.  .---.",0
-	FCV	"  ''                                .-----     ---:,'   / \\",0
-	FCV	"                   ..-------..    ,'           ---:     ! !",0
-	FCV	"    .-------.    ,'   !    :  '. /   ..-----------''.   \\ /",0
-	FCV	"  ,:.     ;  '._/     ! .  :  ..\\----         ;   !..----'",0
-	FCV	" //  ---.. ;   \\=   '---'..:     ! STARBUG  1  ;    :  \\",0
-	FCV	"! '------' ;    !=               !.....        ;    :...!",0
-	FCV	"!     ::   ;    !=........            :        ;    :   !",0
-	FCV	"'.    ::   ;### !=       :       !    :        ;        !",0
-	FCV	" \\)       ;    /=        :      !     :.. .---.         !",0
-	FCV	"  '. 0  .--. ,'-\ :=====;:      /        /     \\       .!",0
-	FCV	"    ---/    \\    '.'....!:    ,:        !       !    ,'/",0
-	FCV	"       \\.--./      '---...---'  \\        \\.---./    / /",0
-	FCV	"        \\,./                     '.    :::\\   /    /,'",0
-	FCV	"         ! !                       '-..   !   ! ,.-'",0
-	FCV	"         !!:                           ---(  !'-",0
-	FCV	"         !!:                               ! !",0
-	FCV	"         !!'                               ! !",0
-	FCV	"       '\"---\"'                           '\"---\"'",0
-red_dwarf_graphic_end:
+	FDB	250	; Starting frame
+	FCB	0	; Frame counter
+	FCB	15	; Frames to pause
+	FDB	scroll_text_11
+	FDB	TEXTBUF+11*32
+
+scroll_text_11:
+
+	FCV	"                                "
+	FCV	"BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_10:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_10
+	FDB	TEXTBUF+10*32
+
+scroll_text_10:
+
+	FCV	"                                "
+	FCV	"10BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_9:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_9
+	FDB	TEXTBUF+9*32
+
+scroll_text_9:
+
+	FCV	"                                "
+	FCV	"9BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_0:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_0
+	FDB	TEXTBUF
+
+scroll_text_0:
+
+	FCV	"                                "
+	FCV	"0BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_1:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_1
+	FDB	TEXTBUF+1*32
+
+scroll_text_1:
+
+	FCV	"                                "
+	FCV	"1BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_2:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_2
+	FDB	TEXTBUF+2*32
+
+scroll_text_2:
+
+	FCV	"                                "
+	FCV	"2BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_3:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_3
+	FDB	TEXTBUF+3*32
+
+scroll_text_3:
+
+	FCV	"                                "
+	FCV	"3BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
+
+scroller_4:
+
+	FDB	300	; Starting frame
+	FCB	0	; Frame counter
+	FCB	20	; Frames to pause
+	FDB	scroll_text_4
+	FDB	TEXTBUF+4*32
+
+scroll_text_4:
+
+	FCV	"                                "
+	FCV	"4BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	FCV	"                                "
+	FCB	0
 
 *************************************
 * Here is our raw data for our sounds
 *************************************
+
+finger_snap_sound:
+	INCLUDEBIN "Sounds/Dot/Finger_Snap.raw"
+finger_snap_sound_end:
+
+now_sound:
+	INCLUDEBIN "Sounds/Dot/Now.raw"
+now_sound_end:
+
+move_sound:
+	INCLUDEBIN "Sounds/Dot/Move.raw"
+move_sound_end:
+
+move_more_sound:
+	INCLUDEBIN "Sounds/Dot/Move_More.raw"
+move_more_sound_end:
+
+change_sound:
+	INCLUDEBIN "Sounds/Dot/Change.raw"
+change_sound_end:

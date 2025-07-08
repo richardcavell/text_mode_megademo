@@ -9,11 +9,13 @@ PART1		=	PART1.BIN
 PART2		=	PART2.BIN
 PART3		=	PART3.BIN
 PART4		=	PART4.BIN
+PART5		=	PART5.BIN
 
 PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 PART3_SRC	=	Part3.asm
 PART4_SRC	=	Part4.asm
+PART5_SRC	=	Part5.asm
 
 PLUCK_SOUND	=	Sounds/Pluck/Pluck.raw
 PLUCK_SOUND_RES	=	Sounds/Pluck/Model_M_resampled.raw
@@ -88,7 +90,7 @@ XROAR		=	xroar
 .PHONY:	all clean disk help info license list test version
 .PHONY: mame mame-debug xroar xroar-coco3 xroar-ntsc
 
-all:	$(DISK) $(PART1) $(PART2) $(PART3) $(PART4)
+all:	$(DISK) $(PART1) $(PART2) $(PART3) $(PART4) $(PART5)
 all:	$(SIN_TABLE) $(SIN_GENERATOR)
 all:	$(PLUCK_SOUND) $(RJFC_SOUND) $(SNAP_SOUND)
 all:	$(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
@@ -99,7 +101,7 @@ all:	$(SOUND_STR)
 
 clean:
 	@$(ECHO) "Removing all generated files" ...
-	@$(RM) $(DISK) $(PART1) $(PART2) $(PART3) $(PART4)
+	@$(RM) $(DISK) $(PART1) $(PART2) $(PART3) $(PART4) $(PART5)
 	@$(RM) $(SIN_TABLE) $(SIN_GENERATOR)
 	@$(RM) $(PLUCK_SOUND) $(RJFC_SOUND) $(SNAP_SOUND)
 	@$(RM) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
@@ -111,7 +113,7 @@ clean:
 
 disk:	$(DISK)
 
-$(DISK): $(BASIC_PART) $(PART1) $(PART2) $(PART3) $(PART4)
+$(DISK): $(BASIC_PART) $(PART1) $(PART2) $(PART3) $(PART4) $(PART5)
 	@$(RM) $@
 	@$(ECHO) "Compiling disk" $@ ...
 	$(DECB) dskini $@ -3
@@ -120,16 +122,18 @@ $(DISK): $(BASIC_PART) $(PART1) $(PART2) $(PART3) $(PART4)
 	$(DECB) copy -2 -b -r $(PART2) $(DISK),$(PART2)
 	$(DECB) copy -2 -b -r $(PART3) $(DISK),$(PART3)
 	$(DECB) copy -2 -b -r $(PART4) $(DISK),$(PART4)
+	$(DECB) copy -2 -b -r $(PART5) $(DISK),$(PART5)
 	@$(DECB) free $@
 	@$(ECHO) ... Done
 
 $(PART1): $(PART1_SRC) $(PLUCK_SOUND)
-$(PART2): $(PART2_SRC) $(SIN_TABLE)
-$(PART3): $(PART3_SRC) $(SIN_TABLE) $(RJFC_SOUND)
-$(PART3): $(SNAP_SOUND) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
-$(PART4): $(PART4_SRC) $(SIN_TABLE)
+$(PART2): $(PART2_SRC) $(RJFC_SOUND)
+$(PART3): $(PART3_SRC)
+$(PART4): $(PART3_SRC) $(SIN_TABLE)
+$(PART4): $(SNAP_SOUND) $(NOW_SOUND) $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND)
+$(PART5): $(PART5_SRC)
 
-$(PART1) $(PART2) $(PART3) $(PART4):
+$(PART1) $(PART2) $(PART3) $(PART4) $(PART5):
 	@$(ECHO) Assembling $@ ...
 	$(ASM) $(ASMFLAGS) -o $@ $<
 	@$(ECHO) ... Done

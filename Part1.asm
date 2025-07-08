@@ -954,8 +954,8 @@ title_screen:
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
-	lda	#0
-	ldb	#0
+	clra
+	clrb
 	ldx	#title_screen_graphic
 	jsr	display_text_graphic
 
@@ -1035,9 +1035,11 @@ display_text:
 	jsr	flash_screen
 	tsta
 	bne	skip_title_screen
+
 	jsr	flash_screen
 	tsta
 	bne	skip_title_screen
+
 	jsr	flash_screen
 	tsta
 	bne	skip_title_screen
@@ -1070,6 +1072,7 @@ skip_title_screen:
 * X = Pointer to data block
 *
 * Outputs:
+* A = 0          Successful
 * A = (non-zero) User wants to skip
 ***********************************
 
@@ -1129,6 +1132,8 @@ switch_on_irq_and_firq:
 * A = The delay between samples
 * X = The sound data
 * Y = The end of the sound data
+*
+* Outputs: None
 *******************************
 
 play_sound:
@@ -1194,7 +1199,7 @@ _clear_screen_loop:
 * Clear a line
 *
 * Inputs:
-* A = line to clear
+* A = line to clear (0 to 15)
 *
 * Outputs: None
 *******************
@@ -1253,7 +1258,7 @@ _text_appears_buff_box:
 	puls	b,x,u
 	tsta			; Has the user chosen to skip?
 	beq	_text_appears_keep_going
-	rts			; Just return a
+	rts			; If yes, just return a
 
 _text_appears_keep_going:
 	pshs	b,x,u
@@ -1288,7 +1293,7 @@ _text_appears_store_char:
 	puls	d
 	bne	_text_appears_buff_box	; If no, then go back and do it again
 
-	clra			; Space was not pressed
+	clra			; User has not chosen to skip
 	rts			; Return to the main code
 
 *****************

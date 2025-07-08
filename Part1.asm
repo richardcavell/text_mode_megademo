@@ -82,12 +82,12 @@ install_irq_service_routine:
 
 	bsr	switch_off_irq		; Switch off IRQ interrupts for now
 
-	ldx	(IRQ_HANDLER)		; Load the current vector into X
+	ldx	IRQ_HANDLER		; Load the current vector into X
 	stx	decb_irq_service_routine	; We will call it at the end
 						; of our own handler
 
 	ldx	#irq_service_routine
-	stx	(IRQ_HANDLER)		; Our own interrupt service routine
+	stx	IRQ_HANDLER		; Our own interrupt service routine
 					; is installed
 
 	bsr	switch_on_irq		; Switch IRQ interrupts back on
@@ -131,13 +131,13 @@ irq_service_routine:
 	lda	#1
 	sta	vblank_happened
 
-	lda	#(DEBUG_MODE)
+	lda	#DEBUG_MODE
 	beq	_skip_debug_visual_indication
 
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
-	inc	(TEXTBUFEND)-1	; The lower-right corner character cycles
+	inc	(TEXTBUFEND-1)	; The lower-right corner character cycles
 
 _skip_debug_visual_indication:
 
@@ -163,7 +163,7 @@ DSKREG	EQU	$FF40
 turn_off_disk_motor:
 
 	clra
-	sta	(DSKREG)		; Turn off disk motor
+	sta	DSKREG		; Turn off disk motor
 
 	rts
 
@@ -183,9 +183,9 @@ turn_6bit_audio_on:
 
 * This code was modified from code written by Trey Tomes
 
-	lda	(AUDIO_PORT_ON)
+	lda	AUDIO_PORT_ON
 	ora	#0b00001000
-	sta	(AUDIO_PORT_ON)	; Turn on 6-bit audio
+	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
 
 * End code modified from code written by Trey Tomes
 
@@ -196,7 +196,7 @@ turn_6bit_audio_on:
 	stb	PIA2_CRA
 
 	lda	#0b11111100
-	sta	(DDRA)
+	sta	DDRA
 
 	orb	#0b00000100
 	stb	PIA2_CRA
@@ -222,7 +222,7 @@ TEXT_LINES	EQU	16
 
 display_skip_message:
 
-	lda	#(TEXT_LINES)-1		; Bottom line of the screen
+	lda	#(TEXT_LINES-1)		; Bottom line of the screen
 	ldx	#skip_message
 	bsr	display_message
 	rts
@@ -244,13 +244,13 @@ skip_message:
 
 display_message:
 
-	ldb	#(COLS_PER_LINE)
+	ldb	#COLS_PER_LINE
 	mul
-	ldy	#(TEXTBUF)
+	ldy	#TEXTBUF
 	leay	d,y	; Y = starting point on the screen
 
 _display_message_loop:
-	cmpy	#(TEXTBUFEND)
+	cmpy	#TEXTBUFEND
 	bhs	_display_message_finished	; End of text buffer
 	lda	,x+
 	beq	_display_message_finished	; Terminating zero
@@ -268,8 +268,8 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
 					; our skip message
 
-GREEN_BOX	EQU	($60)
-WHITE_BOX	EQU	($cf)
+GREEN_BOX	EQU	$60
+WHITE_BOX	EQU	$cf
 
 pluck_line_counts:
 	RZB PLUCK_LINES			; 15 zeroes
@@ -333,15 +333,15 @@ _pluck_skip:
 
 pluck_count_chars_per_line:
 
-	ldx	#(TEXTBUF)
+	ldx	#TEXTBUF
 	ldy	#pluck_line_counts	; There are 15 of these
 
 _pluck_count_chars_on_one_line:
-	ldb	#(COLS_PER_LINE)	; There are 32 characters per line
+	ldb	#COLS_PER_LINE		; There are 32 characters per line
 
 _pluck_count_chars_test_char:
 	lda	,x+
-	cmpa	#(GREEN_BOX)		 ; Is it an empty green box?
+	cmpa	#GREEN_BOX		 ; Is it an empty green box?
 	beq	_pluck_count_chars_space ; Yes, so don't count it
 					 ; or
 	inc	,y			 ; No, so count it
@@ -350,7 +350,7 @@ _pluck_count_chars_space:
 	decb
 	bne	_pluck_count_chars_test_char
 
-	cmpx	#(TEXTBUF)+(PLUCK_LINES*COLS_PER_LINE)
+	cmpx	#(TEXTBUF+PLUCK_LINES*COLS_PER_LINE)
 	beq	_pluck_count_chars_end
 
 	leay	1,y			; Start counting the next line
@@ -383,12 +383,12 @@ wait_for_vblank_and_check_for_skip:
 	clr	vblank_happened
 
 _wait_for_vblank_and_check_for_skip_loop:
-	jsr	[(POLCAT)]
+	jsr	[POLCAT]
 	cmpa	#' '			; Space bar
 	beq	_wait_for_vblank_skip
-	cmpa	#(BREAK_KEY)		; Break key
+	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
-	ldb	#(DEBUG_MODE)
+	ldb	#DEBUG_MODE
 	beq	_wait_for_vblank
 	cmpa	#'t'			; T key
 	beq	_wait_for_vblank_invert_toggle
@@ -446,7 +446,7 @@ count_frames:
 	clra
 	sta	_pluck_frames			; reset the counter, and
 	lda	simultaneous_plucks		; increase the number of plucks
-	cmpa	#(MAX_SIMULTANEOUS_PLUCKS)	; happening at the same time
+	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
 	beq	_skip_increase
 
 	inca
@@ -562,7 +562,7 @@ pluck_find_a_spare_slot:
 
 _pluck_find_loop:
 	ldb	,x
-	cmpb	#(PLUCK_PHASE_NOTHING)	; tstb
+	cmpb	#PLUCK_PHASE_NOTHING	; tstb
 	beq	_pluck_find_found_empty
 
 	deca
@@ -608,13 +608,13 @@ _pluck_char_get_random:
 
 	dec	a,y		; There'll be one less character now
 
-	ldb	#(COLS_PER_LINE)
+	ldb	#COLS_PER_LINE
 	mul 			; Multiply b by 32 and put the answer in D
 
-	ldx	#(TEXTBUF+COLS_PER_LINE) ; Make X point to the end of the line
+	ldx	#TEXTBUF+COLS_PER_LINE ; Make X point to the end of the line
 	leax	d,x		; that we will pluck from
 
-	lda	#(GREEN_BOX)	; Green box (space)
+	lda	#GREEN_BOX	; Green box (space)
 
 _pluck_a_char_find_non_space:
 	cmpa	,-x		; Go backwards until we find a non-space
@@ -644,14 +644,14 @@ _pluck_a_char_check:
 	puls	b,y		; B is the character
 				; X is the slot
 				; Y is the screen position
-	lda	#(PLUCK_PHASE_TURN_WHITE)	; This is our new phase
+	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
 	sta	,x+		; Store our new phase
 	stb	,x+		; the character
 	sty	,x		; And where it is
 
 ; Now turn it into a white box
 
-	lda	#(WHITE_BOX)
+	lda	#WHITE_BOX
 	sta	,y
 
 ; Now play the pluck sound
@@ -719,36 +719,36 @@ _pluck_do_one_pluck:
 				; X = Screen Position
 				; Y = Pluck Data
 
-	cmpa	#(PLUCK_PHASE_NOTHING)	; tsta
+	cmpa	#PLUCK_PHASE_NOTHING	; tsta
 	bne	_pluck_phase_at_least_1
 
 	rts			; Phase nothing, do nothing
 
 _pluck_phase_at_least_1:
 
-	cmpa	#(PLUCK_PHASE_TURN_WHITE)
+	cmpa	#PLUCK_PHASE_TURN_WHITE
 	bne	_pluck_phase_at_least_2
 				; We are white
-	lda	#(PLUCK_PHASE_PLAIN)
+	lda	#PLUCK_PHASE_PLAIN
 	sta	,y
 	rts
 
 _pluck_phase_at_least_2:
 
-	cmpa	#(PLUCK_PHASE_PLAIN)
+	cmpa	#PLUCK_PHASE_PLAIN
 	bne	_pluck_phase_3
 
 				; We are plain
 	stb	,x		; Show the plain character
 
-	lda	#(PLUCK_PHASE_PULLING)	; Go to phase 3
+	lda	#PLUCK_PHASE_PULLING	; Go to phase 3
 	sta	,y
 
 	rts
 
 _pluck_phase_3:
 				; We are pulling
-	lda	#(GREEN_BOX)
+	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
 
 	pshs	b,x,y
@@ -763,7 +763,7 @@ _pluck_phase_3:
 	rts
 
 _pluck_phase_3_ended:		; Character has gone off the right side
-	lda	#(PLUCK_PHASE_NOTHING)	; clra
+	lda	#PLUCK_PHASE_NOTHING	; clra
 	sta	,y		; Store it
 
 	rts
@@ -810,10 +810,10 @@ SEED:
 
 get_random:
 
-	ldd	(SEED)
+	ldd	SEED
 	mul
 	addd	#3037
-	std	(SEED)
+	std	SEED
 	rts
 
 	ENDIF
@@ -830,13 +830,13 @@ SEED:
 
 get_random:
 
-	ldd	(SEED)
+	ldd	SEED
 	lsra
 	rorb
 	bcc	get_random_no_feedback
 	eora	#$b4
 get_random_no_feedback:
-	std	(SEED)
+	std	SEED
 	rts
 
 	ENDIF
@@ -852,7 +852,7 @@ joke_startup_screen:
 
 	jsr	clear_screen	; Just clear the screen
 
-	lda	#(WAIT_PERIOD)
+	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
 	ldx	#joke_startup_messages
@@ -860,7 +860,7 @@ joke_startup_screen:
 	tsta
 	bne	_skip_joke_startup
 
-	lda	#(WAIT_PERIOD)
+	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
 _skip_joke_startup:
@@ -889,8 +889,8 @@ joke_startup_messages:
 
 display_messages:
 
-	lda	#(COLS_PER_LINE)
-	ldy	#(TEXTBUF)
+	lda	#COLS_PER_LINE
+	ldy	#TEXTBUF
 
 _display_messages_loop:
 	ldb	,x+
@@ -903,7 +903,7 @@ _display_messages_loop:
 
 	pshs	a,x,y
 
-	cmpb	#(GREEN_BOX)
+	cmpb	#GREEN_BOX
 	beq	_display_messages_skip_sound
 	bsr	display_messages_play_sound
 
@@ -929,7 +929,7 @@ _message_pause:
 _next_line:
 	pshs	a,x
 	tfr	y,d
-	addd	#32
+	addd	#COLS_PER_LINE
 	andb	#0b11100000
 	tfr	d,y
 	lda	#5
@@ -1024,7 +1024,7 @@ _play_sound_delay_loop:
 clear_screen:
 
 	ldx	#TEXTBUF
-	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
+	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
 
 _clear_screen_loop:
 	std	,x++

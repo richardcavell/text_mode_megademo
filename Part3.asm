@@ -344,14 +344,14 @@ linux_spoof:
 	bne	skip_linux_spoof
 
 	jsr	clear_screen
-        lda     #WAIT_PERIOD
+        lda     #2*WAIT_PERIOD
         jsr     wait_frames                     ; Wait a number of frames
 	tsta
 	bne	skip_linux_spoof
 
 	lda	#7
 	ldb	#13
-	ldx	#ha_ha
+	ldx	#ha_ha_message
 	jsr	display_text_graphic
         lda     #WAIT_PERIOD
         jsr     wait_frames                     ; Wait a number of frames
@@ -360,7 +360,7 @@ linux_spoof:
 
 	lda	#9
 	ldb	#10
-	ldx	#just_kidding
+	ldx	#just_kidding_message
 	jsr	display_text_graphic
 
 	lda	#100
@@ -372,8 +372,6 @@ skip_linux_spoof:
 linux_spoof_text:
 
 	FCV	"LOADING LINUX KERNEL...%%%",0
-	FCV	"[DRM:VMW-MSG-IOCTL [VMWGFX]]%",0
-	FCV	"RFKILL: INPUT HANDLER ENABLED%%",0
 	FCV	"LINUX VERSION 6.11.0-28-GENERIC%",0
 	FCV	"KERNEL SUPPORTED CPUS:",0
 	FCV	"  MOTOROLA 6809",0
@@ -382,17 +380,18 @@ linux_spoof_text:
 	FCV	"[MEM 0X0000-0X7FFF] USABLE%%%%",0
 	FCV	"[MEM 0X8000-0FFFF] RESERVED",0
 	FCV	"MAX. THREADS PER CORE: 1",0
-	FCV	"NUM. CORES PER PACKAGE: 1%%%",0
+	FCV	"NUM. CORES PER PACKAGE: 1%%%",0,0
+	FCV	"FRAME BUFFER 32X16%",0,0
 	FCV	"SPLASH BOOT-IMAGE=/BOOT/VMLINUZ>%%%%%",0
 	FCV	"HUB 2-0:1.0: USB HUB NOT FOUND%%%%%%%",0
 
 	FCV	255
 
-ha_ha:
+ha_ha_message:
 
 	FCV	"HA HA!",0,255
 
-just_kidding:
+just_kidding_message:
 
 	FCV	"JUST KIDDING!",0,255
 

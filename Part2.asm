@@ -490,9 +490,10 @@ switch_on_irq_and_firq:
 * Outputs: None
 *************************
 
-; This routine was written by Simon Jonassen
-
 play_sound:
+
+; This routine was written by Simon Jonassen and slightly modified by me
+
             lda     sample
             sta     dasamp+1
             ldx     #sample+1           ;%11111111

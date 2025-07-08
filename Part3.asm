@@ -998,16 +998,8 @@ skip_dot:
 *************************************************************
 
 sin:
-	clra			; Clamp it to 0-255
-	ldx	#sin_table
-	leax	d,x
-	ldd	d,x		; Put sin_table + 2 * B into D
-
 	rts
 
-sin_table:
-	INCLUDE "sin_table.asm"
-sin_table_end:
 
 *****************************
 * Multiply fixed point signed
@@ -1993,21 +1985,16 @@ scroll_text_4:
 *************************************
 
 finger_snap_sound:
-	INCLUDEBIN "Sounds/Dot/Finger_Snap.raw"
 finger_snap_sound_end:
 
 now_sound:
-	INCLUDEBIN "Sounds/Dot/Now.raw"
 now_sound_end:
 
 move_sound:
-	INCLUDEBIN "Sounds/Dot/Move.raw"
 move_sound_end:
 
 move_more_sound:
-	INCLUDEBIN "Sounds/Dot/Move_More.raw"
 move_more_sound_end:
 
 change_sound:
-	INCLUDEBIN "Sounds/Dot/Change.raw"
 change_sound_end:

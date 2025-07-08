@@ -14,15 +14,9 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner
-* The ASCII art of the small creature is by Microsoft Copilot
-* The big cat was done by Blazej Kozlowski at
-* https://www.asciiart.eu/animals/birds-land
-* Both have been modified by me
 * The sound Pluck.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
 * here: https://commons.wikimedia.org/wiki/File:Modelm.ogg
-* "RJFC Presents Text Mode Megademo" was created by this website:
-* https://speechsynthesis.online/
-* The voice is "Ryan"
+* The art of the baby elephant is by Shanaka Dias at asciiart.eu
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -48,7 +42,7 @@ WAIT_PERIOD	EQU	25
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
-	jsr	loading_screen
+	jsr	loading_screen			; Third section
 
 	jsr	uninstall_irq_service_routine
 
@@ -688,7 +682,7 @@ pluck_play_sound:
 	lda	#1
 	ldx	#pluck_sound	 ; interrupts and everything else
 	ldy	#pluck_sound_end ; pause while we're doing this
-	lbsr	play_sound	 ; Play the pluck noise
+	jsr	play_sound	 ; Play the pluck noise
 	rts
 
 ********************
@@ -862,12 +856,12 @@ joke_startup_screen:
 	ldx	#joke_startup_messages
 	jsr	display_messages
 	tsta
-	bne	skip_joke
+	bne	_skip_joke_startup
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
-skip_joke:
+_skip_joke_startup:
 	rts
 
 joke_startup_messages:
@@ -1033,36 +1027,6 @@ _clear_screen_loop:
 	bne	_clear_screen_loop
 	rts
 
-*******************
-* Clear a line
-*
-* Inputs:
-* A = line to clear (0 to 15)
-*
-* Outputs: None
-*******************
-
-clear_line:
-
-	ldx	#TEXTBUF
-	ldb	#COLS_PER_LINE
-	mul
-	leax	d,x
-
-	ldy	#GREEN_BOX << 8 | GREEN_BOX
-	lda	#4
-
-_clear_line_loop:
-	sty	,x++
-	sty	,x++
-	sty	,x++
-	sty	,x++
-
-	deca
-	bne	_clear_line_loop
-
-	rts
-
 ************************
 * Display a text graphic
 *
@@ -1105,6 +1069,10 @@ _text_graphic_new_line:
 _display_text_graphic_finished:
 	rts
 
+****************
+* Loading screen
+****************
+
 loading_screen:
 
 	jsr	clear_screen
@@ -1112,15 +1080,39 @@ loading_screen:
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
 
+	lda	#1
+	clrb
+	ldx	#baby_elephant
+	jsr	display_text_graphic
+
 	ldx	#loading_text
 	lda	#15
 	ldb	#11
-	jsr	display_text_graphic		; Ignore the return value
+	jsr	display_text_graphic
 
 	rts
 
 loading_text:
+
 	FCV	"LOADING...",0
+
+* This art is by Shanaka Dias at asciiart.eu, and modified by me
+
+baby_elephant:
+	FCV	"     ..-- ,.--.",0
+	FCV	"   .'   .'    /",0
+	FCV	"   ! @       !'..--------..",0
+	FCV	"  /      \\../              '.",0
+	FCV	" /  .-.-                     \\",0
+	FCV	"(  /    \\                     !",0
+	FCV	" \\\\      '.                  !#",0
+	FCV	"  \\\\       \\   -.           /",0
+	FCV	"   :\\       !    ).......'   \\",0
+	FCV	"    \"       !   /  \\  !  \\    )",0
+	FCV	"      SND   !   !./'  :.. \.-'",0
+	FCV	"            '--'",0
+	FCB	255
+baby_elephant_end:
 
 ***********************************
 * Uninstall our IRQ service routine

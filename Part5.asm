@@ -28,13 +28,13 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-        jsr     zero_dp_register
 	jsr	install_irq_service_routine
 	jsr	turn_off_disk_motor
         jsr     turn_6bit_audio_on
 
 	jsr	large_text_graphics		; First section
 
+        jsr     zero_dp_register
 	jsr	uninstall_irq_service_routine
 
 	clra

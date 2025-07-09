@@ -31,16 +31,16 @@ main(int argc, char *argv[])
 	int c = EOF;
 
 	if ((argc > 1) &&
-               (strcmp(argv[0], "--help") == 0    ||
-            	strcmp(argv[0], "-help") == 0     ||
-            	strcmp(argv[0], "-h") == 0        ||
-            	strcmp(argv[0], "-?") == 0        ||
-            	strcmp(argv[0], "--info") == 0    ||
-            	strcmp(argv[0], "-i") == 0        ||
-            	strcmp(argv[0], "--usage") == 0   ||
-            	strcmp(argv[0], "--version") == 0 ||
-		strcmp(argv[0], "-v") == 0        ||
-		strcmp(argv[0], "-V") == 0))
+               (strcmp(argv[1], "--help") == 0    ||
+            	strcmp(argv[1], "-help") == 0     ||
+            	strcmp(argv[1], "-h") == 0        ||
+            	strcmp(argv[1], "-?") == 0        ||
+            	strcmp(argv[1], "--info") == 0    ||
+            	strcmp(argv[1], "-i") == 0        ||
+            	strcmp(argv[1], "--usage") == 0   ||
+            	strcmp(argv[1], "--version") == 0 ||
+		strcmp(argv[1], "-v") == 0        ||
+		strcmp(argv[1], "-V") == 0))
 	{
 		print_help(argv[0]);
 		exit(EXIT_SUCCESS);

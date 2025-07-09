@@ -222,7 +222,7 @@ TEXT_LINES	EQU	16
 
 display_skip_message:
 
-	lda	#(TEXT_LINES-1)		; Bottom line of the screen
+	lda	#TEXT_LINES-1		; Bottom line of the screen
 	ldx	#skip_message
 	bsr	display_message
 	rts

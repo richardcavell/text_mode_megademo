@@ -1,6 +1,6 @@
-* This is Part 3 of Text Mode Demo
+* This is Part 5 of Text Mode Demo
 * by Richard Cavell
-* June 2025
+* June - July 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -8,8 +8,9 @@
 * This code is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* ASCII art in the first section was made by Matzec from
-* https://www.asciiart.eu/animals/birds-land
+* All of the ASCII art is from asciiart.eu
+* Cartman is by Matzec, disk is by Normand Veilleux
+* The rest are by anonymous/name unknown.
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -27,29 +28,16 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-**********************
-* Zero the DP register
-**********************
-
         jsr     zero_dp_register
-
-*************************
-* Install our IRQ handler
-*************************
-
 	jsr	install_irq_service_routine
-
-*************************
-* Turn off the disk motor
-*************************
-
 	jsr	turn_off_disk_motor
-
-******************************
-* Turn on 6-bit audio circuits
-******************************
-
         jsr     turn_6bit_audio_on
+
+	jsr	large_text_graphics
+
+	jsr	uninstall_irq_service_routine
+
+	rts
 
 *************************
 * Text buffer information
@@ -62,9 +50,11 @@ TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE   EQU     32
 TEXT_LINES      EQU     16
 
-******************
-* Clear the screen
-******************
+***************************
+* Large text graphic viewer
+***************************
+
+large_text_graphics:
 
 	jsr	clear_screen
 
@@ -72,10 +62,6 @@ TEXT_LINES      EQU     16
         jsr     wait_frames                     ; Wait a number of frames
 
 	bra	large_text_graphic_viewer_loop
-
-***************************
-* Large text graphic viewer
-***************************
 
 graphic:
 	RZB	1	; 0 = Cartman
@@ -227,10 +213,6 @@ _display_graphic:
 skip_large_text_graphic_viewer:
 
 	jsr	clear_screen
-
-; End of part 3!
-end:
-	jsr	uninstall_irq_service_routine
 
 	rts
 
@@ -612,7 +594,7 @@ _do_lines_loop:
 	bsr	left_margin
 	bsr	skip_graphic_data_horizontal
 	bsr	print_text
-	bsr	right_margin
+	jsr	right_margin
 
 	bra	_do_lines_loop
 
@@ -741,12 +723,20 @@ skip_graphic_data_horizontal:
 	lda	large_text_horizontal_coordinate
 
 	ldy	large_text_graphic_data
+
 _skip_graphic_horizontal_loop:
 	tsta
 	bpl	_skip_graphic_data_horizontal_return
 
-	tst	,y+
+	ldb	,y+
 	beq	_skip_graphic_data_hit_zero
+	cmpb	#255
+	bne	_skip_graphic_data_not_end
+
+	leay	-1,y
+	rts
+
+_skip_graphic_data_not_end:
 	inca
 	bra	_skip_graphic_horizontal_loop
 
@@ -808,63 +798,6 @@ _output_clear_line_loop:
 
 	rts
 
-**********************
-* Display scroll text
-*
-* Inputs:
-* X = scroll text data
-*
-* Outputs: None
-**********************
-
-display_scroll_text:
-
-	ldd	,x
-	beq	_display_scroll_is_active
-	bmi	_display_scroll_is_inactive
-
-	subd	#1		; Countdown to scrolltext start
-	std	,x
-	rts
-
-_display_scroll_is_inactive:
-	rts
-
-_display_scroll_is_active:
-	lda	2,x
-	beq	_display_scroll_needs_update
-
-	deca
-	sta	2,x
-	rts
-
-_display_scroll_needs_update:
-	lda	3,x
-	sta	2,x	; Reset the frame counter
-
-	ldy	4,x	; Pointer to the text
-	leay	1,y
-	sty	4,x
-
-	ldu	6,x	; U is where on the screen to start
-	lda	#COLS_PER_LINE	; There are 32 columns per line
-
-_display_scroll_text_loop_2:
-
-	ldb	,y+
-	beq	_display_scroll_end
-	stb	,u+
-
-	deca
-	bne	_display_scroll_text_loop_2
-
-	rts
-
-_display_scroll_end:
-	ldd	#-1
-	std	,x
-	rts
-
 ******************************************
 * Switch IRQ and FIRQ interrupts on or off
 ******************************************
@@ -878,94 +811,6 @@ switch_on_irq_and_firq:
 
 	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
-
-*******************************
-* Play a sound sample
-*
-* Inputs:
-* A = The delay between samples
-* X = The sound data
-* Y = The end of the sound data
-*******************************
-
-play_sound:
-
-        pshs    a,x,y
-        bsr     switch_off_irq_and_firq
-        puls    a,x,y
-
-        pshs    y       ; _play_sound uses A, X and 2,S
-
-        bsr     _play_sound
-
-        puls    y
-
-        bsr     switch_on_irq_and_firq
-
-        rts
-
-_play_sound:
-        cmpx    2,s                     ; Compare X with Y
-
-        bne     _play_sound_more        ; If we have no more samples, exit
-
-        rts
-
-_play_sound_more:
-        ldb     ,x+
-        stb     AUDIO_PORT
-
-        tfr     a,b
-
-_play_sound_delay_loop:
-        tstb
-        beq     _play_sound             ; Have we completed the delay?
-
-        decb                            ; If not, then wait some more
-
-        bra     _play_sound_delay_loop
-
-************************
-* Display a text graphic
-*
-* Inputs:
-* A = Line number
-* B = Column number
-* X = Graphic data
-************************
-
-display_text_graphic:
-
-        tfr     x,y     ; Y = graphic data
-
-        tfr     d,u     ; Save B
-        ldb     #COLS_PER_LINE
-        mul
-        ldx     #TEXTBUF
-        leax    d,x
-        tfr     u,d     ; B = column number
-        leax    b,x     ; X = Screen memory to start at
-
-_display_text_graphic_loop:
-        lda     ,y+
-        beq     _text_graphic_new_line
-        cmpa    #255
-        beq     _display_text_graphic_finished
-        sta     ,x+
-        bra     _display_text_graphic_loop
-
-_text_graphic_new_line:
-        tfr     d,u             ; Save register B
-        tfr     x,d
-        andb    #0b11100000
-        addd    #COLS_PER_LINE
-        tfr     d,x
-        tfr     u,d             ; Get B back
-        leax    b,x
-        bra     _display_text_graphic_loop
-
-_display_text_graphic_finished:
-        rts
 
 *************************************************************
 * sine function
@@ -1205,56 +1050,9 @@ uninstall_irq_service_routine:
 
         rts
 
-**************
-* Scroll texts
-**************
-
-scroller_15:
-
-	FDB	0	; Starting frame
-	FCB	0	; Frame counter
-	FCB	5	; Frames to pause
-	FDB	scroll_text_15
-	FDB	TEXTBUF+15*32
-
-scroll_text_15:
-
-	FCV	"                                "
-	FCV	"THIS IS A TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
 ***************
 * Text graphics
 ***************
-
-* Art by Joan Stark
-
-face_graphic:
-	FCV	"      ..-'''''-..",0
-	FCV	"    .'  .     .  '.",0
-	FCV	"   /   (.)   (.)   \\",0
-	FCV	"  !  ,           ,  !",0
-	FCV	"  !  \\`.       .`/  !",0
-	FCV	"   \\  '.`'\"\"'\"`.'  /",0
-	FCV	"    '.  `'---'`  .'",0
-	FCV	"JGS   '-.......-'",0
-	FCB	255
-
-happy_face_graphic:
-
-* Art by Joan Stark
-
-	FCV	"      ..-'''''-..",0
-	FCV	"    .'  .     .  '.",0
-	FCV	"   /   (o)   (o)   \\",0
-	FCV	"  !                 !",0
-	FCV	"  !  \\           /  !",0
-	FCV	"   \\  '.       .'  /",0
-	FCV	"    '.  `'---'`  .'",0
-	FCV	"JGS   '-.......-'",0
-	FCB	255
 
 * Art by Matzec, modified by me
 
@@ -1286,6 +1084,7 @@ cartman_text_graphic:
 	FCV	"       :'\"              '-..--''          \"';",0
 	FCV	"        '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"'",0
 	FCV	"              C A R T M A N BY MATZEC",0
+	FCB	255
 cartman_text_graphic_end:
 
 * Art by Normand Veilleux, modified by me
@@ -1319,6 +1118,7 @@ disk_text_graphic:
 	FCV	"8                  AAA  'BAD'  AAA                  8",0
 	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
 	FCV	"                                   NORMAND  VEILLEUX",0
+	FCB	255
 disk_text_graphic_end:
 
 * Art by anonymous at asciiart.eu/space/planets
@@ -1348,6 +1148,7 @@ earth_text_graphic:
 	FCV	"        '-,   .                     ./",0
 	FCV	"            . .                  .-",0
 	FCV	"              ''--..,DD###PP=\"\"'",0
+	FCB	255
 earth_text_graphic_end:
 
 * Art by name unknown at asciiart.eu
@@ -1377,8 +1178,5 @@ red_dwarf_graphic:
 	FCV	"         !!:                               ! !",0
 	FCV	"         !!'                               ! !",0
 	FCV	"       '\"---\"'                           '\"---\"'",0
+	FCB	255
 red_dwarf_graphic_end:
-
-*************************************
-* Here is our raw data for our sounds
-*************************************

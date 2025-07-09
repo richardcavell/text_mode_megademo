@@ -1,4 +1,4 @@
-* This is Part 2 of Text Mode Demo
+* This is Part 4 of Text Mode Demo
 * by Richard Cavell
 * June - July 2025
 *
@@ -14,16 +14,12 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 *
-* ASCII art in the second section was made by an unknown person from
-* https://www.asciiart.eu/animals/birds-land
-* and then modified by me
-* ASCII art in the third section was made by Microsoft Copilot and
+* ASCII art in this section was made by Microsoft Copilot and
 * modified by me
-*
-* The sound of the finger snap in the dot routine is by cori at
-* Wikimedia Commons
-* All of the speech in the dot routine was created by
-* https://speechsynthesis.online/
+* Animation done by me
+* The sound of the finger snap is by cori at Wikimedia Commons
+* https://commons.wikimedia.org/wiki/File:Finger_clicks.ogg
+* All of the speech was created by https://speechsynthesis.online/
 * The voice is "Maisie"
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
@@ -31,7 +27,7 @@
 * Also, you can make the lower right corner character cycle when
 * the interrupt request service routine operates.
 
-DEBUG_MODE      EQU     1
+DEBUG_MODE      EQU     0
 
 * Between each section, wait this number of frames
 
@@ -219,7 +215,7 @@ turn_6bit_audio_on:
 * Outputs: None
 ******************
 
-GREEN_BOX       EQU     ($60)
+GREEN_BOX       EQU     $60
 
 clear_screen:
 
@@ -270,7 +266,7 @@ _wait_for_vblank_and_check_for_skip_loop:
         beq     _wait_for_vblank_invert_toggle
         cmpa    #'T'
         beq     _wait_for_vblank_invert_toggle
-        ldb     debug_mode_toggle
+        ldb     _debug_mode_toggle
         beq     _wait_for_vblank
 
 ; If toggle is on, require an F to go forward 1 frame
@@ -293,10 +289,10 @@ _wait_for_vblank_skip:
         rts
 
 _wait_for_vblank_invert_toggle:
-        com     debug_mode_toggle
+        com     _debug_mode_toggle
         bra     _wait_for_vblank
 
-debug_mode_toggle:
+_debug_mode_toggle:
 
         RZB     1
 
@@ -322,374 +318,6 @@ wait_frames:
 
 _wait_frames_skip:
 	lda	#1
-	rts
-
-*************
-* Linux spoof
-*************
-
-linux_spoof:
-
-	jsr	clear_screen
-
-        lda     #WAIT_PERIOD
-        jsr     wait_frames                     ; Wait a number of frames
-	tsta
-	bne	skip_linux_spoof
-
-	ldx	#linux_spoof_text
-	jsr	display_messages
-	tsta
-	bne	skip_linux_spoof
-
-	jsr	clear_screen
-        lda     #WAIT_PERIOD
-        jsr     wait_frames                     ; Wait a number of frames
-	tsta
-	bne	skip_linux_spoof
-
-	lda	#7
-	ldb	#13
-	ldx	#ha_ha
-	jsr	display_text_graphic
-        lda     #WAIT_PERIOD
-        jsr     wait_frames                     ; Wait a number of frames
-	tsta
-	bne	skip_linux_spoof
-
-	lda	#9
-	ldb	#10
-	ldx	#just_kidding
-	jsr	display_text_graphic
-
-	lda	#100
-	jsr	wait_frames
-
-skip_linux_spoof:
-	rts
-
-linux_spoof_text:
-
-	FCV	"LOADING LINUX KERNEL...%%%",0
-	FCV	"[DRM:VMW-MSG-IOCTL [VMWGFX]]%",0
-	FCV	"RFKILL: INPUT HANDLER ENABLED%%",0
-	FCV	"LINUX VERSION 6.11.0-28-GENERIC%",0
-	FCV	"KERNEL SUPPORTED CPUS:",0
-	FCV	"  MOTOROLA 6809",0
-	FCV	"  HITACHI 6309",0
-	FCV	"PHYSICAL RAM MAP:%%%",0
-	FCV	"[MEM 0X0000-0X7FFF] USABLE%%%%",0
-	FCV	"[MEM 0X8000-0FFFF] RESERVED",0
-	FCV	"MAX. THREADS PER CORE: 1",0
-	FCV	"NUM. CORES PER PACKAGE: 1%%%",0
-	FCV	"SPLASH BOOT-IMAGE=/BOOT/VMLINUZ>%%%%%",0
-	FCV	"HUB 2-0:1.0: USB HUB NOT FOUND%%%%%%%",0
-
-	FCV	255
-
-ha_ha:
-
-	FCV	"HA HA!",0,255
-
-just_kidding:
-
-	FCV	"JUST KIDDING!",0,255
-
-***********************
-* Multiscroller routine
-***********************
-
-multi_scroller:
-
-	jsr	clear_screen
-
-        lda     #WAIT_PERIOD
-        jsr     wait_frames                     ; Wait a number of frames
-
-	lda	#5
-	ldb	#8
-        ldx     #birds_graphic
-	jsr	display_text_graphic
-
-	bra	scroll_text
-
-; This came from https://www.asciiart.eu/animals/birds-land
-; Original artist unknown
-; I have modified the graphic a little bit. All the animations are by me.
-
-birds_graphic:
-
-	FCV	"   ---     ---",0
-	FCV	"  (O O)   (O O)",0
-	FCV	" (  V  ) (  V  ) ",0
-	FCV	"/--M-M- /--M-M-",0
-	FCB	255
-
-scroll_text:
-
-	ldx	#bird_scrollers
-	jsr	display_scroll_texts
-	rts
-
-***********************
-* Display scroll texts
-*
-* Inputs:
-* X = List of scrollers
-*
-* Outputs: None
-***********************
-
-display_scroll_texts:
-
-	pshs	x
-	jsr	wait_for_vblank_and_check_for_skip
-	puls	x
-	tsta
-	bne	_display_scroll_skip
-
-	pshs	x
-	bsr	_display_scroll_texts_all_scrollers
-	bsr	bird_movements
-	puls	x
-
-	bra	display_scroll_texts
-
-_display_scroll_skip:
-	lda	#1
-	rts
-
-_display_scroll_texts_all_scrollers:
-
-	tfr	x,y
-
-_display_scroll_texts_loop:
-	pshs	y
-	ldx	,y
-	beq	_display_scroll_texts_finished
-
-	lbsr	display_scroll_text
-	puls	y
-	leay	2,y
-	bra	_display_scroll_texts_loop
-
-_display_scroll_texts_finished:
-	puls	y	; Reset the stack
-
-	rts
-
-bird_scrollers:
-
-	FDB	#scroller_0
-	FDB	#scroller_1
-	FDB	#scroller_2
-	FDB	#scroller_3
-	FDB	#scroller_4
-
-	FDB	#scroller_9
-	FDB	#scroller_10
-	FDB	#scroller_11
-	FDB	#scroller_12
-	FDB	#scroller_13
-	FDB	#scroller_14
-	FDB	#scroller_15
-	FDB	0
-
-****************
-* Bird movements
-*
-* Inputs: None
-* Outputs: None
-****************
-
-bird_movement_frame_counter:
-
-	FDB	0
-
-bird_movements:
-	ldd	bird_movement_frame_counter
-	addd	#1
-	std	bird_movement_frame_counter
-
-	cmpd	#200
-	beq	left_bird_blinks
-	cmpd	#210
-	beq	left_bird_unblinks
-
-	cmpd	#500
-	beq	right_bird_blinks
-	cmpd	#510
-	beq	right_bird_unblinks
-
-	cmpd	#700
-	beq	left_bird_foot_moves
-	cmpd	#1300
-	beq	left_bird_foot_unmoves
-
-	cmpd	#980
-	beq	right_bird_foot_moves
-	cmpd	#1010
-	beq	right_bird_foot_unmoves
-
-	cmpd	#1400
-	beq	left_bird_moves_wings
-	cmpd	#1450
-	beq	left_bird_unmoves_wings
-
-	cmpd	#1500
-	beq	reset_counter
-
-	rts
-
-left_bird_blinks:
-
-	ldx	#TEXTBUF+6*COLS_PER_LINE+11
-	lda	#'-' + 64
-	sta	,x++
-	sta	,x
-	rts
-
-left_bird_unblinks:
-
-	ldx	#TEXTBUF+6*COLS_PER_LINE+11
-	lda	#'O'
-	sta	,x++
-	sta	,x
-	rts
-
-right_bird_blinks:
-
-	ldx	#TEXTBUF+6*COLS_PER_LINE+19
-	lda	#'-' + 64
-	sta	,x++
-	sta	,x
-	rts
-
-right_bird_unblinks:
-
-	ldx	#TEXTBUF+6*COLS_PER_LINE+19
-	lda	#'O'
-	sta	,x++
-	sta	,x
-	rts
-
-left_bird_foot_moves:
-
-	ldx	#TEXTBUF+8*COLS_PER_LINE+10
-	lda	#'M'
-	sta	,x+
-	lda	#'-' + 64
-	sta	,x
-	rts
-
-left_bird_foot_unmoves:
-
-	ldx	#TEXTBUF+8*COLS_PER_LINE+10
-	lda	#'-' + 64
-	sta	,x+
-	lda	#'M'
-	sta	,x
-	rts
-
-right_bird_foot_moves:
-
-	ldx	#TEXTBUF+8*COLS_PER_LINE+18
-	lda	#'M'
-	sta	,x+
-	lda	#'-' + 64
-	sta	,x
-	rts
-
-right_bird_foot_unmoves:
-
-	ldx	#TEXTBUF+8*COLS_PER_LINE+18
-	lda	#'-' + 64
-	sta	,x+
-	lda	#'M'
-	sta	,x
-	rts
-
-left_bird_moves_wings:
-
-	ldx	#TEXTBUF+7*COLS_PER_LINE+9
-	lda	#'/' + 64
-	sta	,x
-	ldx	#TEXTBUF+7*COLS_PER_LINE+15
-	lda	#'\\' + 64
-	sta	,x
-	rts
-
-left_bird_unmoves_wings:
-
-	ldx	#TEXTBUF+7*COLS_PER_LINE+9
-	lda	#'(' + 64
-	sta	,x
-	ldx	#TEXTBUF+7*COLS_PER_LINE+15
-	lda	#')' + 64
-	sta	,x
-	rts
-
-reset_counter:
-
-	ldd	#0
-	std	bird_movement_frame_counter
-	rts
-
-**********************
-* Display scroll text
-*
-* Inputs:
-* X = scroll text data
-*
-* Outputs: None
-**********************
-
-display_scroll_text:
-
-	ldd	,x
-	beq	_display_scroll_is_active
-	bmi	_display_scroll_is_inactive
-
-	subd	#1		; Countdown to scrolltext start
-	std	,x
-	rts
-
-_display_scroll_is_inactive:
-	rts
-
-_display_scroll_is_active:
-	lda	2,x
-	beq	_display_scroll_needs_update
-
-	deca
-	sta	2,x
-	rts
-
-_display_scroll_needs_update:
-	lda	3,x
-	sta	2,x	; Reset the frame counter
-
-	ldy	4,x	; Pointer to the text
-	leay	1,y
-	sty	4,x
-
-	ldu	6,x	; U is where on the screen to start
-	lda	#COLS_PER_LINE	; There are 32 columns per line
-
-_display_scroll_text_loop_2:
-
-	ldb	,y+
-	beq	_display_scroll_end
-	stb	,u+
-
-	deca
-	bne	_display_scroll_text_loop_2
-
-	rts
-
-_display_scroll_end:
-	ldd	#-1
-	std	,x
 	rts
 
 ******************************************
@@ -822,7 +450,7 @@ dot_mouth_close:
 	sta	,x
 	rts
 
-***************
+************************
 * Speech bubble
 *
 * Inputs:
@@ -830,7 +458,7 @@ dot_mouth_close:
 * X = text
 *
 * Outputs: None
-***************
+************************
 
 speech_bubble:
 	ldy	#TEXTBUF+3*COLS_PER_LINE
@@ -844,48 +472,6 @@ _speech_bubble_loop:
 
 _speech_bubble_finished:
 	rts
-
-******************
-* Display messages
-*
-* Inputs:
-* X = Messages
-******************
-
-display_messages:
-        ldy     #TEXTBUF
-
-_display_messages_loop:
-        ldb     ,x+
-        beq     _next_line
-        cmpb    #'%' + 64
-        beq     _message_pause
-        cmpb    #255
-        beq     _display_messages_end
-        stb     ,y+
-
-        bra     _display_messages_loop  ; User has not skipped
-
-_display_messages_end:
-        rts
-
-_message_pause:
-        pshs    a,x,y
-        lda     #WAIT_PERIOD
-        jsr     wait_frames
-        tsta
-        puls    a,x,y
-        bne     _display_messages_end
-        bra     _display_messages_loop
-
-_next_line:
-        pshs    a,x
-        tfr     y,d
-        addd    #32
-        andb    #0b11100000
-        tfr     d,y
-        puls    a,x
-        bra     _display_messages_loop
 
 **************
 * Create a dot
@@ -983,7 +569,6 @@ skip_dot:
         jsr     display_text_graphic
 
         rts
-
 
 *************************************************************
 * sine function
@@ -1764,15 +1349,6 @@ clear_area_loop:
 
 	rts
 
-; If any part of the dot routine has been skipped, we end up here
-	jsr	clear_screen
-
-	lda	#9
-	ldb	#11
-	ldx	#loading_message
-	jsr	display_text_graphic
-	rts
-
 ***********************************
 * Uninstall our IRQ service routine
 *
@@ -1790,202 +1366,6 @@ uninstall_irq_service_routine:
         jsr     switch_on_irq
 
         rts
-
-**************
-* Scroll texts
-**************
-
-scroller_15:
-
-	FDB	0	; Starting frame
-	FCB	0	; Frame counter
-	FCB	5	; Frames to pause
-	FDB	scroll_text_15
-	FDB	TEXTBUF+15*32
-
-scroll_text_15:
-
-	FCV	"                                "
-	FCV	"THIS IS A TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_14:
-
-	FDB	100	; Starting frame
-	FCB	0	; Frame counter
-	FCB	8	; Frames to pause
-	FDB	scroll_text_14
-	FDB	TEXTBUF+14*32
-
-scroll_text_14:
-
-	FCV	"                                "
-	FCV	"THIS IS ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_13:
-
-	FDB	150	; Starting frame
-	FCB	0	; Frame counter
-	FCB	10	; Frames to pause
-	FDB	scroll_text_13
-	FDB	TEXTBUF+13*32
-
-scroll_text_13:
-
-	FCV	"                                "
-	FCV	"THIS IS YET ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_12:
-
-	FDB	200	; Starting frame
-	FCB	0	; Frame counter
-	FCB	12	; Frames to pause
-	FDB	scroll_text_12
-	FDB	TEXTBUF+12*32
-
-scroll_text_12:
-
-	FCV	"                                "
-	FCV	"BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_11:
-
-	FDB	250	; Starting frame
-	FCB	0	; Frame counter
-	FCB	15	; Frames to pause
-	FDB	scroll_text_11
-	FDB	TEXTBUF+11*32
-
-scroll_text_11:
-
-	FCV	"                                "
-	FCV	"BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_10:
-
-	FDB	300	; Starting frame
-	FCB	0	; Frame counter
-	FCB	20	; Frames to pause
-	FDB	scroll_text_10
-	FDB	TEXTBUF+10*32
-
-scroll_text_10:
-
-	FCV	"                                "
-	FCV	"10BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_9:
-
-	FDB	300	; Starting frame
-	FCB	0	; Frame counter
-	FCB	20	; Frames to pause
-	FDB	scroll_text_9
-	FDB	TEXTBUF+9*32
-
-scroll_text_9:
-
-	FCV	"                                "
-	FCV	"9BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_0:
-
-	FDB	300	; Starting frame
-	FCB	0	; Frame counter
-	FCB	20	; Frames to pause
-	FDB	scroll_text_0
-	FDB	TEXTBUF
-
-scroll_text_0:
-
-	FCV	"                                "
-	FCV	"0BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_1:
-
-	FDB	300	; Starting frame
-	FCB	0	; Frame counter
-	FCB	20	; Frames to pause
-	FDB	scroll_text_1
-	FDB	TEXTBUF+1*32
-
-scroll_text_1:
-
-	FCV	"                                "
-	FCV	"1BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_2:
-
-	FDB	300	; Starting frame
-	FCB	0	; Frame counter
-	FCB	20	; Frames to pause
-	FDB	scroll_text_2
-	FDB	TEXTBUF+2*32
-
-scroll_text_2:
-
-	FCV	"                                "
-	FCV	"2BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_3:
-
-	FDB	300	; Starting frame
-	FCB	0	; Frame counter
-	FCB	20	; Frames to pause
-	FDB	scroll_text_3
-	FDB	TEXTBUF+3*32
-
-scroll_text_3:
-
-	FCV	"                                "
-	FCV	"3BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
-
-scroller_4:
-
-	FDB	300	; Starting frame
-	FCB	0	; Frame counter
-	FCB	20	; Frames to pause
-	FDB	scroll_text_4
-	FDB	TEXTBUF+4*32
-
-scroll_text_4:
-
-	FCV	"                                "
-	FCV	"4BLAH BLAH BLAH ANOTHER TEST ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"TESTING ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	FCV	"                                "
-	FCB	0
 
 *************************************
 * Here is our raw data for our sounds

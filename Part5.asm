@@ -596,6 +596,9 @@ _do_lines_loop:
 	bsr	left_margin
 	bsr	skip_graphic_data_horizontal
 	bsr	print_text
+	cmpx	#TEXTBUFEND
+	beq	_do_lines_done
+
 	jsr	right_margin
 
 	bra	_do_lines_loop
@@ -656,10 +659,7 @@ _print_text_loop:
 	ldb	,y+
 	beq	_print_text_found_zero
 	cmpb	#255
-	bne	_print_text_char
-
-	leay	-1,y
-	ldb	#GREEN_BOX
+	beq	_found_255
 
 _print_text_char:
 	stb	,x+
@@ -681,6 +681,19 @@ _print_text_found_zero:
 	ldb	#32
 	subb	,s+
 	tfr	b,a
+	rts
+
+
+_found_255:
+	lda	#GREEN_BOX
+
+_255_loop:
+	cmpx	#TEXTBUFEND
+	beq	_255_finished
+	sta	,x+
+	bra	_255_loop
+
+_255_finished:
 	rts
 
 ****************************

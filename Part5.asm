@@ -33,11 +33,13 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor
         jsr     turn_6bit_audio_on
 
-	jsr	large_text_graphics
+	jsr	large_text_graphics		; First section
 
 	jsr	uninstall_irq_service_routine
 
-	rts
+	clra
+	clrb
+	rts		; Return to Disk Extended Color BASIC
 
 *************************
 * Text buffer information
@@ -385,7 +387,7 @@ _clear_screen_loop:
         bne     _clear_screen_loop
         rts
 
-*********************************************
+****************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
@@ -393,7 +395,7 @@ _clear_screen_loop:
 * Output:
 * A = 0        -> a VBlank happened
 * A = non-zero -> user is trying to skip
-*********************************************
+****************************************
 
 POLCAT          EQU     $A000
 

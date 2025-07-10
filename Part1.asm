@@ -440,7 +440,7 @@ count_frames:
 	inca
 	sta	_pluck_frames			; Keep count of the frames
 
-	cmpa	#30				; Every 30 frames,
+	cmpa	#50				; Every 50 frames,
 	bne	_skip_increase
 
 	clra
@@ -461,7 +461,7 @@ _skip_increase:
 * Inputs: None
 *
 * Outputs:
-* A = 1 if empty
+* A = (non-zero) if empty
 * A = 0 if not empty
 *************************************************
 
@@ -497,7 +497,7 @@ _pluck_check_data:
 	bne	_pluck_check_data
 
 	puls	y
-	lda	#1			; There are no plucks
+	lda	#1			; There are no spare pluck slots
 	rts
 
 _pluck_check_data_not_empty:

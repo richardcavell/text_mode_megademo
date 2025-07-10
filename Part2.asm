@@ -281,12 +281,16 @@ _debug_mode_toggle:
 
 	RZB	1
 
-*****************************
+**************************************
 * Wait for a number of frames
 *
-* Inputs:
+* Input:
 * A = number of frames
-*****************************
+*
+* Output:
+* A = 0 -> Successful waiting
+* A = (Non-zero) -> User wants to skip
+**************************************
 
 wait_frames:
 
@@ -299,7 +303,11 @@ wait_frames:
 	deca
 	bne	wait_frames
 
+	clra
+	rts
+
 _wait_frames_skip:
+	lda	#1
 	rts
 
 **************

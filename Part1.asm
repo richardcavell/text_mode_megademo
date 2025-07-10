@@ -786,7 +786,11 @@ wait_frames:
 	deca
 	bne	wait_frames
 
+	clra
+	rts
+
 _wait_frames_skip:
+	lda	#1
 	rts
 
 **********************************************************

@@ -606,7 +606,7 @@ _pluck_char_get_random:
 	tst	a,y		; If there are no more characters on this line
 	beq	_pluck_char_get_random	; choose a different one
 
-	dec	a,y		; There'll be one less character now
+	dec	a,y		; There'll be one less character after this
 
 	ldb	#COLS_PER_LINE
 	mul 			; Multiply b by 32 and put the answer in D

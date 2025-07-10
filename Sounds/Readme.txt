@@ -20,4 +20,3 @@ by cori
 All of the speech in Dot/ was created by
 https://speechsynthesis.online/
 The voice is "Maisie"
-

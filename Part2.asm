@@ -507,50 +507,61 @@ play_sound:
 
 ; This routine was written by Simon Jonassen and slightly modified by me
 
-            lda     sample
-            sta     dasamp+1
-            ldx     #sample+1           ;%11111111
-            ldu     #table1
+	lda	sample
+	sta	dasamp+1
+	ldx	#sample+1	; %11111111
+	ldu	#table1
+
 ****************************************
 * UPPER NYBBLE PROCESSOR
 ****************************************
-getnxt      lda     ,x                  ;grab diff
-            anda    #$F0                ;mask lower bits
-            lda     a,u
-dasamp      adda    #0                  ;add diff to current sample
-            sta     dasamp+1            ;store as new current
-            asla                        ;upper 6 bits
-            asla                        ;for dac store
-            sta     $FF20               ;out on dac
+
+getnxt	lda	,x		; grab diff
+	anda	#$F0		; mask lower bits
+	lda	a,u
+dasamp	adda	#0		; add diff to current sample
+	sta	dasamp+1	; store as new current
+	asla			; upper 6 bits
+	asla			; for dac store
+	sta	AUDIO_PORT	; out on dac
+
 ****************************************
 * just a timing delay
 ****************************************
-delay       ldb     #20
-w1          decb
-            bne     w1
+
+delay	ldb	#20
+w1	decb
+	bne	w1
+
 ****************************************
 * LOWER NYBBLE PROCESSOR
 ****************************************
-            lda     ,x+                 ;grab diff and bump pointer
-            anda    #$0F                ;mask upper bits
-            lda     a,u
-            adda    dasamp+1            ;add diff to current sample
-            sta     dasamp+1            ;store as new current
-            asla                        ;upper 6 bits
-            asla                        ;for dac store
-            sta     $FF20               ;out on dac
+
+	lda	,x+		; grab diff and bump pointer
+	anda	#$0F		; mask upper bits
+	lda	a,u
+	adda	dasamp+1	; add diff to current sample
+	sta     dasamp+1	; store as new current
+	asla			; upper 6 bits
+	asla			; for dac store
+	sta     AUDIO_PORT	; out on dac
+
 ****************************************
 * just a timing delay
 ****************************************
-delay2      ldb     #8                  ;adjust for sample rate
-w2          decb
-            bne     w2
+
+delay2	ldb	#8		; adjust for sample rate
+w2	decb
+	bne	w2
 
 ****************************************
 * Sample plays once only
 ****************************************
-            cmpx    #sample.end
-            blo     getnxt
+
+	cmpx	#sample.end
+	blo	getnxt
+
+; End of routine written by Simon Jonassen and slightly modified by me
 
 	rts
 

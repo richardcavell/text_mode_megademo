@@ -77,7 +77,7 @@ zero_dp_register:
 * Outputs: None
 *********************************
 
-IRQ_HANDLER	EQU	$10d
+IRQ_HANDLER	EQU	$10D
 
 install_irq_service_routine:
 
@@ -355,11 +355,15 @@ display_text:
 	tsta
 	bne	skip_title_screen
 
-	jsr	play_sound		; Play the sound
+; Play the sound
+
+	jsr	play_sound
+
+; "Encase" the three text items
 
 	lda	#5
 	clrb
-	jsr	encase_text		; "Encase" the three text items
+	jsr	encase_text
 	tsta
 	bne	skip_title_screen
 
@@ -455,10 +459,7 @@ _print_text_loop:
 	jsr	text_appears
 	puls	y
 	tsta
-	beq	_find_zero
-
-	lda	#1			; User has skipped this
-	rts
+	bne	_print_text_skipped
 
 _find_zero:
 	tst	,y+
@@ -470,6 +471,10 @@ _find_zero:
 	bne	_print_text_loop	; If not, then print the next line
 					; If yes, then fall through
 	clra
+	rts
+
+_print_text_skipped:
+	lda	#1			; User has skipped this
 	rts
 
 ******************************************
@@ -510,13 +515,13 @@ play_sound:
 * UPPER NYBBLE PROCESSOR
 ****************************************
 getnxt      lda     ,x                  ;grab diff
-            anda    #$f0                ;mask lower bits
+            anda    #$F0                ;mask lower bits
             lda     a,u
 dasamp      adda    #0                  ;add diff to current sample
             sta     dasamp+1            ;store as new current
             asla                        ;upper 6 bits
             asla                        ;for dac store
-            sta     $ff20               ;out on dac
+            sta     $FF20               ;out on dac
 ****************************************
 * just a timing delay
 ****************************************
@@ -527,13 +532,13 @@ w1          decb
 * LOWER NYBBLE PROCESSOR
 ****************************************
             lda     ,x+                 ;grab diff and bump pointer
-            anda    #$0f                ;mask upper bits
+            anda    #$0F                ;mask upper bits
             lda     a,u
             adda    dasamp+1            ;add diff to current sample
             sta     dasamp+1            ;store as new current
             asla                        ;upper 6 bits
             asla                        ;for dac store
-            sta     $ff20               ;out on dac
+            sta     $FF20               ;out on dac
 ****************************************
 * just a timing delay
 ****************************************
@@ -542,14 +547,11 @@ w2          decb
             bne     w2
 
 ****************************************
-* sample looped ?
+* Sample plays once only
 ****************************************
             cmpx    #sample.end
-            beq     play_sound_finished
+            blo     getnxt
 
-dunit       bra     getnxt
-
-play_sound_finished:
 	rts
 
 ******************
@@ -577,14 +579,14 @@ _clear_screen_loop:
 	bne	_clear_screen_loop
 	rts
 
-*******************
+*****************************
 * Clear a line
 *
 * Inputs:
 * A = line to clear (0 to 15)
 *
 * Outputs: None
-*******************
+*****************************
 
 clear_line:
 

@@ -263,8 +263,9 @@ _wait_for_vblank_and_check_for_skip_loop:
 	bra	_wait_for_vblank_and_check_for_skip_loop
 
 _wait_for_vblank:
-	tst	vblank_happened
-	beq	_wait_for_vblank_and_check_for_skip_loop
+	tst	$ff03
+	bpl	_wait_for_vblank_and_check_for_skip_loop
+	tst	$ff02
 
 	clra		; A VBlank happened
 	rts

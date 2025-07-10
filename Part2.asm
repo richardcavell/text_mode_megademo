@@ -18,7 +18,7 @@
 * https://www.asciiart.eu/animals/birds-land
 * Both have been modified by me
 * Animation of the small creature by me
-* "RJFC Presents Text Mode Megademo" was created by this website:
+* The speech "RJFC Presents Text Mode Megademo" was created by this website:
 * https://speechsynthesis.online/
 * The voice is "Ryan"
 * The routine that plays the speech was written by Simon Jonassen
@@ -552,7 +552,7 @@ play_sound_finished:
 ******************
 
 GREEN_BOX       EQU     $60
-WHITE_BOX       EQU     $cf
+WHITE_BOX       EQU     $CF
 
 clear_screen:
 

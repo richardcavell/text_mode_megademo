@@ -76,7 +76,7 @@ zero_dp_register:
 * Outputs: None
 *********************************
 
-IRQ_HANDLER	EQU	$10d
+IRQ_HANDLER	EQU	$10D
 
 install_irq_service_routine:
 
@@ -269,7 +269,7 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; our skip message
 
 GREEN_BOX	EQU	$60
-WHITE_BOX	EQU	$cf
+WHITE_BOX	EQU	$CF
 
 pluck_line_counts:
 	RZB PLUCK_LINES			; 15 zeroes
@@ -825,8 +825,8 @@ get_random:
 
 SEED:
 
-	FCB	0xbe
-	FCB	0xef
+	FCB	0xBE
+	FCB	0xEF
 
 get_random:
 
@@ -834,7 +834,7 @@ get_random:
 	lsra
 	rorb
 	bcc	get_random_no_feedback
-	eora	#$b4
+	eora	#$B4
 get_random_no_feedback:
 	std	SEED
 	rts

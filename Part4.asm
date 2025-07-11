@@ -44,6 +44,7 @@ WAIT_PERIOD	EQU	25
         jsr     turn_6bit_audio_on
 
 	jsr	dot_routine		; First section
+	jsr	loading_screen
 
 	jsr	uninstall_irq_service_routine
 
@@ -569,6 +570,48 @@ skip_dot:
         jsr     display_text_graphic
 
         rts
+
+****************
+* Loading screen
+****************
+
+loading_screen:
+
+        jsr     clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames
+
+        lda     #3
+        clrb
+        ldx     #dogbert
+        jsr     display_text_graphic
+
+        ldx     #loading_text
+        lda     #15
+        ldb     #11
+        jsr     display_text_graphic
+        rts
+
+loading_text:
+
+        FCV     "LOADING...",0
+
+dogbert:
+
+	FCV	"     ,-\"\"\"\"-.",0
+	FCV	"  ,-;-.      '.",0
+	FCV	"  ! ! !--/ \\   \\",0
+	FCV	"  '-^-' !   !  !",0
+	FCV	"  (.)   !   !  !",0
+	FCV	"  !      '-'   !",0
+	FCV	"  !      ! !   !",0
+	FCV	"   \\     (.)  /",0
+	FCV	"    '-.    .-'",0
+	FCV	"      ! !  !",0
+	FCV	"HJW   ! !  !",0
+	FCV	"     (.(...!",0
+	FCB	255
 
 *************************************************************
 * sine function

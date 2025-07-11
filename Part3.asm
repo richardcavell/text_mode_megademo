@@ -427,12 +427,10 @@ _starfield_loop:
 	ldy	#TEXTBUF
 
 _starfield_line_loop:
-	pshs	x,y
 	bsr	starfield_do_line
-	puls	x,y
 
-	leax	10*COLS_PER_LINE,x
-	leay	COLS_PER_LINE,y
+	leax	9*COLS_PER_LINE,x
+;	leay	COLS_PER_LINE,y
 
 	cmpy	#TEXTBUF+15*COLS_PER_LINE
 	blo	_starfield_line_loop
@@ -458,7 +456,7 @@ _starfield_end:
 	clra
 	rts
 
-*********************
+*************************
 * Starfield Do Line
 *
 * Inputs:
@@ -466,8 +464,9 @@ _starfield_end:
 * Y = Screen position
 *
 * Outputs:
-* None
-*********************
+* X = New star data
+* Y = New screen position
+*************************
 
 starfield_do_line:
 
@@ -476,6 +475,8 @@ starfield_do_line:
 _starfield_do_line_loop:
 
 	lda	,x+
+	cmpa	#123		; Rarely, a planet appears
+	beq	_star_planet
 	anda	#0b00011111
 
 ;	cmpa	#0
@@ -484,13 +485,17 @@ _starfield_do_line_loop:
 	cmpa	#1
 	beq	_star_small
 
-	cmpa	#2
-	beq	_star_big
-
 * No star:
 
 	lda	#GREEN_BOX << 8 | GREEN_BOX	; and fallthrough
-	bra	_plot_star
+
+_plot_star:
+	sta	,y+
+
+	decb
+	bne	_starfield_do_line_loop
+
+	rts	; Return X and Y
 
 _star_dot:
 	lda	#'.'+64
@@ -500,17 +505,9 @@ _star_small:
 	lda	#'*'+64
 	bra	_plot_star
 
-_star_big:
+_star_planet:
 	lda	#'O'
 	bra	_plot_star
-
-_plot_star:
-	sta	,y+
-
-	decb
-	bne	_starfield_do_line_loop
-
-	rts
 
 ***********************
 * Multiscroller routine
@@ -809,67 +806,7 @@ _display_scroll_end:
 	std	,x
 	rts
 
-******************************************
-* Switch IRQ and FIRQ interrupts on or off
-******************************************
-
-switch_off_irq_and_firq:
-
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-	rts
-
-switch_on_irq_and_firq:
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-	rts
-
-*******************************
-* Play a sound sample
-*
-* Inputs:
-* A = The delay between samples
-* X = The sound data
-* Y = The end of the sound data
-*******************************
-
-play_sound:
-
-        pshs    a,x,y
-        bsr     switch_off_irq_and_firq
-        puls    a,x,y
-
-        pshs    y       ; _play_sound uses A, X and 2,S
-
-        bsr     _play_sound
-
-        puls    y
-
-        bsr     switch_on_irq_and_firq
-
-        rts
-
-_play_sound:
-        cmpx    2,s                     ; Compare X with Y
-
-        bne     _play_sound_more        ; If we have no more samples, exit
-
-        rts
-
-_play_sound_more:
-        ldb     ,x+
-        stb     AUDIO_PORT
-
-        tfr     a,b
-
-_play_sound_delay_loop:
-        tstb
-        beq     _play_sound             ; Have we completed the delay?
-
-        decb                            ; If not, then wait some more
-
-        bra     _play_sound_delay_loop
-
-***************
+****************
 * Loading screen
 ****************
 

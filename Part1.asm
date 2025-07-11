@@ -242,7 +242,7 @@ skip_message:
 *
 * Outputs:
 * A = 0 Success
-* B = (Non-zero) Buffer overrun
+* A = (Non-zero) Buffer overrun
 *****************************************************
 
 display_message:
@@ -328,7 +328,7 @@ _pluck_loop:
 	tsta
 	bne	_pluck_finished			; If Yes, we are finished
 
-	bsr	count_frames			; If No, keep going
+	jsr	pluck_count_frames		; If No, keep going
 
 	jsr	pluck_continue
 
@@ -359,12 +359,12 @@ _pluck_count_chars_on_one_line:
 
 _pluck_count_chars_test_char:
 	lda	,x+
-	cmpa	#GREEN_BOX		 ; Is it an empty green box?
-	beq	_pluck_count_chars_space ; Yes, so don't count it
-					 ; or
-	inc	,y			 ; No, so count it
+	cmpa	#GREEN_BOX		 	; Is it an empty green box?
+	beq	_pluck_count_chars_found_space	; Yes, so don't count it
+					 	; or
+	inc	,y			 	; No, so count it
 
-_pluck_count_chars_space:
+_pluck_count_chars_found_space:
 	decb
 	bne	_pluck_count_chars_test_char
 
@@ -375,18 +375,17 @@ _pluck_count_chars_space:
 	bra	_pluck_count_chars_on_one_line
 
 _pluck_count_chars_end:
-
 	rts
 
-****************************************
+******************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
 *
 * Output:
-* A = 0        -> a VBlank happened
-* A = Non-zero -> user is trying to skip
-****************************************
+* A = 0          -> A VBlank happened
+* A = (Non-zero) -> User is trying to skip
+******************************************
 
 POLCAT		EQU	$A000
 
@@ -442,45 +441,14 @@ _debug_mode_toggle:
 
 	RZB	1
 
-***********************************
-* Count frames
-*
-* Inputs: None
-* Outputs: None
-***********************************
-
-_pluck_frames:
-	RZB	1
-
-count_frames:
-
-	lda	_pluck_frames
-	inca
-	sta	_pluck_frames			; Keep count of the frames
-
-	cmpa	#50				; Every 50 frames,
-	bne	_skip_increase
-
-	clra
-	sta	_pluck_frames			; reset the counter, and
-	lda	simultaneous_plucks		; increase the number of plucks
-	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
-	beq	_skip_increase
-
-	inca
-	sta	simultaneous_plucks		; fallthrough to rts
-
-_skip_increase:
-	rts
-
 *************************************************
 * Pluck - check to see if the screen is empty yet
 *
 * Inputs: None
 *
 * Outputs:
-* A = (non-zero) if empty
-* A = 0 if not empty
+* A = (Non-zero) Screen is empty
+* A = 0          Screen is not empty
 *************************************************
 
 pluck_is_screen_empty:
@@ -540,6 +508,38 @@ _pluck_check_empty_test_line:
 
 _pluck_check_empty_line_not_empty:
 	clra				; Lines are not clear
+	rts
+
+***********************************
+* Pluck - Count frames
+*
+* Inputs: None
+* Outputs: None
+***********************************
+
+_pluck_frames:
+	RZB	1
+
+pluck_count_frames:
+
+	lda	_pluck_frames
+	inca
+	sta	_pluck_frames			; Keep count of the frames
+
+	cmpa	#50				; Every 50 frames,
+	bne	_skip_increase
+
+	clra
+	sta	_pluck_frames			; reset the counter, and
+
+	lda	simultaneous_plucks		; increase the number of plucks
+	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
+	beq	_skip_increase
+
+	inca
+	sta	simultaneous_plucks		; fallthrough to rts
+
+_skip_increase:
 	rts
 
 ******************

@@ -173,6 +173,7 @@ turn_off_disk_motor:
 
 	clra
 	sta	DSKREG		; Turn off disk motor
+
 	rts
 
 *********************

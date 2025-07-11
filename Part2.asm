@@ -630,7 +630,7 @@ _clear_line_loop:
 *
 * Outputs:
 * A = 0 Everything is okay
-* A = Non-zero Space was pressed
+* A = (Non-zero) User wants to skip
 ************************************************
 
 text_appears:
@@ -821,7 +821,7 @@ _encase_finished_storing:
 	bra	_encase_are_we_done	; Go back and do the next one
 
 _encase_char_found:
-	lda	#125		; This is '='
+	lda	#125			; This is '='
 	sta	-COLS_PER_LINE,x	; add '=' above
 	sta	+COLS_PER_LINE,x	;   and below
 
@@ -903,7 +903,7 @@ _flash_chars_loop:
 
 _skip_flash_chars:
 	pshs	b,x
-	bsr	_restore_chars
+	bsr	restore_chars
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
@@ -958,7 +958,8 @@ _flash_chars_not_flashable:
 * Outputs: None
 *****************************************
 
-_restore_chars:
+restore_chars:
+
 	ldy	#flash_text_storage
 
 _flash_restore_chars:
@@ -1278,8 +1279,6 @@ flash_screen_storage:		; Use the area of memory reserved for
 				; the sound, because we're not
 				; using it again
 
-
-            align   $100
 
             fcb     $f8,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
             fcb     $f9,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00

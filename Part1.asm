@@ -615,7 +615,7 @@ pluck_a_char:
 	tsta
 	beq	_pluck_char_get_random
 
-	rts			; No more characters left
+	rts			; No more unplucked characters left
 
 _pluck_char_get_random:
 	bsr	pluck_char_choose_line	; Chosen line is in A
@@ -701,9 +701,10 @@ pluck_char_choose_line:
 pluck_play_sound:
 
 	lda	#1
-	ldx	#pop_sound	; interrupts and everything else
+	ldx	#pop_sound	; Interrupts and everything else
 	ldy	#pop_sound_end 	; pause while we're doing this
 	jsr	play_sound	; Play the pluck noise
+
 	rts
 
 ********************
@@ -770,10 +771,10 @@ _pluck_phase_3:
 	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
 
-	pshs	b,x,y
+	pshs	b
 	tfr	x,d
 	andb	#0b00011111	; Is X divisible by 32?
-	puls	b,x,y		; Does not affect condition codes
+	puls	b		; Does not affect condition codes
 	beq	_pluck_phase_3_ended
 
 	stb	,x		; Draw it in the next column
@@ -787,12 +788,16 @@ _pluck_phase_3_ended:		; Character has gone off the right side
 
 	rts
 
-*****************************
+***********************************
 * Wait for a number of frames
 *
-* Inputs:
-* A = number of frames
-*****************************
+* Input:
+* A = Number of frames
+*
+* Output:
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
 
 wait_frames:
 
@@ -805,19 +810,21 @@ wait_frames:
 	deca
 	bne	wait_frames
 
-	clra
+	clra				; Normal termination
 	rts
 
 _wait_frames_skip:
-	lda	#1
+	lda	#1			; User wants to skip
 	rts
 
-**********************************************************
+********************************************
 * Returns a random-ish number from 0...65535
+*
+* Inputs: None
 *
 * Output:
 * D = The random number
-**********************************************************
+********************************************
 
 USE_DEEKS_CODE	EQU	1
 
@@ -908,6 +915,8 @@ joke_startup_messages:
 *
 * Inputs:
 * X = Messages
+*
+* Outputs: None
 ******************
 
 display_messages:

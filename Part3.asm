@@ -47,7 +47,8 @@ WAIT_PERIOD	EQU	25
         jsr     turn_6bit_audio_on
 
 	jsr	linux_spoof		; First section
-	jsr	multi_scroller		; Second section
+	jsr	digits_of_pi		; Second section
+	jsr	multi_scroller		; Third section
 	jsr	loading_screen
 
 	jsr	uninstall_irq_service_routine
@@ -395,6 +396,28 @@ ha_ha_message:
 just_kidding_message:
 
 	FCV	"JUST KIDDING!",0,255
+
+**************
+* Digits of pi
+**************
+
+digits_of_pi:
+
+	jsr	clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames                     ; Wait a number of frames
+
+	ldx	#pi_text
+	jsr	display_messages
+
+	rts
+
+pi_text:
+
+	FCV	"THE DIGITS OF PI...",0
+	FCV	"(CALCULATED IN REAL TIME)",0
+	FCB	255
 
 ***********************
 * Multiscroller routine
@@ -856,6 +879,7 @@ _display_messages_loop:
         bra     _display_messages_loop  ; User has not skipped
 
 _display_messages_end:
+	clra
         rts
 
 _message_pause:
@@ -864,7 +888,7 @@ _message_pause:
         jsr     wait_frames
         tsta
         puls    a,x,y
-        bne     _display_messages_end
+        bne     _display_messages_skip
         bra     _display_messages_loop
 
 _next_line:
@@ -875,6 +899,10 @@ _next_line:
         tfr     d,y
         puls    a,x
         bra     _display_messages_loop
+
+_display_messages_skip:
+	lda	#1
+	rts
 
 ***********************************
 * Uninstall our IRQ service routine

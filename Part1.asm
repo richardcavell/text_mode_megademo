@@ -237,10 +237,12 @@ skip_message:
 * Display a message on the screen
 *
 * Inputs:
-* A = line to put it on
+* A = line to put it on (0 to 15)
 * X = string containing the message (ended by a zero)
 *
-* Outputs: None
+* Outputs:
+* A = 0 Success
+* B = (Non-zero) Buffer overrun
 *****************************************************
 
 display_message:
@@ -252,18 +254,29 @@ display_message:
 
 _display_message_loop:
 	cmpy	#TEXTBUFEND
-	bhs	_display_message_finished	; End of text buffer
+	bhs	_display_message_overrun	; End of text buffer
 	lda	,x+
 	beq	_display_message_finished	; Terminating zero
 	sta	,y+
 	bra	_display_message_loop
 
-_display_message_finished:
+_display_message_overrun:
+	lda	#1
 	rts
 
-***************
+_display_message_finished:
+	clra
+	rts
+
+******************************************
 * Pluck routine
-***************
+*
+* Inputs: None
+*
+* Outputs:
+* A = 0 Success
+* A = (Non-zero) User skipped this section
+******************************************
 
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
@@ -311,18 +324,22 @@ _pluck_loop:
 	tsta
 	bne	_pluck_skip			; Does the user wants to skip?
 
-	bsr	count_frames
-
 	jsr	pluck_is_screen_empty		; Is the screen empty?
 	tsta
-	bne	_pluck_finished			; Yes, we are finished
+	bne	_pluck_finished			; If Yes, we are finished
 
-	jsr	pluck_continue			; No, continue plucking
+	bsr	count_frames			; If No, keep going
+
+	jsr	pluck_continue
 
 	bra	_pluck_loop
 
-_pluck_finished:
 _pluck_skip:
+	lda	#1
+	rts
+
+_pluck_finished:
+	clra
 	rts
 
 ***********************************

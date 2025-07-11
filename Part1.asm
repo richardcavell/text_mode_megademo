@@ -569,8 +569,9 @@ _pluck_do_a_frame:
 * Inputs: None
 *
 * Outputs:
-* A = (Non-zero) there is a spare slot
-* X = (If A is non-zero) the slot address
+* A = (Non-zero) There is a spare slot
+* A = 0		 There isn't a spare slot
+* X = (If A is non-zero) The slot address
 *****************************************
 
 pluck_find_a_spare_slot:

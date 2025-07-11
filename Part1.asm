@@ -910,14 +910,16 @@ joke_startup_messages:
 
 	FCB	255
 
-******************
+*********************************
 * Display messages
 *
 * Inputs:
 * X = Messages
 *
-* Outputs: None
-******************
+* Outputs:
+* A = 0 Success
+* A = (Non-zero) User has skipped
+*********************************
 
 display_messages:
 
@@ -946,7 +948,12 @@ _display_messages_skip_sound:
 	puls	a,x,y
 	beq	_display_messages_loop	; User has not skipped
 
+_display_messages_skip:
+	lda	#1		; User wants to skip
+	rts
+
 _display_messages_end:
+	clra
 	rts
 
 _message_pause:
@@ -955,8 +962,10 @@ _message_pause:
 	jsr	wait_frames
 	tsta
 	puls	a,x,y
-	bne	_display_messages_end
-	bra	_display_messages_loop
+	beq	_display_messages_loop
+
+	lda	#1		; User wants to skip
+	rts
 
 _next_line:
 	pshs	a,x
@@ -968,16 +977,15 @@ _next_line:
 	jsr	wait_frames
 	tsta
 	puls	a,x
-	bne	_display_messages_end
+	bne	_display_messages_skip
 	bra	_display_messages_loop
 
 display_messages_play_sound:
 	lda	#1
-	ldx	#pluck_sound	 ; interrupts and everything else
-	ldy	#pluck_sound_end   ; pause while we're doing this
-	jsr	play_sound	 ; Play the pluck noise
+	ldx	#pluck_sound		; Interrupts and everything else
+	ldy	#pluck_sound_end	; pause while we're doing this
+	jsr	play_sound		; Play the pluck noise
 	rts
-
 
 ******************************************
 * Switch IRQ and FIRQ interrupts on or off

@@ -800,6 +800,8 @@ _pluck_phase_3_ended:		; Character has gone off the right side
 ***********************************
 
 wait_frames:
+	tsta				; If A = 0, immediately exit
+	beq	_wait_frames_success
 
 	pshs	a
 	jsr	wait_for_vblank_and_check_for_skip
@@ -810,6 +812,7 @@ wait_frames:
 	deca
 	bne	wait_frames
 
+_wait_frames_success:
 	clra				; Normal termination
 	rts
 

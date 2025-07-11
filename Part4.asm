@@ -14,13 +14,15 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 *
-* ASCII art in this section was made by Microsoft Copilot and
+* ASCII art in the first section was made by Microsoft Copilot and
 * modified by me
 * Animation done by me
 * The sound of the finger snap is by cori at Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Finger_clicks.ogg
 * All of the speech was created by https://speechsynthesis.online/
 * The voice is "Maisie"
+* ASCII art of Dogbert on the loading screen is by Hayley (hjw)
+* from https://www.asciiart.eu/comics/dilbert
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -582,8 +584,8 @@ loading_screen:
         lda     #WAIT_PERIOD
         jsr     wait_frames
 
-        lda     #3
-        clrb
+        lda     #2
+        ldb	#7
         ldx     #dogbert
         jsr     display_text_graphic
 

@@ -44,7 +44,7 @@ WAIT_PERIOD	EQU	25
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
-	jsr	loading_screen			; Third section
+	jsr	loading_screen
 
 	jsr	uninstall_irq_service_routine
 

@@ -173,7 +173,7 @@ $(POP_SOUND_RES) $(TYPE_SOUND_RES) $(SNAP_SOUND_RES) \
 $(NOW_SOUND_RES) $(MOVE_SOUND_RES) $(MMORE_SOUND_RES) $(CHNGE_SOUND_RES):
 	@$(RM) $@
 	@$(ECHO) Resampling $@ ...
-	ffmpeg -i $< -v warning -af "dynaudnorm=p=0.9:s=5,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
+	ffmpeg -channel_layout mono -i $< -v warning -af "dynaudnorm=p=0.9:s=5,lowpass=f=3750,aresample=ochl=mono:osf=u8:osr=8192:dither_method=triangular" -f u8 -c:a pcm_u8 $@
 	@$(ECHO) ... Done
 
 $(SOUND_STR): $(SOUND_STR_SRC)

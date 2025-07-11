@@ -553,11 +553,11 @@ pluck_continue:
 
 	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
-	beq	_pluck_do_a_frame		; No, just keep processing
+	beq	_pluck_continue_do_a_frame	; No, just keep processing
 
 	jsr	pluck_a_char			; Yes, pluck a character
 
-_pluck_do_a_frame:
+_pluck_continue_do_a_frame:
 
 	jsr	pluck_do_frame			; Do one frame
 

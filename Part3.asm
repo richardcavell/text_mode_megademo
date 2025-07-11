@@ -47,7 +47,7 @@ WAIT_PERIOD	EQU	25
         jsr     turn_6bit_audio_on
 
 	jsr	linux_spoof		; First section
-	jsr	digits_of_pi		; Second section
+	jsr	starfield		; Second section
 	jsr	multi_scroller		; Third section
 	jsr	loading_screen
 
@@ -397,27 +397,21 @@ just_kidding_message:
 
 	FCV	"JUST KIDDING!",0,255
 
-**************
-* Digits of pi
-**************
+***********
+* Starfield
+***********
 
-digits_of_pi:
+starfield:
 
 	jsr	clear_screen
 
         lda     #WAIT_PERIOD
         jsr     wait_frames                     ; Wait a number of frames
 
-	ldx	#pi_text
-	jsr	display_messages
+
 
 	rts
 
-pi_text:
-
-	FCV	"THE DIGITS OF PI...",0
-	FCV	"(CALCULATED IN REAL TIME)",0
-	FCB	255
 
 ***********************
 * Multiscroller routine

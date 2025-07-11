@@ -397,9 +397,15 @@ just_kidding_message:
 
 	FCV	"JUST KIDDING!",0,255
 
-***********
+***************
 * Starfield
-***********
+*
+* Inputs: None
+* Outputs: None
+***************
+
+starfield_x_pos:
+	RZB	2
 
 starfield:
 
@@ -408,10 +414,103 @@ starfield:
         lda     #WAIT_PERIOD
         jsr     wait_frames                     ; Wait a number of frames
 
+_starfield_loop:
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	bne	_starfield_skip
 
+	ldd	starfield_x_pos
 
+	ldx	#$8000		; Use the ROM as our data source
+	leax	d,x
+
+	ldy	#TEXTBUF
+
+_starfield_line_loop:
+	pshs	x,y
+	bsr	starfield_do_line
+	puls	x,y
+
+	leax	10*COLS_PER_LINE,x
+	leay	COLS_PER_LINE,y
+
+	cmpy	#TEXTBUF+15*COLS_PER_LINE
+	blo	_starfield_line_loop
+
+	ldx	#scroller_starfield	; Add the scroll text at the bottom
+	jsr	display_scroll_text	; of the screen
+
+	ldd	scroller_starfield	; As soon as the scroll text is
+					; finished, so is this section
+	bmi	_starfield_end
+
+	ldd	starfield_x_pos
+	addd	#1
+	std	starfield_x_pos
+
+	bra	_starfield_loop
+
+_starfield_skip:
+	lda	#1
 	rts
 
+_starfield_end:
+	clra
+	rts
+
+*********************
+* Starfield Do Line
+*
+* Inputs:
+* X = Star data
+* Y = Screen position
+*
+* Outputs:
+* None
+*********************
+
+starfield_do_line:
+
+	ldb	#COLS_PER_LINE
+
+_starfield_do_line_loop:
+
+	lda	,x+
+	anda	#0b00011111
+
+;	cmpa	#0
+	beq	_star_dot
+
+	cmpa	#1
+	beq	_star_small
+
+	cmpa	#2
+	beq	_star_big
+
+* No star:
+
+	lda	#GREEN_BOX << 8 | GREEN_BOX	; and fallthrough
+	bra	_plot_star
+
+_star_dot:
+	lda	#'.'+64
+	bra	_plot_star
+
+_star_small:
+	lda	#'*'+64
+	bra	_plot_star
+
+_star_big:
+	lda	#'O'
+	bra	_plot_star
+
+_plot_star:
+	sta	,y+
+
+	decb
+	bne	_starfield_do_line_loop
+
+	rts
 
 ***********************
 * Multiscroller routine
@@ -919,6 +1018,22 @@ uninstall_irq_service_routine:
 **************
 * Scroll texts
 **************
+
+scroller_starfield:
+
+	FDB	0	; Starting frame
+	FCB	0	; Frame counter
+	FCB	5	; Frames to pause
+	FDB	scroll_text_starfield
+	FDB	TEXTBUF+15*32
+
+scroll_text_starfield:
+
+	FCV	"                                "
+	FCV	"STARFIELD SCROLLER"
+	FCV	" TESTING TESTING TESTING"
+	FCV	"                                "
+	FCB	0
 
 scroller_15:
 

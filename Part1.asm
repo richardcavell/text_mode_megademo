@@ -189,7 +189,8 @@ turn_6bit_audio_on:
 
 * End code modified from code written by Trey Tomes
 
-* This code was written by other people (see the top of this file)
+* This code was written by other people, taken from
+* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 
 	ldb	PIA2_CRA
 	andb	#0b11111011

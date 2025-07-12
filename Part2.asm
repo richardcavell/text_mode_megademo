@@ -866,8 +866,8 @@ _encase_right:
 * Flashes text with white (buff) boxes
 *
 * Inputs:
-* A = line number (0 to 15)
-* B = number of times to flash
+* A = Line number (0 to 15)
+* B = Number of times to flash
 **************************************
 
 flash_text_white:

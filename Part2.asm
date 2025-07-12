@@ -596,7 +596,7 @@ _clear_screen_loop:
 * Clear a line
 *
 * Inputs:
-* A = line to clear (0 to 15)
+* A = Line to clear (0 to 15)
 *
 * Outputs: None
 *****************************
@@ -631,7 +631,7 @@ _clear_line_loop:
 * X = String to print
 *
 * Outputs:
-* A = 0 Everything is okay
+* A = 0 Finished, everything is okay
 * A = (Non-zero) User wants to skip
 ************************************************
 
@@ -764,13 +764,15 @@ _creature_blink_frames:
 
 *************************************
 * Encases text on the screen
-* A = line number
-* B = direction (0 = right, 1 = left)
+* A = Line number
+* B = Direction (0 = right, 1 = left)
 *
 * Outputs:
-* A = 0 Everything is okay
-* A = non-zero User wants to skip
+* A = 0 Finished, everything is okay
+* A = (Non-zero) User wants to skip
 *************************************
+
+EQUALS_SIGN	EQU	125
 
 encase_text:
 
@@ -807,7 +809,7 @@ _encase_text_more:
 	cmpa	,x		; If x points to a green box...
 	bne	_encase_char_found
 
-	lda	#125		; then put a '=' in it
+	lda	#EQUALS_SIGN	; then put a '=' in it
 
 	tstb
 	bne	_encase_backwards
@@ -823,7 +825,7 @@ _encase_finished_storing:
 	bra	_encase_are_we_done	; Go back and do the next one
 
 _encase_char_found:
-	lda	#125			; This is '='
+	lda	#EQUALS_SIGN		; This is '='
 	sta	-COLS_PER_LINE,x	; add '=' above
 	sta	+COLS_PER_LINE,x	;   and below
 
@@ -848,7 +850,7 @@ _encase_are_we_done:
 	bne	_encase_text_loop
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
-	rts			; we are finished. Return a
+	rts			; we are finished. Return A
 
 _encase_right:
 	tfr	d,y

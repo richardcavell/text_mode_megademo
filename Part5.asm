@@ -1069,18 +1069,8 @@ _b_signed_is_negative:
 * Credits
 *********
 
-credit_roll_finished:
-	RZB	1
-
 credits:
 
-	tst	credit_roll_finished
-	beq	_credits_active
-
-	clra
-	rts
-
-_credits_active:
 	ldu	#credit_roll
 
 _credits_loop:
@@ -1143,7 +1133,7 @@ _credits_next_line:
 	rts			; Screen has been filled
 
 _credits_finished:
-	com	credit_roll_finished
+
 	rts
 
 ***********************************
@@ -1171,6 +1161,7 @@ uninstall_irq_service_routine:
 * Art by Matzec, modified by me
 
 cartman_text_graphic:
+
 	FCV	"                       ..-**-..",0
 	FCV	"                    .,(        ),.",0
 	FCV	"                 .-\"   '-'----'   \"-.",0
@@ -1199,11 +1190,13 @@ cartman_text_graphic:
 	FCV	"        '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"'",0
 	FCV	"              C A R T M A N BY MATZEC",0
 	FCB	255
+
 cartman_text_graphic_end:
 
 * Art by Normand Veilleux, modified by me
 
 disk_text_graphic:
+
 	FCV	"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",0
 	FCV	"8                                                   8",0
 	FCV	"8  A---------------A                                8",0
@@ -1233,12 +1226,14 @@ disk_text_graphic:
 	FCV	"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"' '\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"",0
 	FCV	"                                   NORMAND  VEILLEUX",0
 	FCB	255
+
 disk_text_graphic_end:
 
 * Art by anonymous at asciiart.eu/space/planets
 * Modified by me
 
 earth_text_graphic:
+
 	FCV	"              .-O#&&*''''?D:>B\\.",0
 	FCV	"          .O/\"'''  '',, DMF9MMMMMHO.",0
 	FCV	"       .O&#'        '\"MBHMMMMMMMMMMMHO.",0
@@ -1263,6 +1258,7 @@ earth_text_graphic:
 	FCV	"            . .                  .-",0
 	FCV	"              ''--..,DD###PP=\"\"'",0
 	FCB	255
+
 earth_text_graphic_end:
 
 * Art by name unknown at asciiart.eu
@@ -1296,6 +1292,9 @@ red_dwarf_graphic:
 	FCB	255
 
 red_dwarf_graphic_end:
+
+* This art is by Blazej Kozlowski at asciiart.eu
+* I have modified it
 
 mortal_kombat_graphic:
 
@@ -1355,8 +1354,8 @@ credit_roll:
 	FCB	0
 	FCB	0
 	FCB	0
-	FCV	"CREDITS",0
-	FCV	"TESTING",0
+	FCV	"            CREDITS",0
+	FCB	0
 	FCB	0
 	FCB	0
 	FCB	0

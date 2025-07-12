@@ -14,15 +14,15 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 *
-* ASCII art in the first section was made by Microsoft Copilot and
+* ASCII art of Dogbert in the first section is by Hayley (hjw)
+* from https://www.asciiart.eu/comics/dilbert
+* ASCII art in the second section was made by Microsoft Copilot and
 * modified by me
 * Animation done by me
 * The sound of the finger snap is by cori at Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Finger_clicks.ogg
 * All of the speech was created by https://speechsynthesis.online/
 * The voice is "Maisie"
-* ASCII art of Dogbert on the loading screen is by Hayley (hjw)
-* from https://www.asciiart.eu/comics/dilbert
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -45,8 +45,8 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor
         jsr     turn_6bit_audio_on
 
-	jsr	dot_routine		; First section
-	jsr	loading_screen
+	jsr	dogbert_routine		; First section
+	jsr	dot_routine		; Second section
 
 	jsr	uninstall_irq_service_routine
 
@@ -210,6 +210,47 @@ turn_6bit_audio_on:
 * End of code written by other people
 
         rts
+
+*****************
+* Dogbert Routine
+*****************
+
+dogbert_routine:
+
+        jsr     clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames
+
+        lda     #2
+        ldb	#7
+        ldx     #dogbert
+        jsr     display_text_graphic
+
+_loop:
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	beq	_loop
+
+        rts
+
+* This text graphic is by Hayley at asciiart.eu
+
+dogbert:
+
+	FCV	"     ,-\"\"\"\"-.",0
+	FCV	"  ,-;-.      '.",0
+	FCV	"  ! ! !--/ \\   \\",0
+	FCV	"  '-^-' !   !  !",0
+	FCV	"  (.)   !   !  !",0
+	FCV	"  !      '-'   !",0
+	FCV	"  !      ! !   !",0
+	FCV	"   \\     (.)  /",0
+	FCV	"    '-.    .-'",0
+	FCV	"      ! !  !",0
+	FCV	"HJW   ! !  !",0
+	FCV	"     (.(...!",0
+	FCB	255
 
 ******************
 * Clear the screen
@@ -572,48 +613,6 @@ skip_dot:
         jsr     display_text_graphic
 
         rts
-
-****************
-* Loading screen
-****************
-
-loading_screen:
-
-        jsr     clear_screen
-
-        lda     #WAIT_PERIOD
-        jsr     wait_frames
-
-        lda     #2
-        ldb	#7
-        ldx     #dogbert
-        jsr     display_text_graphic
-
-        ldx     #loading_text
-        lda     #15
-        ldb     #11
-        jsr     display_text_graphic
-        rts
-
-loading_text:
-
-        FCV     "LOADING...",0
-
-dogbert:
-
-	FCV	"     ,-\"\"\"\"-.",0
-	FCV	"  ,-;-.      '.",0
-	FCV	"  ! ! !--/ \\   \\",0
-	FCV	"  '-^-' !   !  !",0
-	FCV	"  (.)   !   !  !",0
-	FCV	"  !      '-'   !",0
-	FCV	"  !      ! !   !",0
-	FCV	"   \\     (.)  /",0
-	FCV	"    '-.    .-'",0
-	FCV	"      ! !  !",0
-	FCV	"HJW   ! !  !",0
-	FCV	"     (.(...!",0
-	FCB	255
 
 *************************************************************
 * sine function

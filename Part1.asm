@@ -941,15 +941,18 @@ _display_messages_loop:
 	pshs	a,x,y
 
 	cmpb	#GREEN_BOX
-	beq	_display_messages_skip_sound
+	beq	_display_messages_space
+
 	bsr	display_messages_play_sound
 
-_display_messages_skip_sound:
 	lda	#2
 	jsr	wait_frames
 	tsta
+
+_display_messages_continue:
 	puls	a,x,y
-	beq	_display_messages_loop	; User has not skipped
+	beq	_display_messages_loop	; If branch is taken,
+					; user has not skipped
 
 _display_messages_skip:
 	lda	#1		; User wants to skip
@@ -958,6 +961,12 @@ _display_messages_skip:
 _display_messages_end:
 	clra
 	rts
+
+_display_messages_space:
+	lda	#15		; silence for 15 frames
+	jsr	wait_frames
+	tsta
+	bra	_display_messages_continue
 
 _message_pause:
 	pshs	a,x,y
@@ -976,9 +985,11 @@ _next_line:
 	addd	#COLS_PER_LINE
 	andb	#0b11100000
 	tfr	d,y
+	pshs	y
 	lda	#5
 	jsr	wait_frames
 	tsta
+	puls	y
 	puls	a,x
 	bne	_display_messages_skip
 	bra	_display_messages_loop

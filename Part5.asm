@@ -10,6 +10,7 @@
 *
 * All of the ASCII art is from asciiart.eu
 * Cartman is by Matzec, disk is by Normand Veilleux
+* The Mortal Kombat art is by Blazej Kozlowski
 * The rest are by anonymous/name unknown.
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
@@ -34,6 +35,7 @@ WAIT_PERIOD	EQU	25
         jsr     turn_6bit_audio_on
 
 	jsr	large_text_graphics		; First section
+	jsr	credits				; Second section
 
 	jsr	uninstall_irq_service_routine
 
@@ -70,6 +72,7 @@ graphic:
 			; 1 = Floppy disk
 			; 2 = Earth
 			; 3 = Red Dwarf
+			; 4 = Mortal Kombat
 
 horizontal_coord:	; of the graphic
 
@@ -92,6 +95,7 @@ CARTMAN_TEXT_GRAPHIC_HEIGHT		EQU	27
 DISK_TEXT_GRAPHIC_HEIGHT		EQU	28
 EARTH_TEXT_GRAPHIC_HEIGHT		EQU	23
 RED_DWARF_GRAPHIC_HEIGHT		EQU	23
+MORTAL_KOMBAT_GRAPHIC_HEIGHT		EQU	35
 
 CARTMAN_HORIZONTAL_ANGLE_SPEED		EQU	4
 CARTMAN_VERTICAL_ANGLE_SPEED		EQU	2
@@ -127,7 +131,7 @@ large_text_graphic_viewer_loop:
 	cmpa	#2
 	beq	_large_text_graphic_3
 	cmpa	#3
-	lbeq	skip_large_text_graphic_viewer
+	beq	_large_text_graphic_4
 	jmp	skip_large_text_graphic_viewer
 
 _large_text_graphic_1:
@@ -147,6 +151,13 @@ _large_text_graphic_2:
 
 _large_text_graphic_3:
 	lda	#3
+	sta	graphic
+	ldd	#0
+	std	cartman_frames
+	bra	_large_text_animate_cartman
+
+_large_text_graphic_4:
+	lda	#4
 	sta	graphic
 	ldd	#0
 	std	cartman_frames
@@ -184,6 +195,8 @@ _large_text_animate_cartman:
 	beq	_earth
 	cmpa	#3
 	beq	_red_dwarf
+	cmpa	#4
+	beq	_mortal_kombat
 
 _cartman:
 	ldx	#cartman_text_graphic
@@ -203,6 +216,11 @@ _earth:
 _red_dwarf:
 	ldx	#red_dwarf_graphic
 	ldy	#RED_DWARF_GRAPHIC_HEIGHT
+	bra	_display_graphic
+
+_mortal_kombat:
+	ldx	#mortal_kombat_graphic
+	ldy	#MORTAL_KOMBAT_GRAPHIC_HEIGHT
 	bra	_display_graphic
 
 _display_graphic:
@@ -1047,6 +1065,87 @@ _b_signed_is_negative:
 	addd	#1
 	rts
 
+*********
+* Credits
+*********
+
+credit_roll_finished:
+	RZB	1
+
+credits:
+
+	tst	credit_roll_finished
+	beq	_credits_active
+
+	clra
+	rts
+
+_credits_active:
+	ldu	#credit_roll
+
+_credits_loop:
+	pshs	u
+
+	jsr	wait_for_vblank_and_check_for_skip
+	puls	u
+	tsta
+	bne	_user_skip
+
+	pshs	u
+	jsr	clear_screen
+	puls	u
+
+	pshs	u
+	bsr	draw_credits
+	puls	u
+
+	pshs	u
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+	puls	u
+	tsta
+	bne	_user_skip
+
+_find_next_line:			; Set U to point to the next line
+	lda	,u+
+	bne	_find_next_line
+
+	bra	_credits_loop
+
+_user_skip:
+	lda	#1
+	rts
+
+*************
+
+draw_credits:
+
+	ldx	#TEXTBUF
+
+_print_line:
+	lda	,u+
+	beq	_credits_next_line
+	cmpa	#255
+	beq	_credits_finished
+	sta	,x+
+	bra	_print_line
+
+_credits_next_line:
+
+	tfr	x,d
+	addd	#32
+	andb	#0b11100000
+	tfr	d,x
+
+	cmpx	#TEXTBUFEND
+	blo	_print_line
+
+	rts			; Screen has been filled
+
+_credits_finished:
+	com	credit_roll_finished
+	rts
+
 ***********************************
 * Uninstall our IRQ service routine
 *
@@ -1170,6 +1269,7 @@ earth_text_graphic_end:
 * Modified by me
 
 red_dwarf_graphic:
+
 	FCV	"       ..                                   ,--------.",0
 	FCV	"      / /                                 ,' /.!    /",0
 	FCV	"    RED'                                ,'    !!   /",0
@@ -1194,4 +1294,84 @@ red_dwarf_graphic:
 	FCV	"         !!'                               ! !",0
 	FCV	"       '\"---\"'                           '\"---\"'",0
 	FCB	255
+
 red_dwarf_graphic_end:
+
+mortal_kombat_graphic:
+
+	FCV	"                       ...GGGGGPPPPP...",0
+	FCV	"                  ..GD$$$$$$$$$$$$$$$$$$BP..",0
+	FCV	"               .G$$$$$$P^^\"\"J$$B\"\"\"\"^^T$$$$$$P.",0
+	FCV	"            .G$$$P^T$$B    D$P T;       \"\"^^T$$$P.",0
+	FCV	"          .D$$P^\"  :$; '  :$;                \"^T$$B.",0
+	FCV	"        .D$$P'      T$B.   T$B                  'T$$B.",0
+	FCV	"       D$$P'      .GG$$$$BPD$$$P.D$BPP.           'T$$B",0
+	FCV	"      D$$P      .D$$$$$$$$$$$$$$$$$$$$BP.           T$$B",0
+	FCV	"     D$$P      D$$$$$$$$$$$$$$$$$$$$$$$$$B.          T$$B",0
+	FCV	"    D$$P      D$$$$$$$$$$$$$$$$$$P^^T$$$$P            T$$B",0
+	FCV	"   D$$P    '-'T$$$$$$$$$$$$$$$$$$BGGPD$$$$B.           T$$B",0
+ 	FCV	"  :$$$      .D$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$P...G.     $$$;",0
+	FCV	"  $$$;     D$$$$$$$$$$$$$$$$$$$$$$$P^\"^T$$$$P^^T$$$;    :$$$",0
+	FCV	" :$$$     :$$$$$$$$$$$$$$:$$$$$$$$$.    \"^T$BPD$$$$,     $$$;",0
+	FCV	" $$$;     :$$$$$$$$$$$$$$BT$$$$$P^^T$P.    'T$$$$$$;     :$$$",0
+	FCV	":$$$      :$$$$$$$$$$$$$$P '^^^'    \"^T$P.    LB'TP       $$$;",0
+	FCV	":$$$      $$$$$$$$$$$$$$$              'T$$P..;$B         $$$;",0
+	FCV	"$$$;      $$$$$$$$$$$$$$;                'T$$$$:TB        :$$$",0
+	FCV	"$$$;      $$$$$$$$$$$$$$$                        TB    .  :$$$",0
+	FCV	":$$$     D$$$$$$$$$$$$$$$.                        $B...TB $$$;",0
+	FCV	":$$$  .G$$$$$$$$$$$$$$$$$$$P............GP..      :$'^^^' $$$;",0
+	FCV	" $$$;  '^^'T$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$P.    TB.., :$$$",0
+	FCV	" :$$$       T$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$B.   \"^\"  $$$;",0
+	FCV	"  $$$;       '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$B      :$$$",0
+	FCV	"  :$$$        $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$;     $$$;",0
+	FCV	"   T$$B    .  :$$'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$;   D$$P",0
+	FCV	"    T$$B   T$G$$; :$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  D$$P",0
+	FCV	"     T$$B   '^^'  :$$ \"^T$$$$$$$$$$$$$$$$$$$$$$$$$$$ D$$P",0
+	FCV	"      T$$B        $P     T$$$$$$$$$$$$$$$$$$$$$$$$$;D$$P",0
+	FCV	"       T$$B.      '       $$$$$$$$$$$$$$$$$$$$$$$$$$$$P",0
+	FCV	"        'T$$$P.   BUG    D$$$$$$$$$$$$$$$$$$$$$$$$$$P'",0
+	FCV	"          'T$$$$P......G$$$$$$$$$$$$$$$$$$$$$$$$$$P'",0
+	FCV	"            \"^$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$^\"",0
+	FCV	"               \"^T$$$$$$$$$$$$$$$$$$$$$$$$$$P^\"",0
+	FCV	"                   \"\"\"^^^T$$$$$$$$$$P^^^\"\"\"",0
+
+mortal_kombat_graphic_end:
+
+credit_roll:
+
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCV	"CREDITS",0
+	FCV	"TESTING",0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+	FCB	0
+
+	FCB	255		; Marks the end

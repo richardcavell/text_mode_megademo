@@ -432,7 +432,8 @@ display_text:
 				; and fallthrough
 
 skip_title_screen:
-	com	creature_blink_finished
+	lda	#1
+	sta	creature_blink_finished
 
 	rts
 

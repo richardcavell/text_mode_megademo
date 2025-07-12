@@ -202,7 +202,7 @@ turn_6bit_audio_on:
 	orb	#0b00000100
 	stb	PIA2_CRA
 
-* End of code written by other people
+* End of code modified by me from code written by other people
 
 	rts
 

@@ -16,7 +16,7 @@
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
-* Both have been modified by me
+* Both graphics have been modified by me
 * Animation of the small creature by me
 * The speech "RJFC Presents Text Mode Megademo" was created by this website:
 * https://speechsynthesis.online/
@@ -190,7 +190,8 @@ turn_6bit_audio_on:
 
 * End code modified from code written by Trey Tomes
 
-* This code was written by other people (see the top of this file)
+* This code was written by other people (see here)
+* https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 
 	ldb	PIA2_CRA
 	andb	#0b11111011
@@ -202,7 +203,7 @@ turn_6bit_audio_on:
 	orb	#0b00000100
 	stb	PIA2_CRA
 
-* End of code written by other people
+* End of code modified by me from code written by other people
 
 	rts
 
@@ -223,8 +224,8 @@ TEXT_LINES	EQU	16
 * Inputs: None
 *
 * Output:
-* A = 0        -> a VBlank happened
-* A = Non-zero -> user is trying to skip
+* A = 0          -> A VBlank happened
+* A = (Non-zero) -> User is trying to skip
 ****************************************
 
 POLCAT		EQU	$A000
@@ -288,7 +289,7 @@ _debug_mode_toggle:
 * A = number of frames
 *
 * Output:
-* A = 0 -> Successful waiting
+* A = 0          -> Successful waiting
 * A = (Non-zero) -> User wants to skip
 **************************************
 

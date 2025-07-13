@@ -873,6 +873,9 @@ _encase_right:
 
 flash_text_white:
 
+	tstb
+	beq	_flash_finished	; Handle the case where B = 0
+
 	decb			; We test at the bottom
 	pshs	b
 
@@ -899,7 +902,7 @@ _flash_copy_line:
 
 _flash_chars_loop:
 	pshs	b,x
-	bsr	_flash_chars_white
+	bsr	flash_chars_white
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
@@ -916,7 +919,7 @@ _skip_flash_chars:
 	rts
 
 _skip_flash_chars_2:
-	tstb			; We do this routine b times
+	tstb			; We do this routine B times
 	beq	_flash_finished
 
 	decb
@@ -930,7 +933,7 @@ _flash_finished:
 * Turns all chars on a line white
 *********************************
 
-_flash_chars_white:
+flash_chars_white:
 
 _flash_chars_white_loop:
 	lda	,x

@@ -1442,6 +1442,31 @@ display_boxes:
 ***************
 
 display_chars:
+	ldx	start_line
+	clrb
+
+_display_chars_loop:
+	lda	,x+
+	incb
+	cmpa	#WHITE_BOX
+	bne	_display_chars_loop
+
+	pshs	b,x
+	jsr	print_char
+	puls	b,x
+
+_display_chars_loop_2:
+	lda	,x
+	incb
+	cmpa	#WHITE_BOX
+	beq	_display_chars_finished
+	bra	_display_chars_loop_2
+
+_display_chars_finished:
+
+	rts
+
+print_char:
 
 	rts
 

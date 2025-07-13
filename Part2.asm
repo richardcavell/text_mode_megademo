@@ -28,7 +28,7 @@
 * Also, you can make the lower right corner character cycle when
 * the interrupt request service routine operates.
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -1416,7 +1416,7 @@ produce_string:
 	ldy	string_text
 	ldx	#string
 
-	ldb	#horizontal_position
+	ldb	horizontal_position
 
 _left_boxes:
 	tstb
@@ -1429,14 +1429,21 @@ _left_boxes:
 _printing_now:
 
 	lda	,y+
+	beq	_produce_string_right
 	sta	,x+
 
-	beq	_produce_string_finished
 	bra	_printing_now
 
-_produce_string_finished:
-		; The string text, including the terminating zero, is at
-		; the right location within string
+_produce_string_right:
+
+_produce_string_right_loop:
+	lda	#GREEN_BOX
+	sta	,x+
+	tfr	x,d
+	andb	#0b00011111
+	bne	_produce_string_right_loop
+
+		; The string text is at the right location within string
 
 	rts
 
@@ -1533,9 +1540,12 @@ _display_characters_finished:
 
 display_proceed:
 
+;	lda	left_box
+;	cmpa	horizontal_position
+;	blo	_display_proceed_finished
+
 	lda	left_box
-	cmpa	horizontal_position
-	blo	_display_proceed_finished
+	beq	_display_proceed_finished
 
 	dec	left_box
 	inc	right_box

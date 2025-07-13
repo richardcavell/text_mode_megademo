@@ -1353,17 +1353,17 @@ credit_appears:
 	stb	line_number
 	stx	string
 
-	lda	#15
+	lda	#16
 	sta	left_box
 
-	lda	#16
+	lda	#15
 	sta	right_box
 
 _credit_appears_loop:
 
-	jsr	display_boxes
 	jsr	display_chars
 	jsr	display_proceed
+	jsr	display_boxes
 
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
@@ -1442,31 +1442,8 @@ display_boxes:
 ***************
 
 display_chars:
-	ldx	start_line
-	clrb
 
-_display_chars_loop:
-	lda	,x+
-	incb
-	cmpa	#WHITE_BOX
-	bne	_display_chars_loop
 
-	pshs	b,x
-	jsr	print_char
-	puls	b,x
-
-_display_chars_loop_2:
-	lda	,x
-	incb
-	cmpa	#WHITE_BOX
-	beq	_display_chars_finished
-	bra	_display_chars_loop_2
-
-_display_chars_finished:
-
-	rts
-
-print_char:
 
 	rts
 

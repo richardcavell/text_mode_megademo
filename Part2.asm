@@ -1227,6 +1227,10 @@ opening_credits_text:
 	FCB	0
 	FCV	"AND ANOTHER"
 	FCB	0
+	FCV	"BLAH BLAH BLAH BLAH BLAH"
+	FCB	0
+	FCV	"AND ANOTHER BLAH BLAH BLAH"
+	FCB	0
 	FCB	255
 
 roll_credits:
@@ -1264,6 +1268,9 @@ _roll_credits_find_next:
 _roll_credits_find_next_2:
 	lda	,x+
 	bne	_roll_credits_find_next_2
+
+	lda	#WAIT_PERIOD*4
+	jsr	wait_frames
 
 	bra	_roll_credits_loop
 
@@ -1366,7 +1373,10 @@ string_text:
 	RZB	2
 
 string:
+
 	RZB	COLS_PER_LINE
+
+string_end:
 
 credit_appears:
 
@@ -1404,6 +1414,7 @@ _credits_skip:
 	rts
 
 _credits_finished:
+	jsr	display_string
 	clra
 	rts
 
@@ -1435,12 +1446,11 @@ _printing_now:
 	bra	_printing_now
 
 _produce_string_right:
+	lda	#GREEN_BOX
 
 _produce_string_right_loop:
-	lda	#GREEN_BOX
 	sta	,x+
-	tfr	x,d
-	andb	#0b00011111
+	cmpx	#string_end
 	bne	_produce_string_right_loop
 
 		; The string text is at the right location within string
@@ -1557,6 +1567,33 @@ _display_proceed_finished:
 	lda	#1
 	sta	credit_roll_finished
 	rts
+
+****************
+* Display string
+****************
+
+display_string:
+
+        ldx     #TEXTBUF
+        lda     line_number
+        ldb     #COLS_PER_LINE
+        mul
+        leax    d,x                     ; X = start of the line
+
+        ldy     #string
+	clra
+
+_display_string_loop:
+        ldb     a,y
+        stb     a,x
+
+	inca
+	cmpa	#32
+	beq	_display_string_finished
+        bra     _display_string_loop
+
+_display_string_finished:
+        rts
 
 ****************
 * Loading screen

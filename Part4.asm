@@ -16,6 +16,7 @@
 *
 * ASCII art of Dogbert in the first section is by Hayley (hjw)
 * from https://www.asciiart.eu/comics/dilbert
+* and modified by me
 * ASCII art in the second section was made by Microsoft Copilot and
 * modified by me
 * Animation done by me
@@ -232,6 +233,14 @@ _loop:
 	tsta
 	bne	_skip_dogbert
 
+	ldd	dogbert_frames
+	addd	#1
+	std	dogbert_frames
+
+	cmpd	#1000
+	beq	_turn_dogbert
+
+_dogbert_scroll:
         ldx     #scroller_dogbert       ; Add the scroll text at the bottom
         jsr     display_scroll_text     ; of the screen
 
@@ -243,14 +252,28 @@ _skip_dogbert:
 	lda	#1
 	rts
 
-* This text graphic is by Hayley at asciiart.eu
+_turn_dogbert:
+        jsr     clear_screen
+
+        lda     #2
+        ldb	#7
+        ldx     #dogbert_2
+        jsr     display_text_graphic
+
+	bra	_dogbert_scroll
+
+dogbert_frames:
+
+	RZB	2
+
+* These text graphics are by Hayley at asciiart.eu
 
 dogbert:
 
 	FCV	"     ,-\"\"\"\"-.",0
 	FCV	"  ,-;-.      '.",0
 	FCV	"  ! ! !--/ \\   \\",0
-	FCV	"  '-^-' !   !  !",0
+	FCV	"  '-'-' !   !  !",0
 	FCV	"  (.)   !   !  !",0
 	FCV	"  !      '-'   !",0
 	FCV	"  !      ! !   !",0
@@ -260,6 +283,25 @@ dogbert:
 	FCV	"HJW   ! !  !",0
 	FCV	"     (.(...!",0
 	FCB	255
+
+dogbert_end:
+
+dogbert_2:
+
+	FCV	"   .-'\"\"\"'-.",0
+	FCV	" .'  .-.-.  '.",0
+	FCV	"/ !--! ! !--! \\",0
+	FCV	"! !  '-'-'  ! !",0
+	FCV	"\\./   (.)   \\./",0
+	FCV	"!!           !!",0
+	FCV	"\\.)         (./",0
+	FCV	"  \".       .\"",0
+	FCV	"    !  !  !",0
+	FCV	"    !  !  !     HJW",0
+	FCV	"   (...!...)",0
+	FCB	255
+
+dogbert_2_end:
 
 **********************
 * Display scroll text

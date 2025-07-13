@@ -28,7 +28,7 @@
 * Also, you can make the lower right corner character cycle when
 * the interrupt request service routine operates.
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -1549,10 +1549,6 @@ _display_characters_finished:
 *****************
 
 display_proceed:
-
-;	lda	left_box
-;	cmpa	horizontal_position
-;	blo	_display_proceed_finished
 
 	lda	left_box
 	beq	_display_proceed_finished

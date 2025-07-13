@@ -1276,16 +1276,16 @@ _roll_credits_start_pos:
 
 	rts
 
-**********************
+********************
 * Top credit appears
 *
 * Inputs:
-* A = Length of credit
+* A = Start position
 * X = Credit text
 *
 * Outputs:
 * None
-**********************
+********************
 
 top_credit_appears:
 
@@ -1299,7 +1299,7 @@ top_credit_appears:
 * Bottom credit appears
 *
 * Inputs:
-* A = Length of credit
+* A = Start position
 * X = Credit text
 *
 * Outputs:
@@ -1317,13 +1317,28 @@ bottom_credit_appears:
 **********************
 * Credit appears
 *
-* A = Length of credit
+* A = Start position
 * B = Line number
 * X = Credit text
 **********************
 
 credit_appears:
 
+	pshs	a
+	lda	#COLS_PER_LINE
+	mul
+	ldx	#TEXTBUF
+	leau	d,u
+	puls	a
+	leau	a,u
+
+_l:
+	lda	,x+
+	beq	_credit_finished
+	sta	,u+
+	bra	_l
+
+_credit_finished:
 	rts
 
 ******************************************

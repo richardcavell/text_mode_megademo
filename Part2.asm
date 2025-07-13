@@ -1217,6 +1217,14 @@ opening_credits:
 
 	rts
 
+opening_credits_text:
+
+	FCV	"CREDITS"
+	FCB	0
+	FCV	"GO HERE"
+	FCB	0
+	FCB	255
+
 roll_credits:
 
 _roll_credits_loop:
@@ -1226,14 +1234,11 @@ _roll_credits_loop:
 	beq	_roll_credits_finished
 
 	pshs	x
-	jsr	wait_for_vblank_and_check_for_skip	; Ignore result
-
 	jsr	clear_screen
-
 	puls	x
 
 	pshs	x
-	bsr	_roll_credits_start_pos
+	bsr	_roll_credits_start_pos		; Get start position in A
 	puls	x
 
 	pshs	x
@@ -1245,7 +1250,7 @@ _roll_credits_find_end:
 	bne	_roll_credits_find_end
 
 	pshs	x
-	bsr	_roll_credits_start_pos
+	bsr	_roll_credits_start_pos		; Get start position in A
 	puls	x
 
 	pshs	x
@@ -1271,7 +1276,7 @@ _roll_credits_start_pos:
 	subb	,s		; subb a
 	puls	a
 
-	lsrb
+	lsrb			; divide by 2
 	tfr	b,a		; A = (COLS_PER_LINE - len(x)) / 2
 
 	rts
@@ -1317,28 +1322,58 @@ bottom_credit_appears:
 **********************
 * Credit appears
 *
-* A = Start position
+* A = Horizontal position
 * B = Line number
 * X = Credit text
 **********************
 
+left_box:
+
+	RZB	1
+
+right_box:
+
+	RZB	1
+
+horizontal_position:
+
+	RZB	1
+
+line_number:
+
+	RZB	1
+
+string:
+
+	RZB	2
+
 credit_appears:
 
-	pshs	a
-	lda	#COLS_PER_LINE
-	mul
-	ldx	#TEXTBUF
-	leau	d,u
-	puls	a
-	leau	a,u
+	sta	horizontal_position
+	stb	line_number
+	stx	string
 
-_l:
-	lda	,x+
-	beq	_credit_finished
-	sta	,u+
-	bra	_l
+	lda	#15
+	sta	left_box
 
-_credit_finished:
+	lda	#16
+	sta	right_box
+
+_credit_appears_loop:
+
+	jsr	display_boxes
+	jsr	display_chars
+	jsr	display_proceed
+
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	bne	_credits_skip
+
+	bra	_credit_appears_loop
+
+
+_credits_skip:
+	lda	#1
 	rts
 
 ******************************************
@@ -1359,18 +1394,70 @@ _measure_line_loop:
 	ldb	,x+
 	beq	_measure_line_finished
 
-	incb
+	inca
 	bra	_measure_line_loop
 
 _measure_line_finished:
 	rts			; Return A
 
-opening_credits_text:
-	FCV	"CREDITS"
-	FCB	0
-	FCV	"GO HERE"
-	FCB	0
-	FCB	255
+***************
+* Display boxes
+*
+* Inputs: None
+* Outputs: None
+***************
+
+start_line:
+
+	RZB	2
+
+display_boxes:
+
+	ldx	#TEXTBUF
+	lda	line_number
+	ldb	#COLS_PER_LINE
+	mul
+	leax	d,x
+	stx	start_line
+
+	lda	left_box
+	leax	a,x
+
+	ldb	#WHITE_BOX
+	stb	,x
+
+	ldx	start_line
+	lda	right_box
+
+	leax	a,x
+	stb	,x
+
+	rts
+
+***************
+* Display chars
+*
+* Inputs: None
+* Outputs: None
+***************
+
+display_chars:
+
+	rts
+
+*****************
+* Display proceed
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+display_proceed:
+
+	dec	left_box
+	inc	right_box
+
+	rts
 
 ****************
 * Loading screen

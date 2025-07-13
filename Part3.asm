@@ -14,16 +14,11 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 *
-* ASCII art in the first section was made by an unknown person from
+* ASCII art in the third section was made by an unknown person from
 * https://www.asciiart.eu/animals/birds-land
 * and then modified by me
 * ASCII art of the Batman logo was made by an unknown person, possibly
 * Joan Stark, at https://www.asciiart.eu/comics/batman
-* The sound of the finger snap in the dot routine is by cori at
-* Wikimedia Commons
-* All of the speech in the dot routine was created by
-* https://speechsynthesis.online/
-* The voice is "Maisie"
 *
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
@@ -245,8 +240,8 @@ _clear_screen_loop:
 * Inputs: None
 *
 * Output:
-* A = 0        -> a VBlank happened
-* A = non-zero -> user is trying to skip
+* A = 0          -> A VBlank happened
+* A = (Non-zero) -> User is trying to skip
 *********************************************
 
 POLCAT          EQU     $A000

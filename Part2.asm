@@ -1223,6 +1223,10 @@ opening_credits_text:
 	FCB	0
 	FCV	"GO HERE"
 	FCB	0
+	FCV	"ANOTHER CREDIT"
+	FCB	0
+	FCV	"AND ANOTHER"
+	FCB	0
 	FCB	255
 
 roll_credits:
@@ -1238,28 +1242,26 @@ _roll_credits_loop:
 	puls	x
 
 	pshs	x
-	bsr	_roll_credits_start_pos		; Get start position in A
+	bsr	roll_credits_start_pos		; Get start position in A
 	puls	x
 
-	pshs	x
-	bsr	top_credit_appears
-	puls	x
+	pshs	a,x
+	bsr	top_credit_appears		; Send A,X
+	puls	a,x
 
-_roll_credits_find_end:
+_roll_credits_find_next:
 	lda	,x+
-	bne	_roll_credits_find_end
+	bne	_roll_credits_find_next
 
 	pshs	x
-	bsr	_roll_credits_start_pos		; Get start position in A
+	bsr	roll_credits_start_pos		; Get start position in A
 	puls	x
 
-	pshs	x
-	bsr	bottom_credit_appears
-	puls	x
+	bsr	bottom_credit_appears		; Send A,X
 
-_roll_credits_find_end_2:
+_roll_credits_find_next_2:
 	lda	,x+
-	bne	_roll_credits_find_end_2
+	bne	_roll_credits_find_next_2
 
 	bra	_roll_credits_loop
 
@@ -1267,9 +1269,19 @@ _roll_credits_finished:
 	clra
 	rts
 
-_roll_credits_start_pos:
+************************
+* Roll credits start pos
+*
+* Input:
+* X = String to print
+*
+* Output:
+* A = Position to start
+************************
 
-	bsr	measure_line	; Line length is in A
+roll_credits_start_pos:
+
+	jsr	measure_line	; Line length is in A
 
 	pshs	a
 	ldb	#COLS_PER_LINE
@@ -1327,6 +1339,10 @@ bottom_credit_appears:
 * X = Credit text
 **********************
 
+credit_roll_finished:
+
+	RZB	1
+
 left_box:
 
 	RZB	1
@@ -1343,21 +1359,28 @@ line_number:
 
 	RZB	1
 
-string:
+string_text:
 
 	RZB	2
 
+string:
+	RZB	COLS_PER_LINE
+
 credit_appears:
+
+	clr	credit_roll_finished
 
 	sta	horizontal_position
 	stb	line_number
-	stx	string
+	stx	string_text
 
 	lda	#16
 	sta	left_box
 
 	lda	#15
 	sta	right_box
+
+	jsr	produce_string
 
 _credit_appears_loop:
 
@@ -1369,11 +1392,46 @@ _credit_appears_loop:
 	tsta
 	bne	_credits_skip
 
-	bra	_credit_appears_loop
+	tst	credit_roll_finished
+	beq	_credits_finished
 
+	bra	_credit_appears_loop
 
 _credits_skip:
 	lda	#1
+	rts
+
+_credits_finished:
+	clra
+	rts
+
+produce_string:
+
+	ldy	#string_text
+	ldx	#string
+
+	ldb	#horizontal_position
+
+_left_boxes:
+	tstb
+	beq	_printing_now
+	lda	#GREEN_BOX
+	sta	,x+
+	decb
+	bra	_left_boxes
+
+_printing_now:
+
+	lda	,y+
+	sta	,x+
+
+	beq	_produce_string_finished
+	bra	_printing_now
+
+_produce_string_finished:
+		; The string text, including the terminating zero, is at
+		; the right location within string
+
 	rts
 
 ******************************************
@@ -1443,22 +1501,48 @@ display_boxes:
 
 display_chars:
 
+	ldx	#TEXTBUF
+	lda	line_number
+	ldb	#COLS_PER_LINE
+	mul
+	leax	d,x			; X = start of the line
 
+	ldy	#string
+
+	lda	left_box
+
+	ldb	a,y
+	stb	a,x
+
+	lda	right_box
+
+	ldb	a,y
+	stb	a,x
 
 	rts
 
-*****************
+*************************
 * Display proceed
 *
 * Inputs: None
 * Outputs: None
-*****************
+*************************
 
 display_proceed:
+
+	lda	left_box
+	cmpa	horizontal_position
+	beq	_display_proceed_finished
 
 	dec	left_box
 	inc	right_box
 
+	clra
+	rts
+
+_display_proceed_finished:
+	lda	#1
+	sta	credit_roll_finished
 	rts
 
 ****************

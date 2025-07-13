@@ -1210,7 +1210,7 @@ opening_credits:
 	jsr	clear_screen
 
 	lda	#WAIT_PERIOD
-	jsr	wait_frames
+	jsr	wait_frames		; Ignore return value
 
 	ldx	#opening_credits_text
 	bsr	roll_credits
@@ -1273,6 +1273,8 @@ _roll_credit:
 	pshs	x
 	bsr	credit_appears			; Send A,B,X
 	puls	x
+	tsta
+	bne	_roll_credits_skip
 
 _roll_credits_find_next:
 	lda	,x+
@@ -1290,10 +1292,16 @@ _roll_credits_finished:
 _page_done:
 	lda	#WAIT_PERIOD*4
 	jsr	wait_frames
+	tsta
+	bne	_roll_credits_skip
 
 	leax	1,x
 
 	bra	_roll_credits_loop
+
+_roll_credits_skip:
+	lda	#1
+	rts
 
 ************************
 * Roll credits start pos

@@ -1199,9 +1199,165 @@ _text_graphic_new_line:
 _display_text_graphic_finished:
 	rts
 
+*****************
+* Opening credits
+*****************
+
 opening_credits:
-; TODO
+
+	jsr	clear_screen
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+
+	ldx	#opening_credits_text
+	bsr	roll_credits
+
 	rts
+
+roll_credits:
+
+_roll_credits_loop:
+
+	lda	,x
+	cmpa	#255
+	beq	_roll_credits_finished
+
+	pshs	x
+	jsr	wait_for_vblank_and_check_for_skip	; Ignore result
+
+	jsr	clear_screen
+
+	puls	x
+
+	pshs	x
+	bsr	_roll_credits_start_pos
+	puls	x
+
+	pshs	x
+	bsr	top_credit_appears
+	puls	x
+
+_roll_credits_find_end:
+	lda	,x+
+	bne	_roll_credits_find_end
+
+	pshs	x
+	bsr	_roll_credits_start_pos
+	puls	x
+
+	pshs	x
+	bsr	bottom_credit_appears
+	puls	x
+
+_roll_credits_find_end_2:
+	lda	,x+
+	bne	_roll_credits_find_end_2
+
+	bra	_roll_credits_loop
+
+_roll_credits_finished:
+	clra
+	rts
+
+_roll_credits_start_pos:
+
+	bsr	measure_line	; Line length is in A
+
+	pshs	a
+	ldb	#COLS_PER_LINE
+	subb	,s		; subb a
+	puls	a
+
+	lsrb
+	tfr	b,a		; A = (COLS_PER_LINE - len(x)) / 2
+
+	rts
+
+**********************
+* Top credit appears
+*
+* Inputs:
+* A = Length of credit
+* X = Credit text
+*
+* Outputs:
+* None
+**********************
+
+top_credit_appears:
+
+	ldb	#7
+
+	bsr	credit_appears
+
+	rts
+
+***********************
+* Bottom credit appears
+*
+* Inputs:
+* A = Length of credit
+* X = Credit text
+*
+* Outputs:
+* None
+***********************
+
+bottom_credit_appears:
+
+	ldb	#9
+
+	bsr	credit_appears
+
+	rts
+
+**********************
+* Credit appears
+*
+* A = Length of credit
+* B = Line number
+* X = Credit text
+**********************
+
+credit_appears:
+
+	rts
+
+******************************************
+* Measure line
+*
+* Inputs:
+* X = Pointer to a string, null-terminated
+*
+* Outputs:
+* A = Length of that string
+******************************************
+
+measure_line:
+
+	clra
+
+_measure_line_loop:
+	ldb	,x+
+	beq	_measure_line_finished
+
+	incb
+	bra	_measure_line_loop
+
+_measure_line_finished:
+	rts			; Return A
+
+opening_credits_text:
+	FCV	"CREDITS"
+	FCB	0
+	FCV	"GO HERE"
+	FCB	0
+	FCB	255
+
+****************
+* Loading screen
+****************
 
 loading_screen:
 
@@ -1242,6 +1398,7 @@ _skipped_loading_screen:
 * It's from https://www.asciiart.eu/animals/cats
 
 ascii_art_cat:
+
 	FCV	"      .",0
 	FCV	"      \\'*-.",0
 	FCV	"       )  .'-.",0
@@ -1258,6 +1415,7 @@ ascii_art_cat:
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0
 	FCB	255
+
 ascii_art_cat_end:
 
 loading_text:

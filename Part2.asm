@@ -872,6 +872,8 @@ _encase_right:
 **************************************
 
 flash_text_white:
+	tstb			; Handle the case where B = 0
+	beq	_flash_finished
 
 	decb			; We test at the bottom
 	pshs	b
@@ -899,23 +901,23 @@ _flash_copy_line:
 
 _flash_chars_loop:
 	pshs	b,x
-	bsr	_flash_chars_white
+	bsr	flash_chars_white
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	_skip_flash_chars
+	beq	_flash_chars_continue
 	rts
 
-_skip_flash_chars:
+_flash_chars_continue:
 	pshs	b,x
 	bsr	restore_chars
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	_skip_flash_chars_2
+	beq	_flash_chars_continue_2
 	rts
 
-_skip_flash_chars_2:
+_flash_chars_continue_2:
 	tstb			; We do this routine b times
 	beq	_flash_finished
 
@@ -930,7 +932,7 @@ _flash_finished:
 * Turns all chars on a line white
 *********************************
 
-_flash_chars_white:
+flash_chars_white:
 
 _flash_chars_white_loop:
 	lda	,x
@@ -965,12 +967,12 @@ _flash_chars_not_flashable:
 
 restore_chars:
 
-	ldy	#flash_text_storage
+	ldu	#flash_text_storage
 
 _flash_restore_chars:
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
 
 	cmpy	#flash_text_storage_end
@@ -992,17 +994,17 @@ flash_text_storage_end:
 flash_screen:
 
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage	; We overwrite the sound data
+	ldu	#flash_screen_storage	; We overwrite the sound data
 
 _flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
-	std	,y++			; on the screen
+	std	,u++			; on the screen
 	ldd	,x++
-	std	,y++
+	std	,u++
 	ldd	,x++
-	std	,y++
+	std	,u++
 	ldd	,x++
-	std	,y++
+	std	,u++
 
 	cmpx	#TEXTBUFEND
 	blo	_flash_screen_copy_loop
@@ -1052,16 +1054,16 @@ _skip_flash_screen_3:
 
 _skip_flash_screen_4:
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage
+	ldu	#flash_screen_storage
 
 _flash_screen_restore_loop:
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
 
 	cmpx	#TEXTBUFEND
@@ -1088,8 +1090,8 @@ drop_screen_content:
 	pshs	a
 	bsr	_drop_each_line
 	tsta
-	bne	_skip_drop_each_line
 	puls	a
+	bne	_skip_drop_each_line
 
 	inca				; Next time, start a line lower
 
@@ -1101,7 +1103,6 @@ drop_screen_content:
 	rts
 
 _skip_drop_each_line:
-	leas	1,s
 	rts
 
 _drop_each_line:

@@ -230,9 +230,18 @@ dogbert_routine:
 _loop:
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	beq	_loop
+	bne	_skip_dogbert
+
+        ldx     #scroller_dogbert       ; Add the scroll text at the bottom
+        jsr     display_scroll_text     ; of the screen
+
+	bra	_loop
 
         rts
+
+_skip_dogbert:
+	lda	#1
+	rts
 
 * This text graphic is by Hayley at asciiart.eu
 
@@ -251,6 +260,79 @@ dogbert:
 	FCV	"HJW   ! !  !",0
 	FCV	"     (.(...!",0
 	FCB	255
+
+**********************
+* Display scroll text
+*
+* Inputs:
+* X = scroll text data
+*
+* Outputs: None
+**********************
+
+display_scroll_text:
+
+        ldd     ,x
+        beq     _display_scroll_is_active
+        bmi     _display_scroll_is_inactive
+
+        subd    #1              ; Countdown to scrolltext start
+        std     ,x
+        rts
+
+_display_scroll_is_inactive:
+        rts
+
+_display_scroll_is_active:
+        lda     2,x
+        beq     _display_scroll_needs_update
+
+        deca
+        sta     2,x
+        rts
+
+_display_scroll_needs_update:
+        lda     3,x
+        sta     2,x     ; Reset the frame counter
+
+        ldy     4,x     ; Pointer to the text
+        leay    1,y
+        sty     4,x
+
+        ldu     6,x     ; U is where on the screen to start
+        lda     #COLS_PER_LINE  ; There are 32 columns per line
+
+_display_scroll_text_loop_2:
+
+        ldb     ,y+
+        beq     _display_scroll_end
+        stb     ,u+
+
+        deca
+        bne     _display_scroll_text_loop_2
+
+        rts
+
+_display_scroll_end:
+        ldd     #-1
+        std     ,x
+        rts
+
+scroller_dogbert:
+
+        FDB     0       ; Starting frame
+        FCB     0       ; Frame counter
+        FCB     5       ; Frames to pause
+        FDB     scroll_text_dogbert
+        FDB     TEXTBUF+15*32
+
+scroll_text_dogbert:
+
+        FCV     "                                "
+        FCV     "DOGBERT SCROLLER"
+        FCV     " TESTING TESTING TESTING"
+        FCV     "                                "
+        FCB     0
 
 ******************
 * Clear the screen

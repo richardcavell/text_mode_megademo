@@ -1245,9 +1245,9 @@ _roll_credits_loop:
 	bsr	roll_credits_start_pos		; Get start position in A
 	puls	x
 
-	pshs	a,x
+	pshs	x
 	bsr	top_credit_appears		; Send A,X
-	puls	a,x
+	puls	x
 
 _roll_credits_find_next:
 	lda	,x+
@@ -1257,7 +1257,9 @@ _roll_credits_find_next:
 	bsr	roll_credits_start_pos		; Get start position in A
 	puls	x
 
+	pshs	x
 	bsr	bottom_credit_appears		; Send A,X
+	puls	x
 
 _roll_credits_find_next_2:
 	lda	,x+
@@ -1374,19 +1376,19 @@ credit_appears:
 	stb	line_number
 	stx	string_text
 
-	lda	#16
+	lda	#15
 	sta	left_box
 
-	lda	#15
+	lda	#16
 	sta	right_box
 
 	jsr	produce_string
 
 _credit_appears_loop:
 
+	jsr	display_boxes
 	jsr	display_chars
 	jsr	display_proceed
-	jsr	display_boxes
 
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
@@ -1405,9 +1407,13 @@ _credits_finished:
 	clra
 	rts
 
+****************
+* Produce string
+****************
+
 produce_string:
 
-	ldy	#string_text
+	ldy	string_text
 	ldx	#string
 
 	ldb	#horizontal_position
@@ -1465,10 +1471,6 @@ _measure_line_finished:
 * Outputs: None
 ***************
 
-start_line:
-
-	RZB	2
-
 display_boxes:
 
 	ldx	#TEXTBUF
@@ -1476,19 +1478,14 @@ display_boxes:
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
-	stx	start_line
 
 	lda	left_box
-	leax	a,x
 
 	ldb	#WHITE_BOX
-	stb	,x
+	stb	a,x
 
-	ldx	start_line
 	lda	right_box
-
-	leax	a,x
-	stb	,x
+	stb	a,x
 
 	rts
 
@@ -1509,16 +1506,20 @@ display_chars:
 
 	ldy	#string
 
-	lda	left_box
+	lda	left_box		; A = left box
+	ldb	right_box
+	pshs	b			; ,S = right box
+
+_display_chars_loop:
+	inca
+	cmpa	,s
+	bhs	_display_characters_finished
 
 	ldb	a,y
 	stb	a,x
 
-	lda	right_box
-
-	ldb	a,y
-	stb	a,x
-
+_display_characters_finished:
+	puls	b
 	rts
 
 *************************
@@ -1532,7 +1533,7 @@ display_proceed:
 
 	lda	left_box
 	cmpa	horizontal_position
-	beq	_display_proceed_finished
+	blo	_display_proceed_finished
 
 	dec	left_box
 	inc	right_box

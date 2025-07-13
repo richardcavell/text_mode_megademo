@@ -1219,21 +1219,36 @@ opening_credits:
 
 opening_credits_text:
 
+	FCB	7
 	FCV	"CREDITS"
 	FCB	0
+	FCB	9
 	FCV	"GO HERE"
 	FCB	0
+	FCB	0
+
+	FCB	7
 	FCV	"ANOTHER CREDIT"
 	FCB	0
+	FCB	9
 	FCV	"AND ANOTHER"
 	FCB	0
+	FCB	0
+
+	FCB	3
 	FCV	"BLAH BLAH BLAH BLAH BLAH"
 	FCB	0
+	FCB	5
 	FCV	"AND ANOTHER BLAH BLAH BLAH"
+	FCB	0
 	FCB	0
 	FCB	255
 
 roll_credits:
+
+line:
+
+	RZB	1
 
 _roll_credits_loop:
 
@@ -1245,38 +1260,40 @@ _roll_credits_loop:
 	jsr	clear_screen
 	puls	x
 
-	pshs	x
-	bsr	roll_credits_start_pos		; Get start position in A
-	puls	x
+_roll_credit:
+	lda	,x+				; Get starting vertical line
+	sta	line
 
 	pshs	x
-	bsr	top_credit_appears		; Send A,X
+	bsr	roll_credits_start_pos		; Get start horizontal position in A
+	puls	x
+
+	ldb	line
+
+	pshs	x
+	bsr	credit_appears			; Send A,B,X
 	puls	x
 
 _roll_credits_find_next:
 	lda	,x+
 	bne	_roll_credits_find_next
 
-	pshs	x
-	bsr	roll_credits_start_pos		; Get start position in A
-	puls	x
+	lda	,x
+	beq	_page_done
 
-	pshs	x
-	bsr	bottom_credit_appears		; Send A,X
-	puls	x
-
-_roll_credits_find_next_2:
-	lda	,x+
-	bne	_roll_credits_find_next_2
-
-	lda	#WAIT_PERIOD*4
-	jsr	wait_frames
-
-	bra	_roll_credits_loop
+	bra	_roll_credit
 
 _roll_credits_finished:
 	clra
 	rts
+
+_page_done:
+	lda	#WAIT_PERIOD*4
+	jsr	wait_frames
+
+	leax	1,x
+
+	bra	_roll_credits_loop
 
 ************************
 * Roll credits start pos
@@ -1299,44 +1316,6 @@ roll_credits_start_pos:
 
 	lsrb			; divide by 2
 	tfr	b,a		; A = (COLS_PER_LINE - len(x)) / 2
-
-	rts
-
-********************
-* Top credit appears
-*
-* Inputs:
-* A = Start position
-* X = Credit text
-*
-* Outputs:
-* None
-********************
-
-top_credit_appears:
-
-	ldb	#7
-
-	bsr	credit_appears
-
-	rts
-
-***********************
-* Bottom credit appears
-*
-* Inputs:
-* A = Start position
-* X = Credit text
-*
-* Outputs:
-* None
-***********************
-
-bottom_credit_appears:
-
-	ldb	#9
-
-	bsr	credit_appears
 
 	rts
 

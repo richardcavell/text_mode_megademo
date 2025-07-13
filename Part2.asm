@@ -1395,7 +1395,7 @@ _credit_appears_loop:
 	bne	_credits_skip
 
 	tst	credit_roll_finished
-	beq	_credits_finished
+	bne	_credits_finished
 
 	bra	_credit_appears_loop
 
@@ -1518,16 +1518,18 @@ _display_chars_loop:
 	ldb	a,y
 	stb	a,x
 
+	bra	_display_chars_loop
+
 _display_characters_finished:
 	puls	b
 	rts
 
-*************************
+*****************
 * Display proceed
 *
 * Inputs: None
 * Outputs: None
-*************************
+*****************
 
 display_proceed:
 

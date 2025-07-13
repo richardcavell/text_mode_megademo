@@ -45,7 +45,7 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
 	jsr	title_screen			; First section
-	jsr	opening_credits			; Second section
+;	jsr	opening_credits			; Second section
 	jsr	loading_screen
 
 	jsr	uninstall_irq_service_routine
@@ -1244,11 +1244,11 @@ opening_credits_text:
 	FCB	0
 	FCB	255
 
-roll_credits:
-
 line:
 
 	RZB	1
+
+roll_credits:
 
 _roll_credits_loop:
 

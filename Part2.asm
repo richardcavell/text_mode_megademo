@@ -45,7 +45,7 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
 	jsr	title_screen			; First section
-;	jsr	opening_credits			; Second section
+	jsr	opening_credits			; Second section
 	jsr	loading_screen
 
 	jsr	uninstall_irq_service_routine

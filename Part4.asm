@@ -46,8 +46,9 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor
         jsr     turn_6bit_audio_on
 
-	jsr	dogbert_routine		; First section
-	jsr	dot_routine		; Second section
+	jsr	decb_spoof		; First section
+	jsr	dogbert_routine		; Second section
+	jsr	dot_routine		; Third section
 
 	jsr	uninstall_irq_service_routine
 
@@ -211,6 +212,102 @@ turn_6bit_audio_on:
 * End of code written by other people
 
         rts
+
+************
+* DECB spoof
+************
+
+decb_spoof:
+        jsr     clear_screen
+
+        lda     #WAIT_PERIOD
+        jsr     wait_frames	; Ignore the result
+
+        lda     #0
+        ldb	#0
+        ldx     #decb_spoof_text
+        jsr     display_text_graphic
+
+	ldx	#TEXTBUF + 6 * COLS_PER_LINE
+	lda	#143		; A green box
+
+_decb_spoof_colour:
+
+	ldb	#5		; Number of frames for each colour
+
+_decb_spoof_loop:
+	pshs	a,b,x
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	puls	a,b,x
+	bne	_skip_decb_spoof
+
+	sta	,x
+
+	pshs	a,b,x
+        ldx     #scroller_decb_spoof    ; Add the scroll text at the bottom
+        jsr     display_scroll_text     ; of the screen
+	puls	a,b,x
+
+	decb
+	beq	_next_colour
+
+	pshs	d			; Could just use A
+	ldd	scroller_decb_spoof	; Check for scroller finish
+	puls	d
+	bmi	_decb_spoof_finished
+
+	bra	_decb_spoof_loop
+
+_decb_spoof_finished:
+	clra
+	rts
+
+_next_colour:
+	adda	#16
+	cmpa	#15
+	bne	_no_reset
+
+	lda	#143		; Go back to a green box
+
+_no_reset:
+	bra	_decb_spoof_colour
+
+_skip_decb_spoof:
+	lda	#1
+	rts
+
+decb_spoof_text:
+
+	FCV	"DISK EXTENDED COLOR BASIC 3.0",0
+	FCV	"COPR. 1982, 1986, 2025 BY TANDY",0
+	FCV	"UNDER LICENSE FROM MICROSOFT",0
+	FCV	"AND MICROWARE SYSTEMS CORP.",0
+	FCV	0
+	FCV	"OK",0
+	FCB	255
+
+prompt_text:
+
+	FCV	"WHAT DO YOU THINK OF THIS?",0
+	FCB	255
+
+scroller_decb_spoof:
+
+        FDB     0       ; Starting frame
+        FCB     0       ; Frame counter
+        FCB     5       ; Frames to pause
+        FDB     scroll_text_decb_spoof
+        FDB     TEXTBUF+15*32
+
+scroll_text_decb_spoof:
+
+        FCV     "                                "
+        FCV     "DECB SPOOF SCROLLER"
+        FCV     " TESTING TESTING TESTING"
+        FCV     "                                "
+        FCB     0
+
 
 *****************
 * Dogbert Routine

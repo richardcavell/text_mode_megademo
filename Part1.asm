@@ -41,7 +41,7 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
-	jsr	display_skip_message		; Ignore the result
+	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
 	jsr	loading_screen

@@ -41,7 +41,7 @@ WAIT_PERIOD	EQU	25
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
-	jsr	display_skip_message
+	jsr	display_skip_message		; Ignore the result
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
 	jsr	loading_screen
@@ -227,8 +227,6 @@ TEXT_LINES	EQU	16
 * Display message at the bottom of the screen
 *********************************************
 
-; TODO Review is up to here
-
 display_skip_message:
 
 	lda	#TEXT_LINES-1		; Bottom line of the screen
@@ -262,13 +260,13 @@ display_message:
 
 _display_message_loop:
 	cmpy	#TEXTBUFEND
-	bhs	_display_message_overrun	; End of text buffer
+	bhs	_display_message_buffer_overrun	; End of text buffer
 	lda	,x+
 	beq	_display_message_finished	; Terminating zero
 	sta	,y+
 	bra	_display_message_loop
 
-_display_message_overrun:
+_display_message_buffer_overrun:
 	lda	#1
 	rts
 
@@ -282,7 +280,7 @@ _display_message_finished:
 * Inputs: None
 *
 * Outputs:
-* A = 0 Success
+* A = 0 	 Success
 * A = (Non-zero) User skipped this section
 ******************************************
 
@@ -290,11 +288,13 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
 					; our skip message
 
-GREEN_BOX	EQU	$60
+GREEN_BOX	EQU	$60	; These are MC6847 codes
 WHITE_BOX	EQU	$CF
 
 pluck_line_counts:
+
 	RZB PLUCK_LINES			; 15 zeroes
+
 pluck_line_counts_end:
 
 ; The structure of an entry in plucks_data is:
@@ -310,11 +310,16 @@ PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
 plucks_data:
+
 	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
+
 plucks_data_end:
 
 simultaneous_plucks:
+
 	RZB	1
+
+; TODO Review is up to here
 
 pluck_the_screen:
 

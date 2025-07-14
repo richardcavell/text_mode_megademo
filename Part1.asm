@@ -254,20 +254,49 @@ skip_message:
 
 display_message:
 
-	ldb	#COLS_PER_LINE
-	mul
-	ldy	#TEXTBUF
-	leay	d,y	; Y = starting point on the screen
+	pshs	x
+
+	clrb
+	bsr	get_screen_position		; X = Screen position
+
+	puls	u				; U = string
 
 _display_message_loop:
-	cmpy	#TEXTBUFEND
+	cmpx	#TEXTBUFEND
 	bhs	_display_message_finished	; End of text buffer
-	lda	,x+
+	lda	,u+
 	beq	_display_message_finished	; Terminating zero was found
-	sta	,y+
+	sta	,x+
 	bra	_display_message_loop
 
 _display_message_finished:
+	rts
+
+*********************
+* Get screen position
+*
+* Inputs:
+* A = Row (0-15)
+* B = Column (0-31)
+*
+* Output:
+* X = Screen position
+*********************
+
+get_screen_position:
+
+;   X = TEXTBUF + A * COLS_PER_LINE + B
+
+	pshs	b
+
+	ldb	#COLS_PER_LINE
+	mul
+	ldx	#TEXTBUF
+	leax	d,x
+
+	puls	b
+	leax	b,x
+
 	rts
 
 ******************************************

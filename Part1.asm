@@ -362,7 +362,7 @@ pluck_the_screen:
 pluck_count_chars_per_line:
 
 	ldx	#TEXTBUF
-	ldy	#pluck_line_counts	; There are 15 of these
+	ldu	#pluck_line_counts	; There are 15 of these
 
 _pluck_count_chars_on_one_line:
 	ldb	#COLS_PER_LINE		; There are 32 characters per line
@@ -372,7 +372,7 @@ _pluck_count_chars_test_char:
 	cmpa	#GREEN_BOX		 	; Is it an empty green box?
 	beq	_pluck_count_chars_found_space	; Yes, so don't count it
 					 	; or
-	inc	,y			 	; No, so count it
+	inc	,u			 	; No, so count it
 
 _pluck_count_chars_found_space:
 	decb
@@ -381,7 +381,7 @@ _pluck_count_chars_found_space:
 	cmpx	#(TEXTBUF+PLUCK_LINES*COLS_PER_LINE)
 	beq	_pluck_count_chars_end
 
-	leay	1,y			; Start counting the next line
+	leau	1,u			; Start counting the next line
 	bra	_pluck_count_chars_on_one_line
 
 _pluck_count_chars_end:

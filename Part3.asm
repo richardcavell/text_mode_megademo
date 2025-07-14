@@ -405,6 +405,7 @@ just_kidding_message:
 ***************
 
 starfield_x_pos:
+
 	RZB	2
 
 starfield:
@@ -412,7 +413,7 @@ starfield:
 	jsr	clear_screen
 
         lda     #WAIT_PERIOD
-        jsr     wait_frames                     ; Wait a number of frames
+        jsr     wait_frames                     ; Ignore attempt to skip
 
 _starfield_loop:
 	jsr	wait_for_vblank_and_check_for_skip
@@ -421,8 +422,16 @@ _starfield_loop:
 
 	ldd	starfield_x_pos
 
+_starfield_has_been_reset:
 	ldx	#$8000		; Use the ROM as our data source
 	leax	d,x
+
+				; I found this range
+				; by inspecting the memory of a Coco
+				; using mame -debug
+
+	cmpx	#$D000
+	bhs	_reset_starfield
 
 	ldy	#TEXTBUF
 
@@ -430,7 +439,6 @@ _starfield_line_loop:
 	bsr	starfield_do_line
 
 	leax	9*COLS_PER_LINE,x
-;	leay	COLS_PER_LINE,y
 
 	cmpy	#TEXTBUF+15*COLS_PER_LINE
 	blo	_starfield_line_loop
@@ -455,6 +463,12 @@ _starfield_skip:
 _starfield_end:
 	clra
 	rts
+
+_reset_starfield:
+	clra
+	clrb
+	std	starfield_x_pos
+	bra	_starfield_has_been_reset
 
 *************************
 * Starfield Do Line
@@ -483,11 +497,11 @@ _starfield_do_line_loop:
 	beq	_star_dot
 
 	cmpa	#1
-	beq	_star_small
+	beq	_star_big
 
 * No star:
 
-	lda	#GREEN_BOX << 8 | GREEN_BOX	; and fallthrough
+	lda	#GREEN_BOX	; and fallthrough
 
 _plot_star:
 	sta	,y+
@@ -501,7 +515,7 @@ _star_dot:
 	lda	#'.'+64
 	bra	_plot_star
 
-_star_small:
+_star_big:
 	lda	#'*'+64
 	bra	_plot_star
 

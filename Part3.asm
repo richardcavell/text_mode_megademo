@@ -306,6 +306,7 @@ _debug_mode_toggle:
 *****************************
 
 wait_frames:
+
         pshs    a
         jsr     wait_for_vblank_and_check_for_skip
 	tsta
@@ -361,9 +362,13 @@ linux_spoof:
 	jsr	display_text_graphic
 
 	lda	#100
-	jsr	wait_frames
+	jsr	wait_frames		; Return the result in A
+
+	rts
 
 skip_linux_spoof:
+
+	lda	#1
 	rts
 
 linux_spoof_text:

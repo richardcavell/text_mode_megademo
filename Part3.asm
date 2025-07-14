@@ -14,7 +14,7 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 *
-* ASCII art in the third section was made by an unknown person from
+* ASCII art in the fourth section was made by an unknown person from
 * https://www.asciiart.eu/animals/birds-land
 * and then modified by me
 * ASCII art of the Batman logo was made by an unknown person, possibly
@@ -42,8 +42,9 @@ WAIT_PERIOD	EQU	25
         jsr     turn_6bit_audio_on
 
 	jsr	linux_spoof		; First section
-	jsr	starfield		; Second section
-	jsr	multi_scroller		; Third section
+	jsr	game_of_life		; Second section
+	jsr	starfield		; Third section
+	jsr	multi_scroller		; Fourth section
 	jsr	loading_screen
 
 	jsr	uninstall_irq_service_routine
@@ -396,6 +397,159 @@ ha_ha_message:
 just_kidding_message:
 
 	FCV	"JUST KIDDING!",0,255
+
+**************
+* Game of Life
+**************
+
+game_of_life:
+
+	jsr	clear_screen
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames	; Ignore return value
+
+_game_of_life_loop:
+
+	ldd	germ_frame
+	addd	#1
+	std	germ_frame
+	cmpd	#1000
+	beq	_game_of_life_finished
+
+	jsr	iterate
+	jsr	add_germs
+
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	bne	_skip_game_of_life
+
+	jsr	copy_buffer
+
+	bra	_game_of_life_loop
+
+_game_of_life_finished:
+	clra
+	rts
+
+_skip_game_of_life:
+	lda	#1
+	rts
+
+second_buffer:
+
+	RZB	512, GREEN_BOX
+
+germ_frame:
+
+	RZB	2
+
+add_germ_phase:
+
+	RZB	1
+
+add_germs:
+
+	bsr	add_germ_draw
+
+	lda	add_germ_phase
+	beq	_phase0
+	cmpa	#1
+	beq	_phase1
+	cmpa	#2
+	beq	_phase2
+
+	; Other phases are not implemented yet
+	rts
+
+_phase0:
+
+	lda	#3
+	sta	_add_germ_vertical
+
+	ldb	#5
+	stb	_add_germ_horizontal
+
+	lda	#1
+	sta	add_germ_phase
+
+	rts
+
+_phase1:
+	lda	_add_germ_horizontal
+	cmpa	#27
+	beq	_end_phase_1
+	inca
+	sta	_add_germ_horizontal
+
+	rts
+
+_end_phase_1:
+
+	lda	#2
+	sta	add_germ_phase
+	rts
+
+_phase2:
+	lda	_add_germ_vertical
+	cmpa	#14
+	beq	_end_phase_2
+	inca
+	sta	_add_germ_vertical
+
+	rts
+
+_end_phase_2:
+
+	lda	#3
+	sta	add_germ_phase
+
+	rts
+
+_add_germ_horizontal:
+
+	FCB	-1
+
+_add_germ_vertical:
+
+	FCB	-1
+
+WHITE_BOX	EQU	$CF
+
+add_germ_draw:
+
+	lda	#_add_germ_vertical
+	bmi	_no_draw
+	ldb	#COLS_PER_LINE
+	mul
+	ldx	#second_buffer
+	leax	d,x
+	lda	_add_germ_horizontal
+	leax	a,x
+
+	lda	#WHITE_BOX
+	sta	,x			; Plot a new cell
+
+_no_draw:
+	rts
+
+iterate:
+	; Fill the second buffer by transforming the first buffer
+	rts
+
+copy_buffer:
+
+	ldx	#TEXTBUF
+	ldu	#second_buffer
+
+_copy_buffer_loop:
+	ldd	,u++
+	std	,x++
+
+	cmpx	#TEXTBUFEND
+	bne	_copy_buffer_loop
+
+	rts
 
 ***************
 * Starfield

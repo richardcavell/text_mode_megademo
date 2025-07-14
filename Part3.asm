@@ -563,7 +563,7 @@ _iterate_loop:
 
 _skip_reset:
 	cmpx	#TEXTBUFEND
-	bne	iterate_loop
+	bne	_iterate_loop
 
 	rts
 
@@ -576,20 +576,12 @@ determine_box_value:
 	clr	box_value
 
 	deca	; to the left
-	bsr	try_vertical
-	inca
-	bsr	try_vertical
-	inca
-	bsr	try_vertical
+	bsr	get_box
 
 	rts		; Return value is in box_value
 
-try_vertical:
-
-	decb
-	bsr	get_box
-	incb
-	bsr	get_box
+get_box:
+	rts
 
 
 copy_buffer:

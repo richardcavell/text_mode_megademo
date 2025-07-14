@@ -534,8 +534,63 @@ _no_draw:
 	rts
 
 iterate:
+
 	; Fill the second buffer by transforming the first buffer
+
+	lda	#0
+	ldb	#0
+	ldx	#TEXTBUF
+	ldu	#second_buffer
+
+_iterate_loop:
+	pshs	a,x,u
+	bsr	determine_box_value		; Result in box_value
+	puls	a,x,u
+
+	pshs	a
+	lda	box_value
+	sta	,u				; Store it
+	puls	a
+
+	leax	1,x
+	leau	1,u
+	inca
+	cmpa	#COLS_PER_LINE
+	blo	_skip_reset
+
+	clra
+	incb
+
+_skip_reset:
+	cmpx	#TEXTBUFEND
+	bne	iterate_loop
+
 	rts
+
+box_value:
+
+	RZB	1
+
+determine_box_value:
+
+	clr	box_value
+
+	deca	; to the left
+	bsr	try_vertical
+	inca
+	bsr	try_vertical
+	inca
+	bsr	try_vertical
+
+	rts		; Return value is in box_value
+
+try_vertical:
+
+	decb
+	bsr	get_box
+	incb
+	bsr	get_box
+
 
 copy_buffer:
 

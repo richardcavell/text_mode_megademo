@@ -41,6 +41,7 @@ WAIT_PERIOD	EQU	25
 
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	install_irq_service_routine	; Install our IRQ handler
+	jsr	switch_off_irq
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
@@ -265,8 +266,12 @@ _wait_for_vblank_and_check_for_skip_loop:
 	bra	_wait_for_vblank_and_check_for_skip_loop
 
 _wait_for_vblank:
-	tst	vblank_happened
-	beq	_wait_for_vblank_and_check_for_skip_loop
+wvs	tst	$ff03	; Check for interrupt
+	bpl	wvs
+	lda	$ff02	; Acknowledge interrupt
+
+;	tst	vblank_happened
+;	beq	_wait_for_vblank_and_check_for_skip_loop
 
 	clra		; A VBlank happened
 	rts

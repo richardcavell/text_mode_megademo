@@ -223,9 +223,12 @@ TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
-*********************************************
-* Display message at the bottom of the screen
-*********************************************
+**************************************************
+* Display skip message at the bottom of the screen
+*
+* Inputs: None
+* Outputs: None
+**************************************************
 
 display_skip_message:
 
@@ -246,9 +249,7 @@ skip_message:
 * A = line to put it on (0 to 15)
 * X = string containing the message (ended by a zero)
 *
-* Outputs:
-* A = 0 Success
-* A = (Non-zero) Buffer overrun
+* Outputs: None
 *****************************************************
 
 display_message:
@@ -260,28 +261,20 @@ display_message:
 
 _display_message_loop:
 	cmpy	#TEXTBUFEND
-	bhs	_display_message_buffer_overrun	; End of text buffer
+	bhs	_display_message_finished	; End of text buffer
 	lda	,x+
-	beq	_display_message_finished	; Terminating zero
+	beq	_display_message_finished	; Terminating zero was found
 	sta	,y+
 	bra	_display_message_loop
 
-_display_message_buffer_overrun:
-	lda	#1
-	rts
-
 _display_message_finished:
-	clra
 	rts
 
 ******************************************
 * Pluck routine
 *
 * Inputs: None
-*
-* Outputs:
-* A = 0 	 Success
-* A = (Non-zero) User skipped this section
+* Outputs: None
 ******************************************
 
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of

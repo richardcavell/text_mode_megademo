@@ -440,6 +440,12 @@ _starfield_line_loop:
 
 	leax	9*COLS_PER_LINE,x
 
+	cmpx	#$D000
+	blo	_skip_decrement
+
+	leax	-$5000,x	; Keep in the range $8000-$D000
+
+_skip_decrement:
 	cmpy	#TEXTBUF+15*COLS_PER_LINE
 	blo	_starfield_line_loop
 

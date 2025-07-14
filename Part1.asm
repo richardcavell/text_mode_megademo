@@ -1204,8 +1204,8 @@ uninstall_irq_service_routine:
 
 	jsr	switch_off_irq
 
-	ldy	decb_irq_service_routine
-	sty	IRQ_HANDLER
+	ldx	decb_irq_service_routine
+	stx	IRQ_HANDLER
 
 	jsr	switch_on_irq
 

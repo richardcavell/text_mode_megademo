@@ -284,11 +284,21 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 GREEN_BOX	EQU	$60	; These are MC6847 codes
 WHITE_BOX	EQU	$CF
 
+simultaneous_plucks:
+
+	RZB	1
+
 pluck_line_counts:
 
 	RZB PLUCK_LINES			; 15 zeroes
 
 pluck_line_counts_end:
+
+plucks_data:
+
+	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
+
+plucks_data_end:
 
 ; The structure of an entry in plucks_data is:
 ; phase     (1 byte),
@@ -302,51 +312,16 @@ PLUCK_PHASE_TURN_WHITE	EQU	1
 PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
-plucks_data:
-
-	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
-
-plucks_data_end:
-
-simultaneous_plucks:
-
-	RZB	1
-
-; TODO Review is up to here
-
 pluck_the_screen:
 
 ; First, count the number of characters on each line of the screen
 
 	jsr	pluck_count_chars_per_line
 
-; Second, start the number of simultaneous plucks at 1
-
-	lda	#1
-	sta	simultaneous_plucks
-
-_pluck_loop:
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	bne	_pluck_skip			; Does the user wants to skip?
-
-	jsr	pluck_is_screen_empty		; Is the screen empty?
-	tsta
-	bne	_pluck_finished			; If Yes, we are finished
-
-	jsr	pluck_count_frames		; If No, keep going
-
-	jsr	pluck_continue
-
-	bra	_pluck_loop
-
-_pluck_skip:
-	lda	#1
+	bsr	pluck_loop
 	rts
 
-_pluck_finished:
-	clra
-	rts
+; TODO Review is up to here
 
 ***********************************
 * Pluck - Count characters per line
@@ -381,6 +356,41 @@ _pluck_count_chars_found_space:
 	bra	_pluck_count_chars_on_one_line
 
 _pluck_count_chars_end:
+	rts
+
+***************
+* Pluck loop
+*
+* Inputs: None
+* Outputs: None
+***************
+
+pluck_loop:
+
+	lda	#1
+	sta	simultaneous_plucks	; Start 1 pluck at a time
+
+_pluck_loop:
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta
+	bne	_pluck_skip			; Does the user wants to skip?
+
+	jsr	pluck_is_screen_empty		; Is the screen empty?
+	tsta
+	bne	_pluck_finished			; If Yes, we are finished
+
+	jsr	pluck_count_frames		; If No, keep going
+
+	jsr	pluck_continue
+
+	bra	_pluck_loop
+
+_pluck_skip:
+	lda	#1
+	rts
+
+_pluck_finished:
+	clra
 	rts
 
 ******************************************

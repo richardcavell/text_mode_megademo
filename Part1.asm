@@ -60,6 +60,9 @@ WAIT_PERIOD	EQU	25
 
 **********************
 * Zero the DP register
+*
+* Inputs: None
+* Outputs: None
 **********************
 
 zero_dp_register:
@@ -124,22 +127,24 @@ switch_on_irq:
 * Our IRQ handler
 *
 * Make sure decb_irq_service_routine is initialized
+*
+* Inputs: Not applicable
+* Outputs: Not applicable
 ***************************************************
 
 irq_service_routine:
 
-	lda	#1
-	sta	vblank_happened
-
-	lda	#DEBUG_MODE
-	beq	_skip_debug_visual_indication
+	lda	#1			; If waiting for VBlank,
+	sta	vblank_happened		; here's the signal
 
 ; For debugging, this provides a visual indication that
 ; our handler is running
 
+	IF	(DEBUG_MODE)
+
 	inc	(TEXTBUFEND-1)	; The lower-right corner character cycles
 
-_skip_debug_visual_indication:
+	ENDIF
 
 		; In the interests of making our IRQ handler run fast,
 		; the routine assumes that decb_irq_service_routine
@@ -191,6 +196,7 @@ turn_6bit_audio_on:
 
 * This code was written by other people, taken from
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
+* and then modified by me
 
 	ldb	PIA2_CRA
 	andb	#0b11111011
@@ -210,7 +216,7 @@ turn_6bit_audio_on:
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400		; We're not double-buffering
+TEXTBUF		EQU	$400		; We're usually not double-buffering
 TEXTBUFSIZE	EQU	$200		; so there's only one text screen
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
@@ -220,6 +226,8 @@ TEXT_LINES	EQU	16
 *********************************************
 * Display message at the bottom of the screen
 *********************************************
+
+; TODO Review is up to here
 
 display_skip_message:
 

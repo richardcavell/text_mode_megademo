@@ -41,7 +41,7 @@ WAIT_PERIOD	EQU	25
 
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	install_irq_service_routine	; Install our IRQ handler
-	jsr	switch_off_irq
+	jsr	switch_off_irq_and_firq
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 

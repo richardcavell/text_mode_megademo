@@ -626,7 +626,7 @@ _pluck_screen_not_empty:
 pluck_check_empty_slots:
 
 	ldx	#plucks_data
-	lda	simultaneous_plucks	; Multiply by 4
+	lda	simultaneous_plucks	; Multiply this by 4
 	lsla
 	lsla
 	leay	a,x
@@ -686,8 +686,7 @@ pluck_count_frames:
 	cmpa	#50				; Every 50 frames,
 	bne	_skip_increase
 
-	clra
-	sta	_pluck_frames			; reset the counter, and
+	clr	_pluck_frames			; reset the counter, and
 
 	lda	simultaneous_plucks		; increase the number of plucks
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time

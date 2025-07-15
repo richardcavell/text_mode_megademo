@@ -25,7 +25,7 @@
 * Also, you can make the lower right corner character cycle when
 * the interrupt request service routine operates.
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -370,9 +370,16 @@ PLUCK_PHASE_PULLING	EQU	3
 
 pluck_the_screen:
 
-; First, count the number of characters on each line of the screen
+; First, start with just one pluck at a time
+
+	lda	#1
+	sta	simultaneous_plucks
+
+; Second, count the number of characters on each line of the screen
 
 	jsr	pluck_count_chars_per_line
+
+; Now do it
 
 	bsr	pluck_loop
 	rts
@@ -448,8 +455,6 @@ _divisible:
 	lda	#1
 	rts
 
-; TODO Review is up to here
-
 ***************
 * Pluck loop
 *
@@ -459,31 +464,34 @@ _divisible:
 
 pluck_loop:
 
-	lda	#1
-	sta	simultaneous_plucks	; Start 1 pluck at a time
-
-_pluck_loop:
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	bne	_pluck_skip			; Does the user wants to skip?
+	bne	_pluck_finished			; If the user wants to skip, we finish
 
-	jsr	pluck_is_screen_empty		; Is the screen empty?
+	jsr	pluck_is_screen_empty
 	tsta
-	bne	_pluck_finished			; If Yes, we are finished
+	bne	_pluck_finished			; If the screen is empty, we finish
 
-	jsr	pluck_count_frames		; If No, keep going
+	jsr	process_pluck			; Otherwise, keep going
 
-	jsr	pluck_continue
-
-	bra	_pluck_loop
-
-_pluck_skip:
-	lda	#1
-	rts
+	bra	pluck_loop
 
 _pluck_finished:
 	clra
 	rts
+
+**************
+
+; TODO Fix this
+
+process_pluck:
+
+	jsr	pluck_count_frames
+	jsr	pluck_continue
+
+	rts
+
+; TODO Review is up to here
 
 ******************************************
 * Wait for VBlank and check for skip
@@ -495,10 +503,6 @@ _pluck_finished:
 * A = (Non-zero) -> User is trying to skip
 ******************************************
 
-POLCAT		EQU	$A000
-
-BREAK_KEY	EQU	3
-
 vblank_happened:
 
 	RZB	1
@@ -508,46 +512,93 @@ wait_for_vblank_and_check_for_skip:
 	clr	vblank_happened
 
 _wait_for_vblank_and_check_for_skip_loop:
-	jsr	[POLCAT]
-	cmpa	#' '			; Space bar
-	beq	_wait_for_vblank_skip
-	cmpa	#BREAK_KEY		; Break key
-	beq	_wait_for_vblank_skip
-	ldb	#DEBUG_MODE
-	beq	_wait_for_vblank
-	cmpa	#'t'			; T key
-	beq	_wait_for_vblank_invert_toggle
-	cmpa	#'T'
-	beq	_wait_for_vblank_invert_toggle
-	ldb	_debug_mode_toggle
-	beq	_wait_for_vblank
 
-; If toggle is on, require an F to go forward 1 frame
+	bsr	poll_keyboard
+	cmpa	#1
+	beq	_skip
+	cmpa	#2
+	beq	_wait_for_vblank_and_check_for_skip_loop
 
-	cmpa	#'f'
-	beq	_wait_for_vblank
-	cmpa	#'F'
-	beq	_wait_for_vblank
-	bra	_wait_for_vblank_and_check_for_skip_loop
-
-_wait_for_vblank:
 	tst	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
 
 	clra		; A VBlank happened
 	rts
 
+_skip:
+	lda	#1	; User skipped
+	rts
+
+**************
+
+POLCAT		EQU	$A000
+
+BREAK_KEY	EQU	3
+
+poll_keyboard:
+
+	jsr	[POLCAT]		; POLCAT is a pointer to a pointer
+	cmpa	#' '			; Space bar
+	beq	_wait_for_vblank_skip
+	cmpa	#BREAK_KEY		; Break key
+	beq	_wait_for_vblank_skip
+
+	IF	DEBUG_MODE
+	bsr	debugging_mode_on
+	cmpa	#2
+	beq	_wait_for_f
+	ENDIF
+
+	clra
+	rts
+
 _wait_for_vblank_skip:
 	lda	#1	; User wants to skip
 	rts
 
+	IF	DEBUG_MODE
+_wait_for_f:
+	lda	#2	; We require an F to proceed
+	rts
+	ENDIF
+
+******************
+
+debugging_mode_on:
+
+	cmpa	#'t'
+	beq	_wait_for_vblank_invert_toggle
+	cmpa	#'T'
+	beq	_wait_for_vblank_invert_toggle
+	ldb	_debug_mode_toggle
+	bne	require_f
+
+	rts
+
 _wait_for_vblank_invert_toggle:
 	com	_debug_mode_toggle
-	bra	_wait_for_vblank
+	rts
 
 _debug_mode_toggle:
 
 	RZB	1
+
+***********
+
+require_f:
+
+	cmpa	#'f'		; If toggle is on, require an F
+	beq	_rts		; to go forward 1 frame
+
+	cmpa	#'F'
+	beq	_rts
+
+	lda	#2		; If no F, go back to polling
+	rts
+
+_rts:
+	clra
+	rts
 
 *************************************************
 * Pluck - check to see if the screen is empty yet

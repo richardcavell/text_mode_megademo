@@ -46,7 +46,7 @@ WAIT_PERIOD	EQU	25
 	jsr	joke_startup_screen		; Second section
 	jsr	loading_screen
 
-	jsr	uninstall_irq_service_routine
+	jsr	restore_basic_irq_service_routine
 
 	clra
 	clrb
@@ -391,9 +391,13 @@ pluck_count_chars_per_line:
 
 _pluck_count_chars_per_line_loop:
 
+	pshs	x,u
 	bsr	pluck_count_chars_do_one_line
+	puls	x,u
 
 	leau	1,u
+	leax	COLS_PER_LINE,x
+
 	cmpx	#(TEXTBUF+PLUCK_LINES*COLS_PER_LINE)
 	blo	_pluck_count_chars_per_line_loop
 
@@ -403,12 +407,15 @@ _pluck_count_chars_per_line_loop:
 
 pluck_count_chars_do_one_line:
 
-	lda	#COLS_PER_LINE
-
 _one_line_loop:
+	pshs	x
 	bsr	pluck_count_chars_do_char
+	puls	x
 
-	deca
+	leax	1,x
+
+	tfr	x,d
+	andb	#0b00011111		; Is X a multiple of 32?
 	bne	_one_line_loop
 
 	rts
@@ -417,9 +424,9 @@ _one_line_loop:
 
 pluck_count_chars_do_char:
 
-	ldb	#GREEN_BOX
+	lda	#GREEN_BOX
 
-	cmpb	,x+
+	cmpa	,x
 	beq	found_space
 
 	inc	,u
@@ -1265,21 +1272,25 @@ baby_elephant:
 	FCB	255
 baby_elephant_end:
 
-***********************************
-* Uninstall our IRQ service routine
+*************************************
+* Restore BASIC's IRQ service routine
 *
 * Inputs: None
 * Outputs: None
-***********************************
+*************************************
 
-uninstall_irq_service_routine:
+restore_basic_irq_service_routine:
 
 	jsr	switch_off_irq
+	bsr	restore_irq_handler
+	jsr	switch_on_irq
+
+	rts
+
+restore_irq_handler:
 
 	ldx	decb_irq_service_routine
 	stx	IRQ_HANDLER
-
-	jsr	switch_on_irq
 
 	rts
 
@@ -1288,9 +1299,13 @@ uninstall_irq_service_routine:
 *************************************
 
 pop_sound:
+
 	INCLUDEBIN "Sounds/Pop/Pop.raw"
+
 pop_sound_end:
 
 pluck_sound:
+
 	INCLUDEBIN "Sounds/Type/Type.raw"
+
 pluck_sound_end:

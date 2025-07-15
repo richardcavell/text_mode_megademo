@@ -491,8 +491,6 @@ process_pluck:
 
 	rts
 
-; TODO Review is up to here
-
 ******************************************
 * Wait for VBlank and check for skip
 *

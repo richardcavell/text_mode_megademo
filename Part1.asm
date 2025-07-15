@@ -200,6 +200,15 @@ AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
 turn_6bit_audio_on:
 
+	bsr	set_audio_port_on
+	bsr	set_ddra
+
+	rts
+
+******************
+
+set_audio_port_on:
+
 * This code was modified from code written by Trey Tomes
 
 	lda	AUDIO_PORT_ON
@@ -207,6 +216,12 @@ turn_6bit_audio_on:
 	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
 
 * End code modified from code written by Trey Tomes
+
+	rts
+
+*********
+
+set_ddra:
 
 * This code was written by other people, taken from
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm

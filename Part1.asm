@@ -389,50 +389,63 @@ pluck_count_chars_per_line:
 	ldx	#TEXTBUF
 	ldu	#pluck_line_counts
 
-_pluck_count_chars_per_line_loop:
+_pluck_count_loop:
+	bsr	count_char
+	bsr	increment_u
 
-	pshs	x,u
-	bsr	pluck_count_chars_do_one_line
-	puls	x,u
-
-	leau	1,u
-	leax	COLS_PER_LINE,x
-
-	cmpx	#(TEXTBUF+PLUCK_LINES*COLS_PER_LINE)
-	blo	_pluck_count_chars_per_line_loop
+	cmpu	#pluck_line_counts_end
+	blo	_pluck_count_loop
 
 	rts
 
-******************************
+***********
 
-pluck_count_chars_do_one_line:
-
-_one_line_loop:
-	pshs	x
-	bsr	pluck_count_chars_do_char
-	puls	x
-
-	leax	1,x
-
-	tfr	x,d
-	andb	#0b00011111		; Is X a multiple of 32?
-	bne	_one_line_loop
-
-	rts
-
-**************************
-
-pluck_count_chars_do_char:
+count_char:
 
 	lda	#GREEN_BOX
+	cmpa	,x+
+	beq	_skip_count
 
-	cmpa	,x
-	beq	found_space
+	inc	,u		; Count non-spaces only
 
-	inc	,u
+_skip_count:
+	rts
 
-found_space:
+************
 
+increment_u:
+
+	tfr	x,d
+	bsr	is_d_divisible_by_32
+	tsta
+	bne	_increment
+	rts
+
+_increment:
+	leau	1,u
+	rts
+
+*****************************
+* Is D divisible by 32
+*
+* Inputs:
+* D = any number
+*
+* Output:
+* A = 0           No it isn't
+* A = (Non-zero)  Yes it is
+*****************************
+
+is_d_divisible_by_32:
+
+	andb	#0b00011111
+	beq	_divisible
+
+	clra
+	rts
+
+_divisible:
+	lda	#1
 	rts
 
 ; TODO Review is up to here
@@ -1243,20 +1256,20 @@ loading_screen:
 	ldx	#baby_elephant
 	jsr	display_text_graphic
 
-	ldx	#loading_text
 	lda	#15
-	ldb	#11
-	jsr	display_text_graphic
+	ldx	#loading_text
+	jsr	display_message
 
 	rts
 
 loading_text:
 
-	FCV	"LOADING...",0
+	FCV	"           LOADING...",0
 
 * This art is by Shanaka Dias at asciiart.eu, and modified by me
 
 baby_elephant:
+
 	FCV	"     ..-- ,.--.",0
 	FCV	"   .'   .'    /",0
 	FCV	"   ! @       !'..--------..",0
@@ -1270,6 +1283,7 @@ baby_elephant:
 	FCV	"      SND   !   !./'   :.. \.-'",0
 	FCV	"            '--'",0
 	FCB	255
+
 baby_elephant_end:
 
 *************************************

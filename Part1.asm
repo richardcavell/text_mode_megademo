@@ -155,9 +155,7 @@ irq_service_routine:
 ; our handler is running
 
 	IF	(DEBUG_MODE)
-
 	inc	(TEXTBUFEND-1)	; The lower-right corner character cycles
-
 	ENDIF
 
 		; In the interests of making our IRQ handler run fast,
@@ -386,35 +384,51 @@ pluck_the_screen:
 * Outputs: None
 ***********************************
 
-; TODO Review is up to here
-
 pluck_count_chars_per_line:
 
 	ldx	#TEXTBUF
-	ldu	#pluck_line_counts	; There are 15 of these
+	ldu	#pluck_line_counts
 
-_pluck_count_chars_on_one_line:
-	ldb	#COLS_PER_LINE		; There are 32 characters per line
+_pluck_count_chars_per_line_loop:
 
-_pluck_count_chars_test_char:
-	lda	,x+
-	cmpa	#GREEN_BOX		 	; Is it an empty green box?
-	beq	_pluck_count_chars_found_space	; Yes, so don't count it
-					 	; or
-	inc	,u			 	; No, so count it
+	bsr	pluck_count_chars_do_one_line
 
-_pluck_count_chars_found_space:
-	decb
-	bne	_pluck_count_chars_test_char
-
+	leau	1,u
 	cmpx	#(TEXTBUF+PLUCK_LINES*COLS_PER_LINE)
-	beq	_pluck_count_chars_end
+	blo	_pluck_count_chars_per_line_loop
 
-	leau	1,u			; Start counting the next line
-	bra	_pluck_count_chars_on_one_line
-
-_pluck_count_chars_end:
 	rts
+
+******************************
+
+pluck_count_chars_do_one_line:
+
+	lda	#COLS_PER_LINE
+
+_one_line_loop:
+	bsr	pluck_count_chars_do_char
+
+	deca
+	bne	_one_line_loop
+
+	rts
+
+**************************
+
+pluck_count_chars_do_char:
+
+	ldb	#GREEN_BOX
+
+	cmpb	,x+
+	beq	found_space
+
+	inc	,u
+
+found_space:
+
+	rts
+
+; TODO Review is up to here
 
 ***************
 * Pluck loop

@@ -79,21 +79,35 @@ zero_dp_register:
 * Outputs: None
 *********************************
 
-IRQ_HANDLER	EQU	$10D
-
 install_irq_service_routine:
 
 	bsr	switch_off_irq		; Switch off IRQ interrupts for now
 
+	bsr	get_irq_handler
+	bsr	set_irq_handler
+
+	bsr	switch_on_irq		; Switch IRQ interrupts back on
+
+	rts
+
+IRQ_HANDLER	EQU	$10D
+
+****************
+
+get_irq_handler:
+
 	ldx	IRQ_HANDLER		; Load the current vector into X
 	stx	decb_irq_service_routine	; We will call it at the end
 						; of our own handler
+	rts
+
+****************
+
+set_irq_handler:
 
 	ldx	#irq_service_routine
 	stx	IRQ_HANDLER		; Our own interrupt service routine
 					; is installed
-
-	bsr	switch_on_irq		; Switch IRQ interrupts back on
 
 	rts
 
@@ -295,7 +309,7 @@ get_screen_position:
 	leax	d,x
 
 	puls	b
-	leax	b,x
+	abx
 
 	rts
 
@@ -350,14 +364,14 @@ pluck_the_screen:
 	bsr	pluck_loop
 	rts
 
-; TODO Review is up to here
-
 ***********************************
 * Pluck - Count characters per line
 *
 * Inputs: None
 * Outputs: None
 ***********************************
+
+; TODO Review is up to here
 
 pluck_count_chars_per_line:
 

@@ -22,8 +22,8 @@
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.
 * In frame-by-frame mode, you press F to see the next frame.
-* Also, you can make the lower right corner character cycle when
-* the interrupt request service routine operates.
+* Also, you can optionally have the lower right corner character
+* cycle when the interrupt request service routine operates.
 
 DEBUG_MODE	EQU	1
 
@@ -90,27 +90,6 @@ install_irq_service_routine:
 
 	rts
 
-IRQ_HANDLER	EQU	$10D
-
-****************
-
-get_irq_handler:
-
-	ldx	IRQ_HANDLER		; Load the current vector into X
-	stx	decb_irq_service_routine	; We will call it at the end
-						; of our own handler
-	rts
-
-****************
-
-set_irq_handler:
-
-	ldx	#irq_service_routine
-	stx	IRQ_HANDLER		; Our own interrupt service routine
-					; is installed
-
-	rts
-
 ***************************
 * Switch IRQ interrupts off
 *
@@ -134,6 +113,37 @@ switch_off_irq:
 switch_on_irq:
 
 	andcc	#0b11101111		; Switch IRQ interrupts back on
+
+	rts
+
+*****************
+* Get IRQ handler
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+IRQ_HANDLER	EQU	$10D
+
+get_irq_handler:
+
+	ldx	IRQ_HANDLER		; Load the current vector into X
+	stx	decb_irq_service_routine	; We will call it at the end
+						; of our own handler
+	rts
+
+*****************
+* Set IRQ handler
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+set_irq_handler:
+
+	ldx	#irq_service_routine
+	stx	IRQ_HANDLER		; Our own interrupt service routine
+					; is installed
 
 	rts
 

@@ -500,15 +500,21 @@ _divisible:
 
 pluck_loop:
 
+; If the user wants to skip, we finish
+
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	bne	_pluck_finished			; If the user wants to skip, we finish
+	bne	_pluck_finished
+
+; If the screen is empty, we finish
 
 	jsr	pluck_is_screen_empty
 	tsta
-	bne	_pluck_finished			; If the screen is empty, we finish
+	bne	_pluck_finished
 
-	jsr	process_pluck			; Otherwise, keep going
+; Otherwise, keep going
+
+	jsr	process_pluck
 
 	bra	pluck_loop
 
@@ -550,8 +556,11 @@ _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
 	cmpa	#1
 	beq	_skip
+
+	IF	DEBUG_MODE
 	cmpa	#2
 	beq	_wait_for_vblank_and_check_for_skip_loop
+	ENDIF
 
 	tst	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
@@ -563,7 +572,16 @@ _skip:
 	lda	#1	; User skipped
 	rts
 
-**************
+*******************************
+* Poll keyboard
+*
+* Inputs: None
+*
+* Output:
+* A = 0 No input
+* A = 1 User wants to skip
+* A = 2 Require an F to proceed
+*******************************
 
 POLCAT		EQU	$A000
 
@@ -578,9 +596,11 @@ poll_keyboard:
 	beq	_wait_for_vblank_skip
 
 	IF	DEBUG_MODE
+
 	bsr	debugging_mode_on
 	cmpa	#2
 	beq	_wait_for_f
+
 	ENDIF
 
 	clra
@@ -591,12 +611,21 @@ _wait_for_vblank_skip:
 	rts
 
 	IF	DEBUG_MODE
+
 _wait_for_f:
 	lda	#2	; We require an F to proceed
 	rts
+
 	ENDIF
 
-******************
+*******************
+* Debugging mode on
+*
+* Inputs: None
+* Outputs:
+*******************
+
+	IF	DEBUG_MODE
 
 debugging_mode_on:
 
@@ -607,30 +636,44 @@ debugging_mode_on:
 	ldb	_debug_mode_toggle
 	bne	require_f
 
+	clra
 	rts
 
 _wait_for_vblank_invert_toggle:
 	com	_debug_mode_toggle
+
+	clra
 	rts
 
 _debug_mode_toggle:
 
 	RZB	1
 
-***********
+	ENDIF
+
+*******************************
+* Require F
+*
+* Input:
+* A = Keypress
+*
+* Output:
+* A = 0 All is well
+* A = 2 Require an F to proceed
+*******************************
 
 require_f:
 
 	cmpa	#'f'		; If toggle is on, require an F
-	beq	_rts		; to go forward 1 frame
+	beq	_forward		; to go forward 1 frame
 
 	cmpa	#'F'
-	beq	_rts
+	beq	_forward
 
 	lda	#2		; If no F, go back to polling
 	rts
 
-_rts:
+_forward:
 	clra
 	rts
 

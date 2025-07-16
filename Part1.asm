@@ -328,12 +328,13 @@ skip_message:
 
 display_message:
 
-	pshs	x
+	tfr	x,u
+	pshs	u				; U = string
 
 	clrb
 	bsr	get_screen_position		; X = Screen position
 
-	puls	u				; U = string
+	puls	u
 
 _display_message_loop:
 	cmpx	#TEXTBUFEND
@@ -452,13 +453,17 @@ _pluck_count_loop:
 
 	rts
 
-**********************************
+*************************************
 * Count char
 *
 * Inputs:
 * X = Current text buffer position
 * U = Current line count
-**********************************
+*
+* Outputs:
+* X = Updated text buffer position
+* U = (Unmodified) Current line count
+*************************************
 
 count_char:
 
@@ -494,16 +499,16 @@ _increment:
 
 	rts
 
-*****************************
+************************************
 * Is D divisible by 32
 *
 * Inputs:
-* D = any number
+* D = any unsigned number or pointer
 *
 * Output:
 * A = 0           No it isn't
 * A = (Non-zero)  Yes it is
-*****************************
+************************************
 
 is_d_divisible_by_32:
 

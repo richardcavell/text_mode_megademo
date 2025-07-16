@@ -1467,6 +1467,10 @@ loading_text:
 
 	FCV	"           LOADING...",0
 
+***************************
+* ASCII art - Baby elephant
+***************************
+
 * This art is by Shanaka Dias at asciiart.eu, and modified by me
 
 baby_elephant:

@@ -553,17 +553,6 @@ _pluck_finished:
 	clra
 	rts
 
-**************
-
-; TODO Fix this
-
-process_pluck:
-
-	jsr	pluck_count_frames
-	jsr	pluck_continue
-
-	rts
-
 ******************************************
 * Wait for VBlank and check for skip
 *
@@ -662,9 +651,12 @@ toggle_cycle:
 	com	cycle
 	bra	_key_processed
 
-****************************
-* Frame-by-frame mode toggle
-****************************
+**********************************
+* Invert frame-by-frame toggle
+*
+* Input: A = keypress
+* Output: A = (unchanged) keypress
+**********************************
 
 frame_by_frame_mode_toggle:
 
@@ -733,7 +725,7 @@ _pluck_screen_not_empty:
 
 pluck_check_empty_slots:
 
-	bsr	get_pluck_lines_end
+	bsr	get_pluck_data_end
 	pshs	x			; ,s is end of plucks data
 	ldx	#plucks_data
 
@@ -753,16 +745,16 @@ _pluck_check_data_not_empty:
 	clra				; Screen is not clear
 	rts
 
-*********************
-* Get pluck lines end
+********************
+* Get pluck data end
 *
 * Inputs: None
 *
 * Outputs:
 * X = the address
-*********************
+********************
 
-get_pluck_lines_end:
+get_pluck_data_end:
 
 	ldx	#plucks_data
 	lda	simultaneous_plucks	; Multiply this by 4
@@ -798,6 +790,20 @@ _pluck_check_empty_line_not_empty:
 	clra				; Lines are not clear
 	rts
 
+***************
+* Process pluck
+*
+* Inputs: None
+* Outputs: None
+***************
+
+process_pluck:
+
+	jsr	pluck_count_frames
+	jsr	pluck_continue
+
+	rts
+
 ***********************************
 * Pluck - Count frames
 *
@@ -805,26 +811,26 @@ _pluck_check_empty_line_not_empty:
 * Outputs: None
 ***********************************
 
-_pluck_frames:
+pluck_frames:
+
 	RZB	1
 
 pluck_count_frames:
 
-	lda	_pluck_frames
+	lda	pluck_frames
 	inca
-	sta	_pluck_frames			; Keep count of the frames
+	sta	pluck_frames			; Keep count of the frames
 
-	cmpa	#50				; Every 50 frames,
+	cmpa	#50				; Every 50 frames
 	bne	_skip_increase
 
-	clr	_pluck_frames			; reset the counter, and
+	clr	pluck_frames			; reset the counter, and
 
 	lda	simultaneous_plucks		; increase the number of plucks
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
-	beq	_skip_increase
+	bhs	_skip_increase
 
-	inca
-	sta	simultaneous_plucks		; fallthrough to rts
+	inc	simultaneous_plucks		; fallthrough to rts
 
 _skip_increase:
 	rts
@@ -863,18 +869,34 @@ _pluck_continue_do_a_frame:
 
 pluck_find_a_spare_slot:
 
-	lda	simultaneous_plucks
-	ldx	#plucks_data
+	bsr	get_pluck_lines_end
+	pshs	x			; ,S = End of pluck lines
+	ldx	#plucks_data		; X  = Our pointer to pluck data
 
-_pluck_find_loop:
-	ldb	,x
-	cmpb	#PLUCK_PHASE_NOTHING	; tstb
+	bsr	pluck_find_loop
+	leas	2,s
+	rts
+
+*****************************************
+* Pluck find loop
+*
+* Inputs:
+*  X = Pointer to pluck data
+* ,S = Pointer to end of pluck data
+*
+* Outputs:
+* A = (Non-zero) There is a spare slot
+* A = 0		 There isn't a spare slot
+* X = (If A is non-zero) The slot address
+*****************************************
+
+pluck_find_loop:
+	tst	,x			; compare to #PLUCK_PHASE_NOTHING
 	beq	_pluck_find_found_empty
-
-	deca
+	cmpx	,s
 	beq	_pluck_find_no_empty_slot
 	leax	4,x
-	bra	_pluck_find_loop
+	bra	pluck_find_loop
 
 _pluck_find_no_empty_slot:
 

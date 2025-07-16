@@ -24,6 +24,7 @@
 * In frame-by-frame mode, you press F to see the next frame.
 * Also, you can optionally have the lower right corner character
 * cycle when the interrupt request service routine operates.
+* Press C to turn this off or on.
 
 DEBUG_MODE	EQU	1
 
@@ -161,11 +162,8 @@ irq_service_routine:
 	lda	#1			; If waiting for VBlank,
 	sta	vblank_happened		; here's the signal
 
-; For debugging, this provides a visual indication that
-; our handler is running
-
-	IF	(DEBUG_MODE)
-	inc	(TEXTBUFEND-1)	; The lower-right corner character cycles
+	IF	DEBUG_MODE
+	bsr	cycle_corner_character
 	ENDIF
 
 		; In the interests of making our IRQ handler run fast,
@@ -174,9 +172,37 @@ irq_service_routine:
 
 	jmp	[decb_irq_service_routine]
 
+vblank_happened:
+
+	RZB	1
+
 decb_irq_service_routine:
 
 	RZB	2
+
+************************
+* Cycle corner character
+*
+* Inputs: None
+* Outputs: None
+************************
+
+cycle:
+
+	FCB	255	; Start with it turned on
+
+; For debugging, this provides a visual indication that
+; our handler is running
+
+cycle_corner_character:
+
+	tst	cycle
+	beq	_skip_cycle
+	inc	(TEXTBUFEND-1)	; The lower-right corner character cycles
+
+_skip_cycle:
+
+	rts
 
 *********************
 * Turn off disk motor
@@ -543,24 +569,16 @@ process_pluck:
 * A = (Non-zero) -> User is trying to skip
 ******************************************
 
-vblank_happened:
-
-	RZB	1
-
 wait_for_vblank_and_check_for_skip:
 
 	clr	vblank_happened
 
 _wait_for_vblank_and_check_for_skip_loop:
-
 	bsr	poll_keyboard
 	cmpa	#1
 	beq	_skip
-
-	IF	DEBUG_MODE
 	cmpa	#2
 	beq	_wait_for_vblank_and_check_for_skip_loop
-	ENDIF
 
 	tst	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
@@ -571,6 +589,14 @@ _wait_for_vblank_and_check_for_skip_loop:
 _skip:
 	lda	#1	; User skipped
 	rts
+
+*****************************
+* Define POLCAT and BREAK_KEY
+*****************************
+
+POLCAT		EQU	$A000
+
+BREAK_KEY	EQU	3
 
 *******************************
 * Poll keyboard
@@ -583,10 +609,6 @@ _skip:
 * A = 2 Require an F to proceed
 *******************************
 
-POLCAT		EQU	$A000
-
-BREAK_KEY	EQU	3
-
 poll_keyboard:
 
 	jsr	[POLCAT]		; POLCAT is a pointer to a pointer
@@ -595,13 +617,8 @@ poll_keyboard:
 	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
 
-	IF	DEBUG_MODE
-
-	bsr	debugging_mode_on
-	cmpa	#2
-	beq	_wait_for_f
-
-	ENDIF
+	ldb	#DEBUG_MODE
+	bne	debugging_mode_is_on
 
 	clra
 	rts
@@ -610,46 +627,46 @@ _wait_for_vblank_skip:
 	lda	#1	; User wants to skip
 	rts
 
-	IF	DEBUG_MODE
+****************************
+* Frame-by-frame mode toggle
+****************************
 
-_wait_for_f:
-	lda	#2	; We require an F to proceed
-	rts
+frame_by_frame_mode_toggle:
 
-	ENDIF
+	RZB	1
 
-*******************
+*******************************
 * Debugging mode on
 *
 * Inputs: None
 * Outputs:
-*******************
+* A = 0 All normal
+* A = 2 Require F to go forward
+*******************************
 
-	IF	DEBUG_MODE
+debugging_mode_is_on:
 
-debugging_mode_on:
-
-	cmpa	#'t'
-	beq	_wait_for_vblank_invert_toggle
 	cmpa	#'T'
-	beq	_wait_for_vblank_invert_toggle
-	ldb	_debug_mode_toggle
+	beq	wait_for_vblank_invert_toggle
+	cmpa	#'C'
+	beq	toggle_cycle
+
+_key_processed:
+	ldb	frame_by_frame_mode_toggle
 	bne	require_f
 
 	clra
 	rts
 
-_wait_for_vblank_invert_toggle:
-	com	_debug_mode_toggle
+wait_for_vblank_invert_toggle:
 
-	clra
-	rts
+	com	frame_by_frame_mode_toggle
+	bra	_key_processed
 
-_debug_mode_toggle:
+toggle_cycle:
 
-	RZB	1
-
-	ENDIF
+	com	cycle
+	bra	_key_processed
 
 *******************************
 * Require F
@@ -664,11 +681,8 @@ _debug_mode_toggle:
 
 require_f:
 
-	cmpa	#'f'		; If toggle is on, require an F
+	cmpa	#'F'		; If toggle is on, require an F
 	beq	_forward		; to go forward 1 frame
-
-	cmpa	#'F'
-	beq	_forward
 
 	lda	#2		; If no F, go back to polling
 	rts

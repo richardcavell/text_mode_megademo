@@ -282,6 +282,7 @@ display_skip_message:
 	lda	#TEXT_LINES-1		; Bottom line of the screen
 	ldx	#skip_message
 	bsr	display_message
+
 	rts
 
 skip_message:
@@ -346,12 +347,12 @@ get_screen_position:
 
 	rts
 
-******************************************
+***************
 * Pluck routine
 *
 * Inputs: None
 * Outputs: None
-******************************************
+***************
 
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for

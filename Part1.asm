@@ -721,34 +721,65 @@ _pluck_screen_not_empty:
 	clra				; Screen is not clear
 	rts
 
-************************
+**********************************************************
+* Pluck check empty slots
+*
+* Inputs: None
+*
+* Output:
+* A = 0 At least 1 slot is being used, screen is not clear
+* A = (Non-zero) All slots are empty
+**********************************************************
 
 pluck_check_empty_slots:
 
+	bsr	get_pluck_lines_end
+	pshs	x			; ,s is end of plucks data
 	ldx	#plucks_data
-	lda	simultaneous_plucks	; Multiply this by 4
-	lsla
-	lsla
-	leay	a,x
-	pshs	y			; ,s is end of plucks data
 
 _pluck_check_data:
 	lda	,x
 	bne	_pluck_check_data_not_empty
 	leax	4,x
 	cmpx	,s
-	bne	_pluck_check_data
+	blo	_pluck_check_data
 
-	puls	y
+	puls	x
 	lda	#1			; There are no spare pluck slots
 	rts
 
 _pluck_check_data_not_empty:
-	puls	y
+	puls	x
 	clra				; Screen is not clear
 	rts
 
-************************
+*********************
+* Get pluck lines end
+*
+* Inputs: None
+*
+* Outputs:
+* X = the address
+*********************
+
+get_pluck_lines_end:
+
+	ldx	#plucks_data
+	lda	simultaneous_plucks	; Multiply this by 4
+	lsla
+	lsla
+	leax	a,x
+	rts
+
+************************************
+* Pluck check empty lines
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Lines are not clear
+* A = (Non-zero) All lines are clear
+************************************
 
 pluck_check_empty_lines:
 
@@ -758,7 +789,7 @@ _pluck_check_empty_test_line:
 	tst	,x+
 	bne	_pluck_check_empty_line_not_empty
 	cmpx	#pluck_line_counts_end
-	bne	_pluck_check_empty_test_line
+	blo	_pluck_check_empty_test_line
 
 	lda	#1			; Lines are now clear
 	rts

@@ -869,7 +869,7 @@ _pluck_continue_do_a_frame:
 
 pluck_find_a_spare_slot:
 
-	bsr	get_pluck_lines_end
+	bsr	get_pluck_data_end
 	pshs	x			; ,S = End of pluck lines
 	ldx	#plucks_data		; X  = Our pointer to pluck data
 

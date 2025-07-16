@@ -640,6 +640,11 @@ frame_by_frame_mode_toggle:
 
 	RZB	1
 
+invert_frame_by_frame_toggle:
+
+	com	frame_by_frame_mode_toggle
+	bra	_key_processed
+
 *******************************
 * Debugging mode on
 *
@@ -652,7 +657,7 @@ frame_by_frame_mode_toggle:
 debugging_mode_is_on:
 
 	cmpa	#'T'
-	beq	wait_for_vblank_invert_toggle
+	beq	invert_frame_by_frame_toggle
 	cmpa	#'C'
 	beq	toggle_cycle
 
@@ -662,11 +667,6 @@ _key_processed:
 
 	clra
 	rts
-
-wait_for_vblank_invert_toggle:
-
-	com	frame_by_frame_mode_toggle
-	bra	_key_processed
 
 toggle_cycle:
 

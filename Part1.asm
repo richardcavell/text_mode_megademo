@@ -213,7 +213,12 @@ turn_6bit_audio_on:
 
 	rts
 
-******************
+*******************
+* Set audio port on
+*
+* Inputs: None
+* Outputs: None
+*******************
 
 set_audio_port_on:
 
@@ -227,7 +232,12 @@ set_audio_port_on:
 
 	rts
 
-*********
+***************
+* Set DDRA
+*
+* Inputs: None
+* Outputs: None
+***************
 
 set_ddra:
 

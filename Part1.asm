@@ -1396,7 +1396,7 @@ _clear_screen_loop:
 	std	,x++
 
 	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
-	bne	_clear_screen_loop
+	blo	_clear_screen_loop
 	rts
 
 ************************

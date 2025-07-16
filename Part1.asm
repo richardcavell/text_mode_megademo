@@ -157,6 +157,10 @@ set_irq_handler:
 * Outputs: Not applicable
 ***************************************************
 
+vblank_happened:
+
+	RZB	1
+
 irq_service_routine:
 
 	lda	#1			; If waiting for VBlank,
@@ -171,10 +175,6 @@ irq_service_routine:
 		; has been correctly initialized
 
 	jmp	[decb_irq_service_routine]
-
-vblank_happened:
-
-	RZB	1
 
 decb_irq_service_routine:
 

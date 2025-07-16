@@ -17,7 +17,7 @@
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
 * The sound Type.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
-* here: https://commons.wikimedia.org/wiki/File:Modelm.ogg
+* https://commons.wikimedia.org/wiki/File:Modelm.ogg
 * The ASCII art of the baby elephant is by Shanaka Dias at asciiart.eu
 
 * DEBUG_MODE means you press T to toggle frame-by-frame mode.

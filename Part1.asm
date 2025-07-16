@@ -426,7 +426,13 @@ _pluck_count_loop:
 
 	rts
 
-***********
+**********************************
+* Count char
+*
+* Inputs:
+* X = Current text buffer position
+* U = Current line count
+**********************************
 
 count_char:
 
@@ -439,7 +445,14 @@ count_char:
 _skip_count:
 	rts
 
-************
+**********************************
+* Increment U
+*
+* Inputs:
+*
+* X = Current text buffer position
+* U = Current line count
+**********************************
 
 increment_u:
 
@@ -447,10 +460,12 @@ increment_u:
 	bsr	is_d_divisible_by_32
 	tsta
 	bne	_increment
+
 	rts
 
 _increment:
 	leau	1,u
+
 	rts
 
 *****************************

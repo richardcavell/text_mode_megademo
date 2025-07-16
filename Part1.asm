@@ -599,6 +599,8 @@ _skip:
 * Define POLCAT and BREAK_KEY
 *****************************
 
+; POLCAT is a pointer to a pointer
+
 POLCAT		EQU	$A000
 
 BREAK_KEY	EQU	3
@@ -625,25 +627,12 @@ poll_keyboard:
 	ldb	#DEBUG_MODE
 	bne	debugging_mode_is_on
 
-	clra
+	clra		; Debug mode is off, so exit normally
 	rts
 
 _wait_for_vblank_skip:
 	lda	#1	; User wants to skip
 	rts
-
-****************************
-* Frame-by-frame mode toggle
-****************************
-
-frame_by_frame_mode_toggle:
-
-	RZB	1
-
-invert_frame_by_frame_toggle:
-
-	com	frame_by_frame_mode_toggle
-	bra	_key_processed
 
 *******************************
 * Debugging mode on
@@ -673,6 +662,19 @@ toggle_cycle:
 	com	cycle
 	bra	_key_processed
 
+****************************
+* Frame-by-frame mode toggle
+****************************
+
+frame_by_frame_mode_toggle:
+
+	RZB	1
+
+invert_frame_by_frame_toggle:
+
+	com	frame_by_frame_mode_toggle
+	bra	_key_processed
+
 *******************************
 * Require F
 *
@@ -689,7 +691,7 @@ require_f:
 	cmpa	#'F'		; If toggle is on, require an F
 	beq	_forward		; to go forward 1 frame
 
-	lda	#2		; If no F, go back to polling
+	lda	#2		; If no F, go back to polling the keyboard
 	rts
 
 _forward:

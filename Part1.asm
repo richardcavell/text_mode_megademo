@@ -1443,6 +1443,9 @@ _display_text_graphic_finished:
 
 ****************
 * Loading screen
+*
+* Inputs: None
+* Outputs: None
 ****************
 
 loading_screen:

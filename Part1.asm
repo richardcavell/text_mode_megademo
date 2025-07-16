@@ -881,8 +881,8 @@ pluck_find_a_spare_slot:
 * Pluck find loop
 *
 * Inputs:
-*  X = Pointer to pluck data
-* ,S = Pointer to end of pluck data
+*   X = Pointer to pluck data
+* 2,S = Pointer to end of pluck data
 *
 * Outputs:
 * A = (Non-zero) There is a spare slot
@@ -893,7 +893,7 @@ pluck_find_a_spare_slot:
 pluck_find_loop:
 	tst	,x			; compare to #PLUCK_PHASE_NOTHING
 	beq	_pluck_find_found_empty
-	cmpx	,s
+	cmpx	2,s
 	beq	_pluck_find_no_empty_slot
 	leax	4,x
 	bra	pluck_find_loop

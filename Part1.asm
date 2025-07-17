@@ -605,7 +605,8 @@ BREAK_KEY	EQU	3
 *******************************
 * Poll keyboard
 *
-* Inputs: None
+* Inputs:
+* A = Keypress
 *
 * Output:
 * A = 0 No input
@@ -662,8 +663,11 @@ toggle_cycle:
 **********************************
 * Invert frame-by-frame toggle
 *
-* Input: A = keypress
-* Output: A = (unchanged) keypress
+* Input:
+* A = Keypress
+*
+* Output:
+* A = (Unchanged) Keypress
 **********************************
 
 frame_by_frame_mode_toggle:

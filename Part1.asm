@@ -296,6 +296,8 @@ TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
+BOTTOM_LINE	EQU	(TEXT_LINES-1)
+
 **************************************************
 * Display skip message at the bottom of the screen
 *
@@ -305,7 +307,7 @@ TEXT_LINES	EQU	16
 
 display_skip_message:
 
-	lda	#TEXT_LINES-1		; Bottom line of the screen
+	lda	#BOTTOM_LINE		; Bottom line of the screen
 	ldx	#skip_message
 	bsr	display_message
 

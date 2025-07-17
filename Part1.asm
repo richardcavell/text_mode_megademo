@@ -885,7 +885,7 @@ pluck_find_a_spare_slot:
 
 	bsr	get_pluck_data_end
 	pshs	x			; ,S = End of pluck lines
-	ldx	#plucks_data		; X  = Our pointer to pluck data
+	ldx	#plucks_data		;  X = Our pointer to pluck data
 
 	bsr	pluck_find_loop
 	leas	2,s
@@ -905,6 +905,7 @@ pluck_find_a_spare_slot:
 *****************************************
 
 pluck_find_loop:
+
 	cmpx	2,s
 	bhs	_pluck_find_no_empty_slot
 	tst	,x			; compare to #PLUCK_PHASE_NOTHING
@@ -938,7 +939,8 @@ pluck_a_char:
 	tsta
 	bne	_no_chars_left
 	bsr	pluck_char_choose_line
-	bsr	_continue
+	bsr	pluck_get_char
+	bsr	pluck_char
 
 _no_chars_left:
 	rts			; No more unplucked characters left
@@ -965,12 +967,18 @@ pluck_char_choose_line:
 
 	rts
 
-_continue:
-	ldb	#COLS_PER_LINE
-	mul 			; Multiply b by 32 and put the answer in D
+*******************************************************
+* Pluck - Get char
+*
+* Inputs:
+* A = Line number
+*
+* Outputs:
+* X = Pointer to screen position of pluckable character
+*******************************************************
 
-	ldx	#TEXTBUF+COLS_PER_LINE ; Make X point to the end of the line
-	leax	d,x		; that we will pluck from
+pluck_get_char:
+	jsr	get_end_of_line
 
 	lda	#GREEN_BOX	; Green box (space)
 
@@ -988,40 +996,80 @@ _pluck_a_char_check:
 	cmpu	#plucks_data_end
 	blo	_pluck_a_char_check
 
-				; X = position of the character we're plucking
-	ldb	,x		; B = the character
+	rts
 
-; Now register with plucks_data
+********************************************
+* Get end of line
+*
+* Input:
+* A = Line to pluck from
+*
+* Output:
+* X = Screen position of the end of the line
+********************************************
 
-	tfr	x,y
-	pshs	b,y
-	jsr	pluck_find_a_spare_slot
+get_end_of_line:
+
+	clrb
+	jsr	get_screen_position
+
+	; Make X point to the right end of the line
+
+	leax	COLS_PER_LINE,x
+
+	rts
+
+************************************************
+* Pluck - Pluck character
+*
+* Input:
+* X = Screen position of character to be plucked
+*
+* Outputs:None
+************************************************
+
+pluck_char:
+
+	bsr	pluck_register
+	bsr	place_white_box
+	bsr	pluck_play_sound
+
+	rts
+
+************************************************
+* Pluck - Register
+*
+* Input:
+* X = Screen position of character being plucked
+*
+* Outputs:
+* X = Screen position of character being plucked
+************************************************
+
+pluck_register:
+
+	tfr	x,u
+	pshs	u
+	jsr	pluck_find_a_spare_slot	; This call cannot fail
 	tsta
-	beq	_pluck_a_char_impossible
-
-	puls	b,y		; B is the character
+	beq	_impossible
+	puls	u
+	ldb	,u		; B = the character being plucked
 				; X is the slot
-				; Y is the screen position
+				; U is the screen position
 	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
 	sta	,x+		; Store our new phase
 	stb	,x+		; the character
-	sty	,x		; And where it is
+	stu	,x		; And where it is
 
-; Now turn it into a white box
-
-	lda	#WHITE_BOX
-	sta	,y
-
-; Now play the pluck sound
-
-	bsr	pluck_play_sound
+	tfr	u,x		; Return X
 
 	rts
 
 *************************
 
-_pluck_a_char_impossible:
-	bra	_pluck_a_char_impossible	; Should never get here
+_impossible:
+	bra	_impossible	; Should never get here
 
 ***********************
 
@@ -1033,6 +1081,14 @@ pluck_char_choose_random_line:
 	cmpa	#BOTTOM_LINE
 	beq	pluck_char_choose_random_line	; But don't choose line 15
 
+	rts
+
+; Now turn it into a white box
+
+place_white_box:
+
+	lda	#WHITE_BOX
+	sta	,x
 	rts
 
 *****************

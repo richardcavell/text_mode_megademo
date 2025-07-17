@@ -1071,7 +1071,7 @@ pluck_register:
 	pshs	u
 	jsr	pluck_find_a_spare_slot	; This call shouldn't fail
 	tsta
-	beq	_impossible
+	beq	impossible
 	puls	u
 	ldb	,u		; B = the character being plucked
 				; X is the slot
@@ -1085,16 +1085,23 @@ pluck_register:
 
 	rts
 
-*************************
+***************
+* Impossible
+*
+* Inputs: None
+* Outputs: None
+***************
 
-_impossible:
+impossible:
+
+	lda	#'?' +  64
+	sta	$400
+
 	bra	_impossible	; Should never get here
 
-***********************
 
 *********************
 * Place white box
-*
 * Input:
 * X = Screen position
 *

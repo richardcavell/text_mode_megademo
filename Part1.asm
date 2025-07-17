@@ -1069,7 +1069,7 @@ pluck_register:
 
 	tfr	x,u
 	pshs	u
-	jsr	pluck_find_a_spare_slot	; This call cannot fail
+	jsr	pluck_find_a_spare_slot	; This call shouldn't fail
 	tsta
 	beq	_impossible
 	puls	u

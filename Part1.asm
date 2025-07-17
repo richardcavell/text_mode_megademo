@@ -967,6 +967,25 @@ pluck_char_choose_line:
 
 	rts
 
+*********************************
+* Pluck char - Choose random line
+*
+* Inputs: None
+*
+* Output:
+* A = Chosen line
+*********************************
+
+pluck_char_choose_random_line:
+
+	jsr	get_random 	; Get a random number in D
+	tfr	b,a
+	anda	#0b00001111	; Make the random number between 0 and 15
+	cmpa	#BOTTOM_LINE
+	beq	pluck_char_choose_random_line	; But don't choose line 15
+
+	rts
+
 *******************************************************
 * Pluck - Get char
 *
@@ -1073,17 +1092,14 @@ _impossible:
 
 ***********************
 
-pluck_char_choose_random_line:
-
-	bsr	get_random 	; Get a random number in D
-	tfr	b,a
-	anda	#0b00001111	; Make the random number between 0 and 15
-	cmpa	#BOTTOM_LINE
-	beq	pluck_char_choose_random_line	; But don't choose line 15
-
-	rts
-
-; Now turn it into a white box
+*********************
+* Place white box
+*
+* Input:
+* X = Screen position
+*
+* Outputs: None
+*********************
 
 place_white_box:
 
@@ -1091,7 +1107,12 @@ place_white_box:
 	sta	,x
 	rts
 
-*****************
+********************
+* Pluck - Play sound
+*
+* Inputs: None
+* Outputs: None
+********************
 
 pluck_play_sound:
 

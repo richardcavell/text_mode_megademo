@@ -1291,6 +1291,7 @@ get_random:
 	rorb
 	bcc	get_random_no_feedback
 	eora	#$B4
+
 get_random_no_feedback:
 	std	SEED
 	rts
@@ -1321,6 +1322,10 @@ joke_startup_screen:
 
 _skip_joke_startup:
 	rts
+
+***********************
+* Joke startup messages
+***********************
 
 joke_startup_messages:
 

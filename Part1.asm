@@ -718,7 +718,7 @@ pluck_is_screen_empty:
 	tsta
 	beq	_pluck_screen_not_empty
 
-	bsr	pluck_check_empty_lines
+	bsr	pluck_are_lines_empty
 	rts
 
 _pluck_screen_not_empty:
@@ -778,7 +778,7 @@ get_pluck_data_end:
 	rts
 
 ************************************
-* Pluck - Check empty lines
+* Pluck - Are lines empty
 *
 * Inputs: None
 *
@@ -787,20 +787,20 @@ get_pluck_data_end:
 * A = (Non-zero) All lines are clear
 ************************************
 
-pluck_check_empty_lines:
+pluck_are_lines_empty:
 
 	ldx	#pluck_line_counts
 
-_pluck_check_empty_test_line:
+_pluck_are_lines_empty_test_line:
 	tst	,x+
-	bne	_pluck_check_empty_line_not_empty
+	bne	_pluck_are_lines_empty_line_not_empty
 	cmpx	#pluck_line_counts_end
-	blo	_pluck_check_empty_test_line
+	blo	_pluck_are_lines_empty_test_line
 
 	lda	#1			; Lines are now clear
 	rts
 
-_pluck_check_empty_line_not_empty:
+_pluck_are_lines_empty_line_not_empty:
 	clra				; Lines are not clear
 	rts
 
@@ -934,22 +934,38 @@ _pluck_find_found_empty:
 
 pluck_a_char:
 
-	bsr	pluck_check_empty_lines
+	bsr	pluck_are_lines_empty
 	tsta
-	beq	_pluck_char_get_random
+	bne	_no_chars_left
+	bsr	pluck_char_choose_line
+	bsr	_continue
 
+_no_chars_left:
 	rts			; No more unplucked characters left
 
-_pluck_char_get_random:
-	bsr	pluck_char_choose_line	; Chosen line is in A
+*********************************
+* Pluck a character - Choose line
+*
+* Inputs: None
+*
+* Output:
+* A = Line number
+*********************************
 
-	ldy	#pluck_line_counts
+pluck_char_choose_line:
 
-	tst	a,y		; If there are no more characters on this line
-	beq	_pluck_char_get_random	; choose a different one
+	bsr	pluck_char_choose_random_line	; Chosen line is in A
 
-	dec	a,y		; There'll be one less character after this
+	ldx	#pluck_line_counts
 
+	tst	a,x	; If there are no more characters on this line
+	beq	pluck_char_choose_line		; choose a different one
+
+	dec	a,x		; There'll be one less character after this
+
+	rts
+
+_continue:
 	ldb	#COLS_PER_LINE
 	mul 			; Multiply b by 32 and put the answer in D
 
@@ -1009,13 +1025,13 @@ _pluck_a_char_impossible:
 
 ***********************
 
-pluck_char_choose_line:
+pluck_char_choose_random_line:
 
 	bsr	get_random 	; Get a random number in D
 	tfr	b,a
 	anda	#0b00001111	; Make the random number between 0 and 15
 	cmpa	#BOTTOM_LINE
-	beq	pluck_char_choose_line	; But don't choose line 15
+	beq	pluck_char_choose_random_line	; But don't choose line 15
 
 	rts
 

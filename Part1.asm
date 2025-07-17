@@ -763,10 +763,12 @@ _pluck_check_data_not_empty:
 * Inputs: None
 *
 * Outputs:
-* X = the address
+* X = Address
 ********************
 
 get_pluck_data_end:
+
+; X = #plucks_data + 4 * simultaneous_plucks
 
 	ldx	#plucks_data
 	lda	simultaneous_plucks	; Multiply this by 4
@@ -833,7 +835,7 @@ pluck_count_frames:
 	inca
 	sta	pluck_frames			; Keep count of the frames
 
-	cmpa	#50				; Every 50 frames
+	cmpa	#50				; Every 50 frames,
 	bne	_skip_increase
 
 	clr	pluck_frames			; reset the counter, and

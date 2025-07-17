@@ -161,6 +161,8 @@ $(MOVE_SOUND) $(MMORE_SOUND) $(CHNGE_SOUND):
 	./$(SOUND_STR) $< $@
 	@$(ECHO) "... Done"
 
+# The "RJFC presents Text Mode Megademo" sound is hardcoded in Part2.asm
+
 $(POP_SOUND_RES):   $(POP_SOUND_SRC)
 $(TYPE_SOUND_RES):  $(TYPE_SOUND_SRC)
 $(SNAP_SOUND_RES):  $(SNAP_SOUND_SRC)

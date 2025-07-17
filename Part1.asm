@@ -26,7 +26,7 @@
 * cycle when the interrupt request service routine operates.
 * Press C to turn this off or on.
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -778,7 +778,7 @@ get_pluck_data_end:
 	rts
 
 ************************************
-* Pluck check empty lines
+* Pluck - Check empty lines
 *
 * Inputs: None
 *
@@ -1014,7 +1014,7 @@ pluck_char_choose_line:
 	bsr	get_random 	; Get a random number in D
 	tfr	b,a
 	anda	#0b00001111	; Make the random number between 0 and 15
-	cmpa	#PLUCK_LINES
+	cmpa	#BOTTOM_LINE
 	beq	pluck_char_choose_line	; But don't choose line 15
 
 	rts

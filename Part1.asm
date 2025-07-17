@@ -905,10 +905,10 @@ pluck_find_a_spare_slot:
 *****************************************
 
 pluck_find_loop:
+	cmpx	2,s
+	bhs	_pluck_find_no_empty_slot
 	tst	,x			; compare to #PLUCK_PHASE_NOTHING
 	beq	_pluck_find_found_empty
-	cmpx	2,s
-	beq	_pluck_find_no_empty_slot
 	leax	4,x
 	bra	pluck_find_loop
 

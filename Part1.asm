@@ -478,20 +478,26 @@ count_char:
 _skip_count:
 	rts
 
-**********************************
+***********************************************
 * Increment U
 *
 * Inputs:
 *
 * X = Current text buffer position
 * U = Current line count
-**********************************
+*
+* Outputs:
+* X = (Unmodified) Current text buffer position
+* U = Current line count
+***********************************************
 
 increment_u:
 
+	pshs	x,u
 	tfr	x,d
 	bsr	is_d_divisible_by_32
 	tsta
+	puls	x,u
 	bne	_increment
 
 	rts

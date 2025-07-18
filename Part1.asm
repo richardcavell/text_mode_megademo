@@ -563,7 +563,7 @@ pluck_loop:
 
 ; Otherwise, keep going
 
-	jsr	process_pluck
+	jsr	process_pluck_1
 
 	bra	pluck_loop
 
@@ -820,10 +820,10 @@ _pluck_are_lines_empty_line_not_empty:
 * Outputs: None
 ***************
 
-process_pluck:
+process_pluck_1:
 
 	jsr	pluck_count_frames
-	jsr	pluck_continue
+	jsr	process_pluck_2
 
 	rts
 
@@ -853,29 +853,31 @@ pluck_count_frames:
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
 	bhs	_skip_increase
 
-	inc	simultaneous_plucks		; fallthrough to rts
+	inc	simultaneous_plucks		; then fallthrough to rts
 
 _skip_increase:
 	rts
 
-******************
-* Pluck - Continue
+*****************
+* Process pluck 2
 *
 * Inputs: None
 * Outputs: None
-******************
+*****************
 
-pluck_continue:
+process_pluck_2:
+
+; TODO: Save the result of pluck_find_a_spare_slot
 
 	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
-	beq	_pluck_continue_do_a_frame	; No, just keep processing
+	beq	_process_pluck_3		; No, just keep processing
 
 	jsr	pluck_a_char			; Yes, pluck a character
 
-_pluck_continue_do_a_frame:
+_process_pluck_3:
 
-	jsr	pluck_do_frame			; Do one frame
+	jsr	process_pluck_3			; Do one frame
 
 	rts
 
@@ -952,7 +954,7 @@ pluck_a_char:
 	bsr	pluck_char
 
 _no_chars_left:
-	rts			; No more unplucked characters left
+	rts		; No more unplucked characters left on the screen
 
 *********************************
 * Pluck a character - Choose line
@@ -1139,14 +1141,14 @@ pluck_play_sound:
 
 	rts
 
-********************
-* Pluck - Do a frame
+*****************
+* Process pluck 3
 *
 * Inputs: None
 * Outputs: None
-********************
+*****************
 
-pluck_do_frame:
+process_pluck_3:
 
 	ldy	#plucks_data
 

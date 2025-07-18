@@ -865,13 +865,17 @@ _skip_increase:
 * Outputs: None
 *****************
 
-process_pluck_2:
+spare_slot:
 
-; TODO: Save the result of pluck_find_a_spare_slot
+	RZB	2
+
+process_pluck_2:
 
 	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	_process_pluck_3		; No, just keep processing
+
+	stx	spare_slot	; Save for later use
 
 	jsr	pluck_a_char			; Yes, pluck a character
 
@@ -946,7 +950,7 @@ _pluck_find_found_empty:
 
 pluck_a_char:
 
-	bsr	pluck_are_lines_empty	; TODO - this is being called twice
+	bsr	pluck_are_lines_empty
 	tsta
 	bne	_no_chars_left
 	bsr	pluck_char_choose_line
@@ -1080,9 +1084,7 @@ pluck_register:
 
 	tfr	x,u
 	pshs	u
-	jsr	pluck_find_a_spare_slot	; This call shouldn't fail
-	tsta
-	beq	impossible
+	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
 	puls	u
 	ldb	,u		; B = the character being plucked
 				; X is the slot
@@ -1095,21 +1097,6 @@ pluck_register:
 	tfr	u,x		; Return X
 
 	rts
-
-***************
-* Impossible
-*
-* Inputs: None
-* Outputs: None
-***************
-
-impossible:
-
-	lda	#'?' +  64
-	sta	$400
-
-	bra	impossible	; Should never get here
-
 
 *********************
 * Place white box

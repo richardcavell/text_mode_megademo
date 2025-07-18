@@ -378,12 +378,9 @@ get_screen_position:
 
 	rts
 
-***************
-* Pluck routine
-*
-* Inputs: None
-* Outputs: None
-***************
+*****************
+* Pluck variables
+*****************
 
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
@@ -402,6 +399,10 @@ pluck_line_counts:
 
 pluck_line_counts_end:
 
+*************
+* Plucks data
+*************
+
 plucks_data:
 
 	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
@@ -419,6 +420,13 @@ PLUCK_PHASE_NOTHING	EQU	0
 PLUCK_PHASE_TURN_WHITE	EQU	1
 PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
+
+******************
+* Pluck the screen
+*
+* Inputs: None
+* Outputs: None
+******************
 
 pluck_the_screen:
 

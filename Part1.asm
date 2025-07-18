@@ -727,7 +727,7 @@ pluck_is_screen_empty:
 	tsta
 	beq	_pluck_screen_not_empty
 
-	bsr	pluck_are_lines_empty
+	bsr	pluck_are_lines_empty	; Return whatever this returns
 	rts
 
 _pluck_screen_not_empty:
@@ -758,12 +758,12 @@ _pluck_check_data:
 	blo	_pluck_check_data
 
 	puls	x
-	lda	#1			; There are no spare pluck slots
+	lda	#1			; There are no plucks happening
 	rts
 
 _pluck_check_data_not_empty:
 	puls	x
-	clra				; Screen is not clear
+	clra				; There are plucks happening
 	rts
 
 ********************

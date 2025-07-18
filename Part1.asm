@@ -946,7 +946,7 @@ _pluck_find_found_empty:
 
 pluck_a_char:
 
-	bsr	pluck_are_lines_empty
+	bsr	pluck_are_lines_empty	; TODO - this is being called twice
 	tsta
 	bne	_no_chars_left
 	bsr	pluck_char_choose_line

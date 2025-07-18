@@ -33,7 +33,7 @@
 *      The lower left corner will display how many frames have been skipped
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -188,9 +188,7 @@ dropped_frames:
 	RZB	1
 
 ***************************************************
-* Our IRQ handler (DEBUG version)
-*
-* Make sure decb_irq_service_routine is initialized
+* Our IRQ handler
 *
 * Inputs: Not applicable
 * Outputs: Not applicable
@@ -237,11 +235,13 @@ _store_a:
 _do_not_print_frame_counter:
 	bsr	cycle_corner_character
 
-		; In the interests of making our IRQ handler run fast,
-		; the routine assumes that decb_irq_service_routine
-		; has been correctly initialized
+	ldx	decb_irq_service_routine
+	beq	_rti_from_here
+	jmp	,x
 
-	jmp	[decb_irq_service_routine]
+_rti_from_here:
+	lda	$FF02			; Acknowledge interrupt
+	rti
 
 decb_irq_service_routine:
 

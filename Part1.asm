@@ -22,13 +22,18 @@
 
 * The ASCII art of the baby elephant is by Shanaka Dias at asciiart.eu
 
-* DEBUG_MODE means you can press T to toggle frame-by-frame mode, and
-* have the lower right corner character cycle when the interrupt request
-* routine is called.
-* In frame-by-frame mode, you press F to see the next frame.
-* Press C to turn the cycling of the lower-right character off or on.
+* If DEBUG_MODE is non-zero, then Debug Mode is "on".
+* If Debug Mode is on:
+*   1) You can press T to toggle frame-by-frame mode
+*        In frame-by-frame mode, you press F to see the next frame.
+*   2) You can have the lower right corner character cycle when the
+*      interrupt request routine is called
+*        Press C to turn the cycling of the lower-right character off or on
+*   3) You can see if there are dropped frames
+*      The lower left corner will display how many frames have been skipped
+*        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -150,8 +155,40 @@ set_irq_handler:
 
 	rts
 
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF		EQU	$400		; We're usually not double-buffering
+TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE	EQU	32
+TEXT_LINES	EQU	16
+
+BOTTOM_LINE	EQU	(TEXT_LINES-1)
+
+LOWER_LEFT_CORNER	EQU	$5E0
+LOWER_RIGHT_CORNER	EQU	$5FF
+
+******************************************************
+* Variables that are relevant to vertical blank timing
+******************************************************
+
+waiting_for_vblank:
+
+	RZB	1		; The interrupt routine reads this
+
+vblank_happened:
+
+	RZB	1		; and sets this
+
+dropped_frames:
+
+	RZB	1
+
 ***************************************************
-* Our IRQ handler
+* Our IRQ handler (DEBUG version)
 *
 * Make sure decb_irq_service_routine is initialized
 *
@@ -159,18 +196,46 @@ set_irq_handler:
 * Outputs: Not applicable
 ***************************************************
 
-vblank_happened:
-
-	RZB	1
-
 irq_service_routine:
 
+	tst	waiting_for_vblank	; If the demo is not ready for a
+	bne	_no_dropped_frames	; vblank, then we drop a frame
+
+	lda	dropped_frames		; Stop counting dropped frames at 10
+	cmpa	#10
+	beq	_clamp_at_ten
+	inca
+
+_clamp_at_ten:
+	sta	dropped_frames
+	bra	_dropped_frame		; are dropping a frame
+
+_no_dropped_frames:
+	clr	waiting_for_vblank	; No longer waiting
 	lda	#1			; If waiting for VBlank,
 	sta	vblank_happened		; here's the signal
 
-	IF	DEBUG_MODE
+	clr	dropped_frames
+
+_dropped_frame:
+	tst	dropped_frame_counter_toggle
+	beq	_do_not_print_frame_counter
+
+	lda	dropped_frames
+	cmpa	#10
+	blo	_adjust_a
+
+	lda	#94			; This is the up arrow
+	bra	_store_a
+
+_adjust_a:
+	adda	#'0'+64
+
+_store_a:
+	sta	LOWER_LEFT_CORNER	; Put it in the lower-left corner
+
+_do_not_print_frame_counter:
 	bsr	cycle_corner_character
-	ENDIF
 
 		; In the interests of making our IRQ handler run fast,
 		; the routine assumes that decb_irq_service_routine
@@ -190,17 +255,20 @@ decb_irq_service_routine:
 ************************
 
 cycle:
-
+	IF	(DEBUG_MODE)
 	FCB	255	; Start with it turned on
+	ELSE
+	FCB	0
+	ENDIF
 
 ; For debugging, this provides a visual indication that
-; our handler is running
+; our IRQ handler is running
 
 cycle_corner_character:
 
 	tst	cycle
 	beq	_skip_cycle
-	inc	(TEXTBUFEND-1)	; The lower-right corner character cycles
+	inc	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
 
 _skip_cycle:
 
@@ -286,19 +354,6 @@ set_ddra:
 * End of code modified by me from code written by other people
 
 	rts
-
-*************************
-* Text buffer information
-*************************
-
-TEXTBUF		EQU	$400		; We're usually not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
-TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE	EQU	32
-TEXT_LINES	EQU	16
-
-BOTTOM_LINE	EQU	(TEXT_LINES-1)
 
 **************************************************
 * Display skip message at the bottom of the screen
@@ -583,6 +638,8 @@ _pluck_finished:
 wait_for_vblank_and_check_for_skip:
 
 	clr	vblank_happened		; See "Our IRQ handler" above
+	lda	#1
+	sta	waiting_for_vblank
 
 _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
@@ -656,6 +713,8 @@ debugging_mode_is_on:
 	beq	invert_frame_by_frame_toggle
 	cmpa	#'C'
 	beq	toggle_cycle
+	cmpa	#'D'
+	beq	toggle_dropped_frame_counter
 
 _key_processed:
 	ldb	frame_by_frame_mode_toggle
@@ -664,9 +723,48 @@ _key_processed:
 	clra
 	rts
 
+***************
+* Toggle cycle
+*
+* Inputs: None
+* Outputs: None
+***************
+
 toggle_cycle:
 
 	com	cycle
+	bne	_skip_redraw_cycle
+					; If it's being turned off
+	lda	#GREEN_BOX		; then draw over the lower-left
+	sta	LOWER_RIGHT_CORNER	; corner
+
+_skip_redraw_cycle:
+	bra	_key_processed
+
+******************************
+* Toggle dropped frame counter
+*
+* Inputs: None
+* Outputs: None
+******************************
+
+dropped_frame_counter_toggle:
+
+	IF	(DEBUG_MODE)	; If DEBUG_MODE is on, then
+	FCB	255		; dropped frame counter is on by default
+	ELSE
+	FCB	0		; Otherwise, it is off
+	ENDIF
+
+toggle_dropped_frame_counter:
+
+	com	dropped_frame_counter_toggle
+	bne	_skip_redraw_dropped_frame_counter
+					; If it's being turned off
+	lda	#GREEN_BOX		; then draw over the lower-left
+	sta	LOWER_LEFT_CORNER	; corner
+
+_skip_redraw_dropped_frame_counter:
 	bra	_key_processed
 
 **********************************

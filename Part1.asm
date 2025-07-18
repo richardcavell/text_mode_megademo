@@ -194,6 +194,10 @@ dropped_frames:
 * Outputs: Not applicable
 ***************************************************
 
+; We get significantly better performance by ignoring DECB's IRQ handler
+
+CALL_DECB_IRQ_HANDLER	EQU	0
+
 irq_service_routine:
 
 	tst	waiting_for_vblank	; If the demo is not ready for a
@@ -235,9 +239,11 @@ _store_a:
 _do_not_print_frame_counter:
 	bsr	cycle_corner_character
 
+	IF	(CALL_DECB_IRQ_HANDLER)
 	ldx	decb_irq_service_routine
 	beq	_rti_from_here
 	jmp	,x
+	ENDIF
 
 _rti_from_here:
 	lda	$FF02			; Acknowledge interrupt

@@ -15,3 +15,5 @@ Circular scroller
 Sine scroller
 Scroller that drops words
 Boing scroller
+Play sound through HSYNC
+Plucks increase as letters are taken off the screen

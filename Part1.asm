@@ -549,15 +549,15 @@ _divisible:
 
 pluck_loop:
 
-; If the user wants to skip, we finish
-
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	bne	_pluck_finished
-
 ; If the screen is empty, we finish
 
 	jsr	pluck_is_screen_empty
+	tsta
+	bne	_pluck_finished
+
+; If the user wants to skip, we finish
+
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
 	bne	_pluck_finished
 
@@ -568,7 +568,6 @@ pluck_loop:
 	bra	pluck_loop
 
 _pluck_finished:
-	clra
 	rts
 
 ******************************************
@@ -583,7 +582,7 @@ _pluck_finished:
 
 wait_for_vblank_and_check_for_skip:
 
-	clr	vblank_happened
+	clr	vblank_happened		; See "Our IRQ handler" above
 
 _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
@@ -1107,7 +1106,7 @@ impossible:
 	lda	#'?' +  64
 	sta	$400
 
-	bra	_impossible	; Should never get here
+	bra	impossible	; Should never get here
 
 
 *********************

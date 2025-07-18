@@ -14,17 +14,19 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner (Deek)
+
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
 * The sound Type.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Modelm.ogg
+
 * The ASCII art of the baby elephant is by Shanaka Dias at asciiart.eu
 
-* DEBUG_MODE means you press T to toggle frame-by-frame mode.
+* DEBUG_MODE means you can press T to toggle frame-by-frame mode, and
+* have the lower right corner character cycle when the interrupt request
+* routine is called.
 * In frame-by-frame mode, you press F to see the next frame.
-* Also, you can optionally have the lower right corner character
-* cycle when the interrupt request service routine operates.
-* Press C to turn this off or on.
+* Press C to turn the cycling of the lower-right character off or on.
 
 DEBUG_MODE	EQU	0
 

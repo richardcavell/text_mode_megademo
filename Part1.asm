@@ -199,17 +199,18 @@ call_decb_irq_handler:		; We get significantly better performance
 * Outputs: Not applicable
 ***************************************************
 
+; This routine should run absolutely as fast as possible, so
+; the 25-line rule does not apply
+
 irq_service_routine:
 
 	tst	waiting_for_vblank	; If the demo is not ready for a
 	bne	_no_dropped_frames	; vblank, then we drop a frame
 
-	lda	dropped_frames		; Stop counting dropped frames at 10
+	lda	dropped_frames
 	cmpa	#10
-	beq	_clamp_at_ten
+	beq	_dropped_frame		; Stop counting dropped frames at 10
 	inca
-
-_clamp_at_ten:
 	sta	dropped_frames
 	bra	_dropped_frame		; are dropping a frame
 

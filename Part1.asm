@@ -1606,8 +1606,11 @@ _display_messages_loop:
 
 	bsr	display_messages_play_sound
 
+_display_messages_space:
+
 	lda	#2
 	jsr	wait_frames
+	clra
 	tsta
 
 _display_messages_continue:
@@ -1622,12 +1625,6 @@ _display_messages_skip:
 _display_messages_end:
 	clra
 	rts
-
-_display_messages_space:
-	lda	#15		; silence for 15 frames
-	jsr	wait_frames
-	tsta
-	bra	_display_messages_continue
 
 _message_pause:
 	pshs	a,x,y
@@ -1654,6 +1651,13 @@ _next_line:
 	puls	a,x
 	bne	_display_messages_skip
 	bra	_display_messages_loop
+
+*******************************
+* Display messages - play sound
+*
+* Inputs: None
+* Outputs: None
+*******************************
 
 display_messages_play_sound:
 	lda	#1
@@ -1699,13 +1703,10 @@ play_sound:
 	puls	a,x,y
 
 	pshs	y	; _play_sound uses A, X and 2,S
-
 	bsr	play_sound_2
-
 	puls	y
 
 	bsr	switch_on_irq_and_firq
-
 	rts
 
 *******************************

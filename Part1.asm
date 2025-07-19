@@ -1321,31 +1321,63 @@ _pluck_do_each_pluck:
 *********************
 
 pluck_do_one_pluck:
-				; A = Phase
-				; B = Character
-				; X = Screen Position
-				; Y = Pluck Data
 
 	cmpa	#PLUCK_PHASE_NOTHING	; tsta
-	bne	_pluck_phase_at_least_1
+	beq	pluck_phase_0	; Nothing happening
+
+	cmpa	#PLUCK_PHASE_TURN_WHITE
+	beq	pluck_phase_1	; We are white
+
+	cmpa	#PLUCK_PHASE_PLAIN
+	beq	pluck_phase_2	; We are plain
+
+	bra	pluck_phase_3	; We are pulling
+
+*********************
+* Pluck phase 0
+* Inputs:
+* A = Phase
+* B = Character
+* X = Screen position
+* Y = Pluck data
+*
+* Outputs: None
+*********************
+
+pluck_phase_0:
 
 	rts			; Phase nothing, do nothing
 
-_pluck_phase_at_least_1:
+*********************
+* Pluck phase 1
+* Inputs:
+* A = Phase
+* B = Character
+* X = Screen position
+* Y = Pluck data
+*
+* Outputs: None
+*********************
 
-	cmpa	#PLUCK_PHASE_TURN_WHITE
-	bne	_pluck_phase_at_least_2
-				; We are white
+pluck_phase_1:
+
 	lda	#PLUCK_PHASE_PLAIN
 	sta	,y
 	rts
 
-_pluck_phase_at_least_2:
+*********************
+* Pluck phase 2
+* Inputs:
+* A = Phase
+* B = Character
+* X = Screen position
+* Y = Pluck data
+*
+* Outputs: None
+*********************
 
-	cmpa	#PLUCK_PHASE_PLAIN
-	bne	_pluck_phase_3
+pluck_phase_2:
 
-				; We are plain
 	stb	,x		; Show the plain character
 
 	lda	#PLUCK_PHASE_PULLING	; Go to phase 3
@@ -1353,23 +1385,46 @@ _pluck_phase_at_least_2:
 
 	rts
 
-_pluck_phase_3:
-				; We are pulling
+*********************
+* Pluck phase 3
+* Inputs:
+* A = Phase
+* B = Character
+* X = Screen position
+* Y = Pluck data
+*
+* Outputs: None
+*********************
+
+pluck_phase_3:
+
 	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
 
-	pshs	b
+	pshs	b,x,y
 	tfr	x,d
-	andb	#0b00011111	; Is X divisible by 32?
-	puls	b		; Does not affect condition codes
-	beq	_pluck_phase_3_ended
+	jsr	is_d_divisible_by_32
+	tsta
+	puls	b,x,y		; Does not affect condition codes
+	bne	pluck_phase_3_ended
 
 	stb	,x		; Draw it in the next column
 	stx	2,y		; Update position in plucks_data
 
 	rts
 
-_pluck_phase_3_ended:		; Character has gone off the right side
+*********************
+* Pluck phase 3 ended
+* Inputs:
+* A = Phase
+* B = Character
+* X = Screen position
+* Y = Pluck data
+*
+* Outputs: None
+*********************
+
+pluck_phase_3_ended:		; Character has gone off the right side
 	lda	#PLUCK_PHASE_NOTHING	; clra
 	sta	,y		; Store it
 
@@ -1418,49 +1473,63 @@ _wait_frames_skip:
 
 USE_DEEKS_CODE	EQU	1
 
-	IF	(USE_DEEKS_CODE==0)
+get_random:
+
+	lda	#USE_DEEKS_CODE
+	beq	get_random_cavell
+	bra	get_random_conner
+
+********************************
+* Pseudo-random number generator
+*
+* Inputs: None
+* Output:
+* D = Random(ish) number
+********************************
 
 * I found these values through simple experimentation.
 * This RNG could be improved on.
 
-SEED:
+cavell_seed:
 
 	FCB	0xBE
 	FCB	0xEF
 
-get_random:
+get_random_cavell:
 
-	ldd	SEED
+	ldd	cavell_seed
 	mul
 	addd	#3037
-	std	SEED
+	std	cavell_seed
 	rts
 
-	ENDIF
+********************************
+* Pseudo-random number generator
+*
+* Inputs: None
+* Output:
+* D = Random(ish) number
+********************************
 
-	IF	(USE_DEEKS_CODE)
+; This code was written by Sean Conner (Deek) in June 2025 during a
+; discussion on Discord, and then modified by me
 
-; This code was written by Sean Conner (Deek) and slightly modified
-; by me in June 2025 during a discussion on Discord
-
-SEED:
+conner_seed:
 
 	FCB	0xBE
 	FCB	0xEF
 
-get_random:
+get_random_conner:
 
-	ldd	SEED
+	ldd	conner_seed
 	lsra
 	rorb
 	bcc	get_random_no_feedback
 	eora	#$B4
 
 get_random_no_feedback:
-	std	SEED
+	std	conner_seed
 	rts
-
-	ENDIF
 
 *********************
 * Joke startup screen
@@ -1693,15 +1762,9 @@ _clear_screen_loop:
 
 display_text_graphic:
 
-	tfr	x,y	; Y = graphic data
-
-	tfr	d,u	; Save B
-	ldb	#COLS_PER_LINE
-	mul
-	ldx	#TEXTBUF
-	leax	d,x
-	tfr	u,d	; B = column number
-	leax	b,x	; X = Screen memory to start at
+	pshs	b,x
+	jsr	get_screen_position
+	puls	b,y			; Y = graphics data
 
 _display_text_graphic_loop:
         lda     ,y+
@@ -1712,12 +1775,12 @@ _display_text_graphic_loop:
         bra     _display_text_graphic_loop
 
 _text_graphic_new_line:
-	tfr	d,u		; Save register B
+	pshs	b
         tfr     x,d
         andb    #0b11100000
         addd    #COLS_PER_LINE
-        tfr     d,x
-	tfr	u,d		; Get B back
+	tfr	d,x
+	puls	b
 	leax	b,x
 	bra	_display_text_graphic_loop
 

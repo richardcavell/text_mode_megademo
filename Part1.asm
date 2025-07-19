@@ -34,7 +34,7 @@
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -188,6 +188,14 @@ dropped_frames:
 
 	RZB	1		; From 0 to 10 (don't count more than 10)
 
+**********************************************
+* Variables relating to DECB's own IRQ handler
+**********************************************
+
+decb_irq_service_routine:
+
+	RZB	2
+
 call_decb_irq_handler:		; We get significantly better performance
 				; by ignoring DECB's IRQ handler
 	RZB	0
@@ -199,30 +207,67 @@ call_decb_irq_handler:		; We get significantly better performance
 * Outputs: Not applicable
 ***************************************************
 
-; This routine should run absolutely as fast as possible, so
-; the 25-line rule does not apply
-
 irq_service_routine:
 
-	tst	waiting_for_vblank	; If the demo is not ready for a
+	lda	waiting_for_vblank	; If the demo is not ready for a
 	bne	_no_dropped_frames	; vblank, then we drop a frame
 
-	lda	dropped_frames
-	cmpa	#10
-	beq	_dropped_frame		; Stop counting dropped frames at 10
-	inca
-	sta	dropped_frames
+	bsr	count_dropped_frame
 	bra	_dropped_frame		; are dropping a frame
 
 _no_dropped_frames:
+	bsr	signal_demo		; VBlank has happened
+
+_dropped_frame:
+	bsr	print_dropped_frames
+	bsr	cycle_corner_character
+	bra	exit_irq_handler
+
+***************
+* Signal demo
+*
+* Inputs: None
+* Outputs: None
+***************
+
+signal_demo:
+
 	clr	waiting_for_vblank	; No longer waiting
 	lda	#1			; If waiting for VBlank,
 	sta	vblank_happened		; here's the signal
 
 	clr	dropped_frames
 
-_dropped_frame:
-	tst	dropped_frame_counter_toggle
+	rts
+
+*********************
+* Count dropped frame
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+count_dropped_frame:
+
+	lda	dropped_frames
+	cmpa	#10
+	beq	_skip_increment		; Stop counting dropped frames at 10
+	inca
+	sta	dropped_frames
+
+_skip_increment:
+	rts
+
+**********************
+* Print dropped frames
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+print_dropped_frames:
+
+	lda	dropped_frame_counter_toggle
 	beq	_do_not_print_frame_counter
 
 	lda	dropped_frames
@@ -239,21 +284,7 @@ _store_a:
 	sta	LOWER_LEFT_CORNER	; Put it in the lower-left corner
 
 _do_not_print_frame_counter:
-	bsr	cycle_corner_character
-
-	lda	call_decb_irq_handler
-	beq	_rti_from_here
-	ldx	decb_irq_service_routine
-	beq	_rti_from_here
-	jmp	,x
-
-_rti_from_here:
-	lda	$FF02			; Acknowledge interrupt
-	rti
-
-decb_irq_service_routine:
-
-	RZB	2
+	rts
 
 ************************
 * Cycle corner character
@@ -274,13 +305,31 @@ cycle:
 
 cycle_corner_character:
 
-	tst	cycle
+	lda	cycle
 	beq	_skip_cycle
 	inc	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
 
 _skip_cycle:
 
 	rts
+
+******************
+* Exit IRQ handler
+******************
+
+PIA0BD	EQU	$FF02
+
+exit_irq_handler:
+
+	lda	call_decb_irq_handler
+	beq	_rti_from_here
+	ldx	decb_irq_service_routine
+	beq	_rti_from_here
+	jmp	,x
+
+_rti_from_here:
+	lda	PIA0BD			; Acknowledge interrupt
+	rti
 
 *********************
 * Turn off disk motor

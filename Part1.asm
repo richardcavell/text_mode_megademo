@@ -198,7 +198,7 @@ decb_irq_service_routine:
 
 call_decb_irq_handler:		; We get significantly better performance
 				; by ignoring DECB's IRQ handler
-	RZB	0
+	RZB	1
 
 ***************************************************
 * Our IRQ handler

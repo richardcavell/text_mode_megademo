@@ -1560,6 +1560,8 @@ _skip_joke_startup:
 * Joke startup messages
 ***********************
 
+MESSAGES_END	EQU	255
+
 joke_startup_messages:
 
 	FCV	"INCORPORATING CLEVER IDEAS...",0
@@ -1572,7 +1574,7 @@ joke_startup_messages:
 	FCV	"DEMO CLICHES...% DONE",0,0
 	FCV	"STARTING THE SHOW...%%%%%%"
 
-	FCB	255
+	FCB	MESSAGES_END
 
 *********************************
 * Display messages
@@ -1594,7 +1596,7 @@ _display_messages_loop:
 	beq	display_messages_next_line
 	cmpa	#'%' + 64
 	beq	display_messages_big_pause
-	cmpa	#255
+	cmpa	#MESSAGES_END
 	beq	_display_messages_end
 	sta	,u+
 
@@ -1809,6 +1811,8 @@ _clear_screen_loop:
 * X = Graphic data
 ************************
 
+TEXT_GRAPHIC_END	EQU	255
+
 display_text_graphic:
 
 	pshs	b,x
@@ -1817,8 +1821,8 @@ display_text_graphic:
 
 _display_text_graphic_loop:
         lda     ,y+
-        beq     _text_graphic_new_line
-        cmpa    #255
+        beq     text_graphic_new_line
+        cmpa    #TEXT_GRAPHIC_END
         beq	_display_text_graphic_finished
         sta     ,x+
         bra     _display_text_graphic_loop
@@ -1838,7 +1842,8 @@ _display_text_graphic_finished:
 * X = (Updated) Screen position
 *******************************
 
-_text_graphic_new_line:
+text_graphic_new_line:
+
 	pshs	b
         tfr     x,d
         andb    #0b11100000
@@ -1897,7 +1902,7 @@ baby_elephant:
 	FCV	"    \"       !   /  \\   !  \\   )",0
 	FCV	"      SND   !   !./'   :.. \.-'",0
 	FCV	"            '--'",0
-	FCB	255
+	FCB	TEXT_GRAPHIC_END
 
 baby_elephant_end:
 

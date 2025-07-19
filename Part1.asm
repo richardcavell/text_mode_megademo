@@ -1587,34 +1587,20 @@ joke_startup_messages:
 
 display_messages:
 
-	lda	#COLS_PER_LINE
-	ldy	#TEXTBUF
+	ldu	#TEXTBUF
 
 _display_messages_loop:
-	ldb	,x+
+	lda	,x+
 	beq	display_messages_next_line
-	cmpb	#'%' + 64
-	beq	_message_pause
-	cmpb	#255
+	cmpa	#'%' + 64
+	beq	display_messages_big_pause
+	cmpa	#255
 	beq	_display_messages_end
-	stb	,y+
-
-	pshs	a,x,y
-
-	cmpb	#GREEN_BOX
-	beq	_display_messages_space
+	sta	,u+
 
 	bsr	display_messages_play_sound
-
-_display_messages_space:
-
-	lda	#2
-	jsr	wait_frames
-	clra
+	bsr	display_messages_pause
 	tsta
-
-_display_messages_continue:
-	puls	a,x,y
 	beq	_display_messages_loop	; If branch is taken,
 					; user has not skipped
 
@@ -1626,17 +1612,6 @@ _display_messages_end:
 	clra
 	rts
 
-_message_pause:
-	pshs	a,x,y
-	lda	#WAIT_PERIOD
-	jsr	wait_frames
-	tsta
-	puls	a,x,y
-	beq	_display_messages_loop
-
-	lda	#1		; User wants to skip
-	rts
-
 ******************************
 * Display messages - next line
 *
@@ -1645,32 +1620,88 @@ _message_pause:
 
 display_messages_next_line:
 
-	pshs	a,x
-	tfr	y,d
+	tfr	u,d
 	addd	#COLS_PER_LINE
 	andb	#0b11100000
-	tfr	d,y
-	pshs	y
+	tfr	d,u
+	pshs	x,u
 	lda	#5
 	jsr	wait_frames
 	tsta
-	puls	y
-	puls	a,x
+	puls	x,u
 	bne	_display_messages_skip
 	bra	_display_messages_loop
 
-*******************************
+***************************************
+* Display messages - big pause
+*
+* X = Messages position
+* U = Text buffer position
+*
+* Outputs:
+* X = (Unmodified) Messages position
+* U = (Unmodified) Text buffer position
+***************************************
+
+display_messages_big_pause:
+
+	pshs	x,u
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+	tsta
+	puls	x,u
+	beq	_display_messages_loop
+
+	lda	#1		; User wants to skip
+	rts
+
+***************************************
+* Display messages - pause
+*
+* X = Messages position
+* U = Text buffer position
+*
+* Outputs:
+* X = (Unmodified) Messages position
+* U = (Unmodified) Text buffer position
+***************************************
+
+display_messages_pause:
+
+	pshs	x,u
+	lda	#2
+	jsr	wait_frames
+	tsta
+	puls	x,u
+	rts
+
+***************************************
 * Display messages - play sound
 *
-* Inputs: None
-* Outputs: None
-*******************************
+* Inputs:
+* A = Character being displayed
+* X = Messages position
+* U = Text buffer position
+*
+* Outputs:
+* X = (Unmodified) Messages position
+* U = (Unmodified) Text buffer position
+***************************************
 
 display_messages_play_sound:
+
+	cmpa	#GREEN_BOX
+	beq	_display_messages_skip_sound
+
+	pshs	x,u
 	lda	#1
-	ldx	#pluck_sound		; Interrupts and everything else
-	ldy	#pluck_sound_end	; pause while we're doing this
+	ldx	#type_sound		; Interrupts and everything else
+	ldy	#type_sound_end		; pause while we're doing this
 	jsr	play_sound		; Play the pluck noise
+	puls	x,u
+
+_display_messages_skip_sound:
+
 	rts
 
 ******************************************
@@ -1902,8 +1933,8 @@ pop_sound:
 
 pop_sound_end:
 
-pluck_sound:
+type_sound:
 
 	INCLUDEBIN "Sounds/Type/Type.raw"
 
-pluck_sound_end:
+type_sound_end:

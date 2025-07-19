@@ -209,11 +209,11 @@ call_decb_irq_handler:		; We get significantly better performance
 
 irq_service_routine:
 
-	lda	waiting_for_vblank	; If the demo is not ready for a
-	bne	_no_dropped_frames	; vblank, then we drop a frame
+	lda	waiting_for_vblank	; The demo is waiting for the signal
+	bne	_no_dropped_frames	; so let's give it to them
 
-	bsr	count_dropped_frame
-	bra	_dropped_frame		; are dropping a frame
+	bsr	count_dropped_frame	; If the demo is not ready for a
+	bra	_dropped_frame		; vblank, then we drop a frame
 
 _no_dropped_frames:
 	bsr	signal_demo		; VBlank has happened

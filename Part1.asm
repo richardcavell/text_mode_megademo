@@ -14,14 +14,14 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner (Deek)
-
+*
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
 * The sound Type.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Modelm.ogg
-
+*
 * The ASCII art of the baby elephant is by Shanaka Dias at asciiart.eu
-
+*
 * If DEBUG_MODE is non-zero, then Debug Mode is "on".
 * If Debug Mode is on:
 *   1) You can press T to toggle frame-by-frame mode
@@ -31,6 +31,7 @@
 *        Press C to turn the cycling of the lower-right character off or on
 *   3) You can see if there are dropped frames
 *      The lower left corner will display how many frames have been skipped
+*        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
 DEBUG_MODE	EQU	0
@@ -136,7 +137,7 @@ IRQ_HANDLER	EQU	$10D
 get_irq_handler:
 
 	ldx	IRQ_HANDLER		; Load the current vector into X
-	stx	decb_irq_service_routine	; We will call it at the end
+	stx	decb_irq_service_routine	; We could call it at the end
 						; of our own handler
 	rts
 
@@ -151,7 +152,7 @@ set_irq_handler:
 
 	ldx	#irq_service_routine
 	stx	IRQ_HANDLER		; Our own interrupt service routine
-					; is installed
+					; is now installed
 
 	rts
 
@@ -177,7 +178,7 @@ LOWER_RIGHT_CORNER	EQU	$5FF
 
 waiting_for_vblank:
 
-	RZB	1		; The interrupt routine reads this
+	RZB	1		; The interrupt handler reads this
 
 vblank_happened:
 
@@ -185,7 +186,11 @@ vblank_happened:
 
 dropped_frames:
 
-	RZB	1
+	RZB	1		; From 0 to 10 (don't count more than 10)
+
+call_decb_irq_handler:		; We get significantly better performance
+				; by ignoring DECB's IRQ handler
+	RZB	0
 
 ***************************************************
 * Our IRQ handler
@@ -193,10 +198,6 @@ dropped_frames:
 * Inputs: Not applicable
 * Outputs: Not applicable
 ***************************************************
-
-; We get significantly better performance by ignoring DECB's IRQ handler
-
-CALL_DECB_IRQ_HANDLER	EQU	0
 
 irq_service_routine:
 
@@ -239,11 +240,11 @@ _store_a:
 _do_not_print_frame_counter:
 	bsr	cycle_corner_character
 
-	IF	(CALL_DECB_IRQ_HANDLER)
+	lda	call_decb_irq_handler
+	beq	_rti_from_here
 	ldx	decb_irq_service_routine
 	beq	_rti_from_here
 	jmp	,x
-	ENDIF
 
 _rti_from_here:
 	lda	$FF02			; Acknowledge interrupt

@@ -1592,7 +1592,7 @@ display_messages:
 
 _display_messages_loop:
 	ldb	,x+
-	beq	_next_line
+	beq	display_messages_next_line
 	cmpb	#'%' + 64
 	beq	_message_pause
 	cmpb	#255
@@ -1637,7 +1637,14 @@ _message_pause:
 	lda	#1		; User wants to skip
 	rts
 
-_next_line:
+******************************
+* Display messages - next line
+*
+* Inputs:
+******************************
+
+display_messages_next_line:
+
 	pshs	a,x
 	tfr	y,d
 	addd	#COLS_PER_LINE

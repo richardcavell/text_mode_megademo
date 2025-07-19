@@ -1700,7 +1700,7 @@ play_sound:
 
 	pshs	y	; _play_sound uses A, X and 2,S
 
-	bsr	_play_sound
+	bsr	play_sound_2
 
 	puls	y
 
@@ -1708,12 +1708,23 @@ play_sound:
 
 	rts
 
-_play_sound:
+*******************************
+* Play a sound sample
+*
+* Inputs:
+*   A = The delay between samples
+*   X = The sound data
+* 2,S = The end of the sound data
+*
+* Outputs: None
+*******************************
+
+play_sound_2:
+
 	cmpx	2,s			; Compare X with Y
+	bne	_play_sound_more
 
-	bne	_play_sound_more	; If we have no more samples, exit
-
-	rts
+	rts				; If we have no more samples, exit
 
 _play_sound_more:
 	ldb	,x+
@@ -1723,10 +1734,9 @@ _play_sound_more:
 
 _play_sound_delay_loop:
 	tstb
-	beq	_play_sound		; Have we completed the delay?
+	beq	play_sound_2		; Have we completed the delay?
 
 	decb				; If not, then wait some more
-
 	bra	_play_sound_delay_loop
 
 ******************
@@ -1774,18 +1784,30 @@ _display_text_graphic_loop:
         sta     ,x+
         bra     _display_text_graphic_loop
 
+_display_text_graphic_finished:
+	rts
+
+*******************************
+* Text graphic new line
+*
+* Inputs:
+* B = Column number
+* X = Screen position
+*
+* Outputs:
+* B = (Unchanged) Column number
+* X = (Updated) Screen position
+*******************************
+
 _text_graphic_new_line:
 	pshs	b
         tfr     x,d
         andb    #0b11100000
-        addd    #COLS_PER_LINE
 	tfr	d,x
+        leax	COLS_PER_LINE,x
 	puls	b
 	leax	b,x
 	bra	_display_text_graphic_loop
-
-_display_text_graphic_finished:
-	rts
 
 ****************
 * Loading screen

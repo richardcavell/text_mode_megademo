@@ -1300,7 +1300,7 @@ _pluck_do_each_pluck:
 	ldx	2,y
 
 	pshs	y
-	bsr	_pluck_do_one_pluck
+	bsr	pluck_do_one_pluck
 	puls	y
 
 	leay	4,y
@@ -1309,7 +1309,18 @@ _pluck_do_each_pluck:
 
 	rts
 
-_pluck_do_one_pluck:
+*********************
+* Pluck do one pluck
+* Inputs:
+* A = Phase
+* B = Character
+* X = Screen position
+* Y = Pluck data
+*
+* Outputs: None
+*********************
+
+pluck_do_one_pluck:
 				; A = Phase
 				; B = Character
 				; X = Screen Position

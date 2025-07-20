@@ -457,8 +457,8 @@ skip_message:
 * Display a message on the screen
 *
 * Inputs:
-* A = line to put it on (0 to 15)
-* X = string containing the message (ended by a zero)
+* A = Line to put it on (0 to 15)
+* X = String containing the message (ended by a zero)
 *
 * Outputs: None
 *****************************************************
@@ -501,9 +501,9 @@ get_screen_position:
 
 	pshs	b
 
+	ldx	#TEXTBUF
 	ldb	#COLS_PER_LINE
 	mul
-	ldx	#TEXTBUF
 	leax	d,x
 
 	puls	b

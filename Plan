@@ -1,4 +1,5 @@
 Add music
+Play sound through HSYNC
 Fish tank
 Name the parts on disk something interesting
 Type out scrolltexts, credits
@@ -14,5 +15,3 @@ Circular scroller
 Sine scroller
 Scroller that drops words
 Boing scroller
-Play sound through HSYNC
-Plucks increase as letters are taken off the screen

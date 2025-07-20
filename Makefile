@@ -79,6 +79,7 @@ LDFLAGS   = -Wl,-z,defs -Wl,-O1 -Wl,--gc-sections -Wl,-z,relro -Wl,-z,now
 
 # The toolshed is at https://toolshed.sourceforge.net/ToolShed.html
 DECB		=	decb
+
 RM		=	rm -f -v
 ECHO		=	echo
 

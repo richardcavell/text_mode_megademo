@@ -596,17 +596,17 @@ _pluck_count_loop:
 
 	rts
 
-*************************************
+************************************************
 * Count char
 *
 * Inputs:
 * X = Current text buffer position
-* U = Current line count
+* U = Pointer to current line count
 *
 * Outputs:
-* X = Updated text buffer position
-* U = (Unmodified) Current line count
-*************************************
+* X = (Updated) Text buffer position
+* U = (Unmodified) Pointer to current line count
+************************************************
 
 count_char:
 
@@ -619,18 +619,18 @@ count_char:
 _skip_count:
 	rts
 
-***********************************************
+*******************************************************
 * Increment U
 *
 * Inputs:
 *
 * X = Current text buffer position
-* U = Current line count
+* U = Pointer to current line count
 *
 * Outputs:
 * X = (Unmodified) Current text buffer position
-* U = Current line count
-***********************************************
+* U = (Possibly modified) Pointer to current line count
+*******************************************************
 
 increment_u:
 
@@ -713,8 +713,8 @@ _pluck_finished:
 
 wait_for_vblank_and_check_for_skip:
 
-	clr	vblank_happened		; See "Our IRQ handler" above
-	lda	#1
+	clr	vblank_happened		; See "Variables relating to
+	lda	#1			; DECB's own IRQ handler" above
 	sta	waiting_for_vblank
 
 _wait_for_vblank_and_check_for_skip_loop:

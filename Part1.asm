@@ -747,8 +747,7 @@ BREAK_KEY	EQU	3
 *******************************
 * Poll keyboard
 *
-* Inputs:
-* A = Keypress
+* Inputs: None
 *
 * Output:
 * A = 0 No input
@@ -775,7 +774,7 @@ _wait_for_vblank_skip:
 	rts
 
 *******************************
-* Debugging mode on
+* Debugging mode is on
 *
 * Inputs: None
 * Outputs:

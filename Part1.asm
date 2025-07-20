@@ -46,10 +46,10 @@ WAIT_PERIOD	EQU	25
 		ORG $1800
 
 	jsr	zero_dp_register		; Zero the DP register
+	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
-	jsr	turn_on_debug_features		; Turn on debugging features
 
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
@@ -80,6 +80,26 @@ zero_dp_register:
 	clra
 	tfr	a, dp
 
+	rts
+
+************************
+* Turn on debug features
+*
+* Inputs: None
+* Outputs: None
+************************
+
+turn_on_debug_features:
+
+	lda	#DEBUG_MODE
+	beq	_not_in_debug_mode
+
+	clra
+	coma				; Load #255 into these places
+	sta	cycle
+	sta	dropped_frame_counter_toggle
+
+_not_in_debug_mode:
 	rts
 
 *********************************
@@ -236,6 +256,7 @@ count_dropped_frame:
 	lda	dropped_frames
 	cmpa	#10
 	beq	_skip_increment		; Stop counting dropped frames at 10
+
 	inca
 	sta	dropped_frames
 
@@ -306,6 +327,7 @@ cycle_corner_character:
 
 	lda	cycle
 	beq	_skip_cycle
+
 	inc	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
 
 _skip_cycle:
@@ -409,26 +431,6 @@ set_ddra:
 
 * End of code modified by me from code written by other people
 
-	rts
-
-************************
-* Turn on debug features
-*
-* Inputs: None
-* Outputs: None
-************************
-
-turn_on_debug_features:
-
-	lda	#DEBUG_MODE
-	beq	_not_in_debug_mode
-
-	clra
-	coma				; Load #255 into these places
-	sta	cycle
-	sta	dropped_frame_counter_toggle
-
-_not_in_debug_mode:
 	rts
 
 **************************************************

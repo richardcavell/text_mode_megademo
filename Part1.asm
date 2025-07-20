@@ -534,6 +534,8 @@ pluck_line_counts_end:
 * Plucks data
 *************
 
+MAX_SIMULTANEOUS_PLUCKS	EQU	10
+
 plucks_data:
 
 	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
@@ -544,8 +546,6 @@ plucks_data_end:
 ; phase     (1 byte),
 ; character (1 byte),
 ; position  (2 bytes)
-
-MAX_SIMULTANEOUS_PLUCKS	EQU	10
 
 PLUCK_PHASE_NOTHING	EQU	0
 PLUCK_PHASE_TURN_WHITE	EQU	1
@@ -1003,28 +1003,7 @@ process_pluck_1:
 * Outputs: None
 ***********************************
 
-pluck_frames:
-
-	RZB	1
-
 pluck_count_frames:
-
-	lda	pluck_frames
-	inca
-	sta	pluck_frames			; Keep count of the frames
-
-	cmpa	#50				; Every 50 frames,
-	bne	_skip_increase
-
-	clr	pluck_frames			; reset the counter, and
-
-	lda	simultaneous_plucks		; increase the number of plucks
-	cmpa	#MAX_SIMULTANEOUS_PLUCKS	; happening at the same time
-	bhs	_skip_increase
-
-	inc	simultaneous_plucks		; then fallthrough to rts
-
-_skip_increase:
 	rts
 
 *****************
@@ -1438,10 +1417,33 @@ pluck_phase_3:
 * Outputs: None
 *********************
 
-pluck_phase_3_ended:		; Character has gone off the right side
-	lda	#PLUCK_PHASE_NOTHING	; clra
-	sta	,y		; Store it
+number_of_plucked_chars:
 
+	RZB	1
+
+pluck_phase_3_ended:		; Character has gone off the right side
+
+	lda	#PLUCK_PHASE_NOTHING
+	sta	,y		; This slot is now empty
+
+	lda	number_of_plucked_chars
+	inca
+	sta	number_of_plucked_chars
+
+	cmpa	simultaneous_plucks
+	beq	_increase_plucks
+
+	rts
+
+_increase_plucks:
+
+	cmpa	#MAX_SIMULTANEOUS_PLUCKS
+	beq	_no_increase
+
+	inc	simultaneous_plucks
+	clr	number_of_plucked_chars
+
+_no_increase:
 	rts
 
 ***********************************

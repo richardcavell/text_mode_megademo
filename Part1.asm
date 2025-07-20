@@ -448,7 +448,7 @@ display_skip_message:
 
 skip_message:
 
-	FCV	"  PRESS SPACE TO SKIP ANY PART"
+	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
 
 *****************************************************

@@ -49,6 +49,7 @@ WAIT_PERIOD	EQU	25
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
+	jsr	turn_on_debug_features		; Turn on debugging features
 
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
@@ -160,8 +161,8 @@ set_irq_handler:
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400		; We're usually not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+TEXTBUF		EQU	$400	; We're not double-buffering in this part
+TEXTBUFSIZE	EQU	$200	; so there's only one text screen
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
 COLS_PER_LINE	EQU	32
@@ -223,23 +224,6 @@ _dropped_frame:
 	bsr	cycle_corner_character
 	bra	exit_irq_handler
 
-***************
-* Signal demo
-*
-* Inputs: None
-* Outputs: None
-***************
-
-signal_demo:
-
-	clr	waiting_for_vblank	; No longer waiting
-	lda	#1			; If waiting for VBlank,
-	sta	vblank_happened		; here's the signal
-
-	clr	dropped_frames
-
-	rts
-
 *********************
 * Count dropped frame
 *
@@ -256,6 +240,24 @@ count_dropped_frame:
 	sta	dropped_frames
 
 _skip_increment:
+	rts
+
+***************
+* Signal demo
+*
+* Inputs: None
+* Outputs: None
+***************
+
+signal_demo:
+
+	clr	waiting_for_vblank	; No longer waiting
+
+	lda	#1			; If waiting for VBlank,
+	sta	vblank_happened		; here's the signal
+
+	clr	dropped_frames
+
 	rts
 
 **********************
@@ -294,11 +296,8 @@ _do_not_print_frame_counter:
 ************************
 
 cycle:
-	IF	(DEBUG_MODE)
-	FCB	255	; Start with it turned on
-	ELSE
-	FCB	0
-	ENDIF
+
+	FCB	0	; If DEBUG_MODE is on, this will start with 255
 
 ; For debugging, this provides a visual indication that
 ; our IRQ handler is running
@@ -410,6 +409,26 @@ set_ddra:
 
 * End of code modified by me from code written by other people
 
+	rts
+
+************************
+* Turn on debug features
+*
+* Inputs: None
+* Outputs: None
+************************
+
+turn_on_debug_features:
+
+	lda	#DEBUG_MODE
+	beq	_not_in_debug_mode
+
+	clra
+	coma				; Load #255 into these places
+	sta	cycle
+	sta	dropped_frame_counter_toggle
+
+_not_in_debug_mode:
 	rts
 
 **************************************************
@@ -807,11 +826,7 @@ _skip_redraw_cycle:
 
 dropped_frame_counter_toggle:
 
-	IF	(DEBUG_MODE)	; If DEBUG_MODE is on, then
-	FCB	255		; dropped frame counter is on by default
-	ELSE
-	FCB	0		; Otherwise, it is off
-	ENDIF
+	FCB	0
 
 toggle_dropped_frame_counter:
 

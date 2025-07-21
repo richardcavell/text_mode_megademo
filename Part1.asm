@@ -715,9 +715,11 @@ _pluck_finished:
 
 wait_for_vblank_and_check_for_skip:
 
-	clr	vblank_happened		; See "Variables relating to
-	lda	#1			; DECB's own IRQ handler" above
+	bsr	switch_off_irq_and_firq
+	clr	vblank_happened		; See "Variables that are relevant to
+	lda	#1			; vertical blank timing" above
 	sta	waiting_for_vblank
+	bsr	switch_on_irq_and_firq
 
 _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
@@ -787,7 +789,7 @@ _wait_for_vblank_skip:
 debugging_mode_is_on:
 
 	cmpa	#'T'
-	beq	invert_frame_by_frame_toggle
+	beq	toggle_frame_by_frame
 	cmpa	#'C'
 	beq	toggle_cycle
 	cmpa	#'D'
@@ -812,7 +814,7 @@ toggle_cycle:
 	com	cycle
 	bne	_skip_redraw_cycle
 					; If it's being turned off
-	lda	#GREEN_BOX		; then draw over the lower-left
+	lda	#GREEN_BOX		; then draw over the lower-right
 	sta	LOWER_RIGHT_CORNER	; corner
 
 _skip_redraw_cycle:
@@ -846,15 +848,14 @@ _skip_redraw_dropped_frame_counter:
 * Input:
 * A = Keypress
 *
-* Output:
-* A = (Unchanged) Keypress
+* Outputs: None
 **********************************
 
 frame_by_frame_mode_toggle:
 
 	RZB	1
 
-invert_frame_by_frame_toggle:
+toggle_frame_by_frame:
 
 	com	frame_by_frame_mode_toggle
 	bra	_key_processed

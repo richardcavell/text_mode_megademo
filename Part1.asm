@@ -715,11 +715,11 @@ _pluck_finished:
 
 wait_for_vblank_and_check_for_skip:
 
-	bsr	switch_off_irq_and_firq
+	jsr	switch_off_irq_and_firq
 	clr	vblank_happened		; See "Variables that are relevant to
 	lda	#1			; vertical blank timing" above
 	sta	waiting_for_vblank
-	bsr	switch_on_irq_and_firq
+	jsr	switch_on_irq_and_firq
 
 _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
@@ -907,7 +907,7 @@ _pluck_screen_not_empty:
 	rts
 
 **********************************************************
-* Pluck check empty slots
+* Pluck - check empty slots
 *
 * Inputs: None
 *
@@ -985,32 +985,8 @@ _pluck_are_lines_empty_line_not_empty:
 	clra				; Lines are not clear
 	rts
 
-***************
-* Process pluck
-*
-* Inputs: None
-* Outputs: None
-***************
-
-process_pluck_1:
-
-	jsr	pluck_count_frames
-	jsr	process_pluck_2
-
-	rts
-
-***********************************
-* Pluck - Count frames
-*
-* Inputs: None
-* Outputs: None
-***********************************
-
-pluck_count_frames:
-	rts
-
 *****************
-* Process pluck 2
+* Process pluck 1
 *
 * Inputs: None
 * Outputs: None
@@ -1020,19 +996,19 @@ spare_slot:
 
 	RZB	2
 
-process_pluck_2:
+process_pluck_1:
 
 	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
-	beq	_process_pluck_3		; No, just keep processing
+	beq	_process_pluck_2		; No, just keep processing
 
 	stx	spare_slot	; Save for later use
 
 	jsr	pluck_a_char			; Yes, pluck a character
 
-_process_pluck_3:
+_process_pluck_2:
 
-	jsr	process_pluck_3			; Do one frame
+	jsr	process_pluck_2			; Do one frame
 
 	rts
 
@@ -1280,13 +1256,13 @@ pluck_play_sound:
 	rts
 
 *****************
-* Process pluck 3
+* Process pluck 2
 *
 * Inputs: None
 * Outputs: None
 *****************
 
-process_pluck_3:
+process_pluck_2:
 
 	ldy	#plucks_data
 

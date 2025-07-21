@@ -1668,7 +1668,6 @@ display_messages_pause:
 	pshs	x,u
 	lda	#2
 	jsr	wait_frames
-	tsta
 	puls	x,u
 	rts
 

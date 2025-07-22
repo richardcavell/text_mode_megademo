@@ -153,9 +153,13 @@ switch_on_irq:
 * Outputs: None
 *****************
 
+IRQ_INSTRUCTION	EQU	$10C
 IRQ_HANDLER	EQU	$10D
 
 get_irq_handler:
+
+	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
+	sta	decb_irq_service_instruction
 
 	ldx	IRQ_HANDLER		; Load the current vector into X
 	stx	decb_irq_service_routine	; We could call it at the end
@@ -212,6 +216,10 @@ dropped_frames:
 **********************************************
 * Variables relating to DECB's own IRQ handler
 **********************************************
+
+decb_irq_service_instruction:
+
+	RZB	1		; Should be JMP (extended)
 
 decb_irq_service_routine:
 
@@ -1916,6 +1924,9 @@ restore_basic_irq_service_routine:
 	rts
 
 restore_irq_handler:
+
+	lda	decb_irq_service_instruction
+	sta	IRQ_INSTRUCTION
 
 	ldx	decb_irq_service_routine
 	stx	IRQ_HANDLER

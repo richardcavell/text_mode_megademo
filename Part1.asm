@@ -1282,7 +1282,7 @@ _pluck_do_each_pluck:
 	bsr	pluck_do_one_pluck
 	puls	u
 
-	leay	4,u
+	leau	4,u
 	cmpu	#plucks_data_end
 	blo	_pluck_do_each_pluck
 

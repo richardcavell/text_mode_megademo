@@ -1612,6 +1612,14 @@ _display_messages_loop:
 	tsta
 	beq	_display_messages_loop	; If branch is taken,
 					; user has not skipped
+**********************************
+* Display messages - Exit routines
+*
+* Inputs: None
+* Outputs:
+* A = 0 Normal termination
+* A = 1 User wants to skip
+**********************************
 
 _display_messages_skip:
 	lda	#1		; User wants to skip
@@ -1621,11 +1629,17 @@ _display_messages_end:
 	clra
 	rts
 
-******************************
-* Display messages - next line
+************************************
+* Display messages - Next line
 *
 * Inputs:
-******************************
+* X = Messages position
+* U = Text buffer position
+*
+* Outputs:
+* X = (Unchanged) Messages position
+* U = (Updated) Text buffer position
+************************************
 
 display_messages_next_line:
 

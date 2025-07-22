@@ -810,6 +810,24 @@ _key_processed:
 	clra
 	rts
 
+**********************************
+* Invert frame-by-frame toggle
+*
+* Input:
+* A = Keypress
+*
+* Outputs: None
+**********************************
+
+frame_by_frame_mode_toggle:
+
+	RZB	1
+
+toggle_frame_by_frame:
+
+	com	frame_by_frame_mode_toggle
+	bra	_key_processed
+
 ***************
 * Toggle cycle
 *
@@ -837,7 +855,7 @@ _skip_redraw_cycle:
 
 dropped_frame_counter_toggle:
 
-	FCB	0
+	FCB	0	; If DEBUG_MODE is on, then this starts with 255
 
 toggle_dropped_frame_counter:
 
@@ -848,24 +866,6 @@ toggle_dropped_frame_counter:
 	sta	LOWER_LEFT_CORNER	; corner
 
 _skip_redraw_dropped_frame_counter:
-	bra	_key_processed
-
-**********************************
-* Invert frame-by-frame toggle
-*
-* Input:
-* A = Keypress
-*
-* Outputs: None
-**********************************
-
-frame_by_frame_mode_toggle:
-
-	RZB	1
-
-toggle_frame_by_frame:
-
-	com	frame_by_frame_mode_toggle
 	bra	_key_processed
 
 *******************************

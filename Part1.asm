@@ -48,6 +48,7 @@ WAIT_PERIOD	EQU	25
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
+	jsr	turn_on_interrupts		; Turn on interrupts
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
@@ -56,6 +57,7 @@ WAIT_PERIOD	EQU	25
 	jsr	joke_startup_screen		; Second section
 	jsr	loading_screen
 
+	jsr	turn_off_interrupts		; Go back to what BASIC uses
 	jsr	restore_basic_irq_service_routine
 
 	clra
@@ -178,6 +180,33 @@ set_irq_handler:
 	ldx	#irq_service_routine
 	stx	IRQ_HANDLER		; Our own interrupt service routine
 					; is now installed
+
+	rts
+
+********************
+* Turn on interrupts
+********************
+
+PIA0AD	EQU	$FF00
+PIA0AC	EQU	$FF01
+PIA0BD	EQU	$FF02
+PIA0BC	EQU	$FF03
+
+turn_on_interrupts:
+
+	jsr	switch_off_irq
+
+	lda	PIA0BC		; Enable VSync interrupt
+	ora	#3
+	sta	PIA0BC
+	lda	PIA0BD
+
+	lda	PIA0AC		; Enable HSync interrupt
+	ora	#3
+	sta	PIA0AC
+	lda	PIA0AD
+
+	jsr	switch_on_irq
 
 	rts
 
@@ -345,8 +374,6 @@ _skip_cycle:
 ******************
 * Exit IRQ handler
 ******************
-
-PIA0BD	EQU	$FF02
 
 exit_irq_handler:
 
@@ -1927,6 +1954,17 @@ baby_elephant:
 	FCB	TEXT_GRAPHIC_END
 
 baby_elephant_end:
+
+*********************
+* Turn off interrupts
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+turn_off_interrupts:
+
+	rts
 
 *************************************
 * Restore BASIC's IRQ service routine

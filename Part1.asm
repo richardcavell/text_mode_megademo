@@ -34,7 +34,7 @@
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -1257,7 +1257,7 @@ pluck_play_sound:
 
 	lda	#1
 	ldx	#pop_sound	; Interrupts and everything else
-	ldy	#pop_sound_end 	; pause while we're doing this
+	ldu	#pop_sound_end 	; pause while we're doing this
 	jsr	play_sound	; Play the pluck noise
 
 	rts
@@ -1718,7 +1718,7 @@ display_messages_play_sound:
 	pshs	x,u
 	lda	#1
 	ldx	#type_sound		; Interrupts and everything else
-	ldy	#type_sound_end		; pause while we're doing this
+	ldu	#type_sound_end		; pause while we're doing this
 	jsr	play_sound		; Play the pluck noise
 	puls	x,u
 
@@ -1758,13 +1758,13 @@ switch_on_irq_and_firq:
 
 play_sound:
 
-	pshs	a,x,y
+	pshs	a,x,u
 	bsr	switch_off_irq_and_firq
-	puls	a,x,y
+	puls	a,x,u
 
-	pshs	y	; _play_sound uses A, X and 2,S
+	pshs	u	; _play_sound uses A, X and 2,S
 	bsr	play_sound_2
-	puls	y
+	puls	u
 
 	bsr	switch_on_irq_and_firq
 	rts
@@ -1782,7 +1782,7 @@ play_sound:
 
 play_sound_2:
 
-	cmpx	2,s			; Compare X with Y
+	cmpx	2,s			; Compare X with U
 	bne	_play_sound_more
 
 	rts				; If we have no more samples, exit
@@ -1837,10 +1837,10 @@ display_text_graphic:
 
 	pshs	b,x
 	jsr	get_screen_position
-	puls	b,y			; Y = graphics data
+	puls	b,u			; U = graphics data
 
 _display_text_graphic_loop:
-        lda     ,y+
+        lda     ,u+
         beq     text_graphic_new_line
         cmpa    #TEXT_GRAPHIC_END
         beq	_display_text_graphic_finished
@@ -1856,10 +1856,12 @@ _display_text_graphic_finished:
 * Inputs:
 * B = Column number
 * X = Screen position
+* U = Message
 *
 * Outputs:
 * B = (Unchanged) Column number
-* X = (Updated) Screen position
+* X = (Updated)   Screen position
+* U = (Unchanged) Message
 *******************************
 
 text_graphic_new_line:

@@ -95,7 +95,7 @@ turn_on_debug_features:
 	beq	_not_in_debug_mode
 
 	clra
-	coma				; Load #255 into these places
+	coma				; Load #255 into these variables
 	sta	cycle
 	sta	dropped_frame_counter_toggle
 

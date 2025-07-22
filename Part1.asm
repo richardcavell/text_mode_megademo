@@ -1218,9 +1218,7 @@ pluck_char:
 pluck_register:
 
 	tfr	x,u
-	pshs	u
 	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
-	puls	u
 	ldb	,u		; B = the character being plucked
 				; X is the slot
 				; U is the screen position
@@ -1235,6 +1233,7 @@ pluck_register:
 
 *********************
 * Place white box
+*
 * Input:
 * X = Screen position
 *
@@ -1272,30 +1271,31 @@ pluck_play_sound:
 
 process_pluck_2:
 
-	ldy	#plucks_data
+	ldu	#plucks_data
 
 _pluck_do_each_pluck:
-	lda	,y
-	ldb	1,y
-	ldx	2,y
+	lda	,u
+	ldb	1,u
+	ldx	2,u
 
-	pshs	y
+	pshs	u
 	bsr	pluck_do_one_pluck
-	puls	y
+	puls	u
 
-	leay	4,y
-	cmpy	#plucks_data_end
+	leay	4,u
+	cmpu	#plucks_data_end
 	blo	_pluck_do_each_pluck
 
 	rts
 
 *********************
 * Pluck do one pluck
+*
 * Inputs:
 * A = Phase
 * B = Character
 * X = Screen position
-* Y = Pluck data
+* U = Pluck data
 *
 * Outputs: None
 *********************
@@ -1319,7 +1319,7 @@ pluck_do_one_pluck:
 * A = Phase
 * B = Character
 * X = Screen position
-* Y = Pluck data
+* U = Pluck data
 *
 * Outputs: None
 *********************
@@ -1330,11 +1330,12 @@ pluck_phase_0:
 
 *********************
 * Pluck phase 1
+*
 * Inputs:
 * A = Phase
 * B = Character
 * X = Screen position
-* Y = Pluck data
+* U = Pluck data
 *
 * Outputs: None
 *********************
@@ -1342,16 +1343,17 @@ pluck_phase_0:
 pluck_phase_1:
 
 	lda	#PLUCK_PHASE_PLAIN
-	sta	,y
+	sta	,u
 	rts
 
 *********************
 * Pluck phase 2
+*
 * Inputs:
 * A = Phase
 * B = Character
 * X = Screen position
-* Y = Pluck data
+* U = Pluck data
 *
 * Outputs: None
 *********************
@@ -1361,17 +1363,18 @@ pluck_phase_2:
 	stb	,x		; Show the plain character
 
 	lda	#PLUCK_PHASE_PULLING	; Go to phase 3
-	sta	,y
+	sta	,u
 
 	rts
 
 *********************
 * Pluck phase 3
+*
 * Inputs:
 * A = Phase
 * B = Character
 * X = Screen position
-* Y = Pluck data
+* U = Pluck data
 *
 * Outputs: None
 *********************
@@ -1381,25 +1384,26 @@ pluck_phase_3:
 	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
 
-	pshs	b,x,y
+	pshs	b,x,u
 	tfr	x,d
 	jsr	is_d_divisible_by_32
 	tsta
-	puls	b,x,y		; Does not affect condition codes
+	puls	b,x,u		; Does not affect condition codes
 	bne	pluck_phase_3_ended
 
 	stb	,x		; Draw it in the next column
-	stx	2,y		; Update position in plucks_data
+	stx	2,u		; Update position in plucks_data
 
 	rts
 
 *********************
 * Pluck phase 3 ended
+*
 * Inputs:
 * A = Phase
 * B = Character
 * X = Screen position
-* Y = Pluck data
+* U = Pluck data
 *
 * Outputs: None
 *********************
@@ -1411,7 +1415,7 @@ number_of_plucked_chars:
 pluck_phase_3_ended:		; Character has gone off the right side
 
 	lda	#PLUCK_PHASE_NOTHING
-	sta	,y		; This slot is now empty
+	sta	,u		; This slot is now empty
 
 	lda	number_of_plucked_chars
 	inca

@@ -1288,8 +1288,8 @@ _pluck_do_each_pluck:
 
 	rts
 
-*********************
-* Pluck do one pluck
+**********************
+* Pluck - Do one pluck
 *
 * Inputs:
 * A = Phase
@@ -1298,7 +1298,7 @@ _pluck_do_each_pluck:
 * U = Pluck data
 *
 * Outputs: None
-*********************
+**********************
 
 pluck_do_one_pluck:
 
@@ -1391,7 +1391,7 @@ pluck_phase_3:
 	puls	b,x,u		; Does not affect condition codes
 	bne	pluck_phase_3_ended
 
-	stb	,x		; Draw it in the next column
+	stb	,x		; Draw it in the next column to the right
 	stx	2,u		; Update position in plucks_data
 
 	rts

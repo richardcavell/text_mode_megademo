@@ -35,7 +35,7 @@
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -610,7 +610,7 @@ pluck_line_counts_end:
 * Plucks data
 *************
 
-MAX_SIMULTANEOUS_PLUCKS	EQU	10
+MAX_SIMULTANEOUS_PLUCKS	EQU	1
 
 plucks_data:
 
@@ -1072,6 +1072,9 @@ spare_slot:
 
 process_pluck_1:
 
+	jsr	is_sound_slot_available		; Is the sound playing
+	beq	_process_pluck_2		; routine available?
+
 	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	_process_pluck_2		; No, just keep processing
@@ -1080,6 +1083,8 @@ process_pluck_1:
 
 	jsr	pluck_a_char			; Yes, pluck a character
 
+	lda	#2
+	jsr	wait_frames
 _process_pluck_2:
 
 	jsr	process_pluck_2			; Do one frame
@@ -1665,6 +1670,12 @@ display_messages:
 	ldu	#TEXTBUF
 
 _display_messages_loop:
+	pshs	x,u
+	jsr	is_sound_slot_available
+	tsta
+	puls	x,u
+	beq	_display_messages_loop
+
 	lda	,x+
 	beq	display_messages_next_line
 	cmpa	#'%' + 64
@@ -1779,7 +1790,7 @@ display_messages_big_pause:
 display_messages_pause:
 
 	pshs	x,u
-	lda	#2
+	lda	#1
 	jsr	wait_frames
 	puls	x,u
 	rts
@@ -1808,8 +1819,13 @@ display_messages_play_sound:
 	ldu	#type_sound_end		; pause while we're doing this
 	jsr	play_sound		; Play the pluck noise
 	puls	x,u
+	rts
 
 _display_messages_skip_sound:
+	lda	#5
+	pshs	x,u
+	jsr	wait_frames
+	puls	x,u
 
 	rts
 
@@ -1844,9 +1860,6 @@ switch_on_irq_and_firq:
 *******************************
 
 play_sound:
-	ldy	smp_pt+1		; Wait for previous sound
-	cmpy	end_pt+1		; to finish playing
-	bne	play_sound
 
 	pshs	a,x,u
 	bsr	switch_off_irq_and_firq
@@ -1860,6 +1873,32 @@ play_sound:
 * End of code modified from code written by Simon Jonassen
 
 	bsr	switch_on_irq_and_firq
+	rts
+
+******************************
+* Is sound slot available
+*
+* Inputs: None
+* Output:
+* A = 0 Sound is still playing
+* A = 1 Sound has finished
+******************************
+
+is_sound_slot_available:
+
+	bsr	switch_off_irq_and_firq
+
+        ldy     smp_pt+1                ; Wait for previous sound
+        cmpy    end_pt+1                ; to finish playing
+        bne     _still_playing
+
+	bsr	switch_on_irq_and_firq
+	lda	#1			; Sound slot is available
+	rts
+
+_still_playing:
+	bsr	switch_on_irq_and_firq
+	clra
 	rts
 
 ******************

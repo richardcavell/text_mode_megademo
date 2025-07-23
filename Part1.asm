@@ -1327,8 +1327,8 @@ place_white_box:
 pluck_play_sound:
 
 	lda	#1
-	ldx	#pop_sound	; Interrupts and everything else
-	ldu	#pop_sound_end 	; pause while we're doing this
+	ldx	#pop_sound
+	ldu	#pop_sound_end
 	jsr	play_sound	; Play the pluck noise
 
 	rts
@@ -1754,7 +1754,7 @@ move_to_next_line:
 	rts
 
 ***************************************
-* Display messages - big pause
+* Display messages - Big pause
 *
 * X = Messages position
 * U = Text buffer position
@@ -1777,7 +1777,7 @@ display_messages_big_pause:
 	rts
 
 ***************************************
-* Display messages - pause
+* Display messages - Pause
 *
 * X = Messages position
 * U = Text buffer position
@@ -1796,7 +1796,7 @@ display_messages_pause:
 	rts
 
 ***************************************
-* Display messages - play sound
+* Display messages - Play sound
 *
 * Inputs:
 * A = Character being displayed
@@ -1815,8 +1815,8 @@ display_messages_play_sound:
 
 	pshs	x,u
 	lda	#1
-	ldx	#type_sound		; Interrupts and everything else
-	ldu	#type_sound_end		; pause while we're doing this
+	ldx	#type_sound
+	ldu	#type_sound_end
 	jsr	play_sound		; Play the typing noise
 	puls	x,u
 	rts

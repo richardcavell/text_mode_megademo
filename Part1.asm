@@ -1849,43 +1849,15 @@ play_sound:
 	bsr	switch_off_irq_and_firq
 	puls	a,x,u
 
-	pshs	u	; _play_sound uses A, X and 2,S
-	bsr	play_sound_2
-	puls	u
+* This code was modified from code written by Simon Jonassen
+
+	stx	smp_pt+1	; This is self-modifying code
+	stu	end_pt+1
+
+* End of code modified from code written by Simon Jonassen
 
 	bsr	switch_on_irq_and_firq
 	rts
-
-*******************************
-* Play a sound sample
-*
-* Inputs:
-*   A = The delay between samples
-*   X = The sound data
-* 2,S = The end of the sound data
-*
-* Outputs: None
-*******************************
-
-play_sound_2:
-
-	cmpx	2,s			; Compare X with U
-	bne	_play_sound_more
-
-	rts				; If we have no more samples, exit
-
-_play_sound_more:
-	ldb	,x+
-	stb	AUDIO_PORT
-
-	tfr	a,b
-
-_play_sound_delay_loop:
-	tstb
-	beq	play_sound_2		; Have we completed the delay?
-
-	decb				; If not, then wait some more
-	bra	_play_sound_delay_loop
 
 ******************
 * Clear the screen

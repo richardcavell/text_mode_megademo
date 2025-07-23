@@ -49,7 +49,7 @@ WAIT_PERIOD	EQU	25
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
-;	jsr	turn_on_interrupts		; Turn on interrupts
+	jsr	turn_on_interrupts		; Turn on interrupts
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
@@ -1988,6 +1988,21 @@ baby_elephant_end:
 *********************
 
 turn_off_interrupts:
+
+	jsr     switch_off_irq
+
+* This code is modified from code written by Simon Jonassen
+
+	lda	PIA0AC		; Turn off HSYNC interrupt
+	anda	#0b11111110
+	sta	PIA0AC
+
+	lda	PIA0AD		; Acknowledge any outstanding
+				; interrupt request
+
+* End of code modified from code written by Simon Jonassen
+
+	jsr     switch_on_irq
 
 	rts
 

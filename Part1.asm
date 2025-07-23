@@ -273,6 +273,39 @@ call_decb_irq_handler:		; We get significantly better performance
 
 irq_service_routine:
 
+	lda	PIA0AC		; Was it a VBlank or HSync?
+	bpl	service_vblank	; VBlank - go there
+
+* If HSYNC, fallthrough to HSYNC handler
+
+*************************
+* Service HSYNC
+*
+* Inputs: Not applicable
+* Outputs: Not applicable
+*************************
+
+smp_pt:	ldx	#0		; pointer to sample
+end_pt:	cmpx	#0		; done ?
+	beq	quit_isr
+
+	lda	,x+		; Get the next byte of data
+	sta	AUDIO_PORT	; and shove it into the audio port
+	stx	smp_pt+1	; Self-modifying code here
+
+quit_isr:
+	lda	PIA0AD		; Acknowledge HSYNC interrupt
+	rti
+
+*************************
+* Service VBlank
+*
+* Inputs: Not applicable
+* Outputs: Not applicable
+*************************
+
+service_vblank:
+
 	lda	waiting_for_vblank	; The demo is waiting for the signal
 	bne	_no_dropped_frames	; so let's give it to them
 

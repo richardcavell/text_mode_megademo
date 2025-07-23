@@ -203,12 +203,12 @@ turn_on_interrupts:
 	lda	PIA0BC		; Enable VSync interrupt
 	ora	#3
 	sta	PIA0BC
-	lda	PIA0BD
+	lda	PIA0BD		; Acknowledge any outstanding VSync interrupt
 
 	lda	PIA0AC		; Enable HSync interrupt
 	ora	#3
 	sta	PIA0AC
-	lda	PIA0AD
+	lda	PIA0AD		; Acknowledge any outstanding HSync interrupt
 
 * End code modified by me from code written by Simon Jonassen
 
@@ -1817,7 +1817,7 @@ display_messages_play_sound:
 	lda	#1
 	ldx	#type_sound		; Interrupts and everything else
 	ldu	#type_sound_end		; pause while we're doing this
-	jsr	play_sound		; Play the pluck noise
+	jsr	play_sound		; Play the typing noise
 	puls	x,u
 	rts
 

@@ -1838,12 +1838,15 @@ switch_on_irq_and_firq:
 * Inputs:
 * A = The delay between samples
 * X = The sound data
-* Y = The end of the sound data
+* U = The end of the sound data
 *
 * Outputs: None
 *******************************
 
 play_sound:
+	ldy	smp_pt+1		; Wait for previous sound
+	cmpy	end_pt+1		; to finish playing
+	bne	play_sound
 
 	pshs	a,x,u
 	bsr	switch_off_irq_and_firq

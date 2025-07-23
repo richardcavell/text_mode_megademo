@@ -49,7 +49,7 @@ WAIT_PERIOD	EQU	25
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
-	jsr	turn_on_interrupts		; Turn on interrupts
+;	jsr	turn_on_interrupts		; Turn on interrupts
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
@@ -1676,10 +1676,12 @@ _display_messages_end:
 
 display_messages_next_line:
 
-	tfr	u,d
-	addd	#COLS_PER_LINE
-	andb	#0b11100000
-	tfr	d,u
+	pshs	x
+	tfr	u,x
+	bsr	move_to_next_line
+	tfr	x,u
+	puls	x
+
 	pshs	x,u
 	lda	#5
 	jsr	wait_frames
@@ -1687,6 +1689,25 @@ display_messages_next_line:
 	puls	x,u
 	bne	_display_messages_skip
 	bra	_display_messages_loop
+
+***************************************
+* Move to next line
+*
+* Input:
+* X = Screen position pointer
+*
+* Output:
+* X = (Updated) Screen position pointer
+***************************************
+
+move_to_next_line:
+
+	tfr	x,d
+	addd	#COLS_PER_LINE
+	andb	#0b11100000
+	tfr	d,x
+
+	rts
 
 ***************************************
 * Display messages - big pause
@@ -1899,12 +1920,10 @@ _display_text_graphic_finished:
 
 text_graphic_new_line:
 
-	pshs	b
-        tfr     x,d
-        andb    #0b11100000
-	tfr	d,x
-        leax	COLS_PER_LINE,x
-	puls	b
+	pshs	b,u
+	jsr	move_to_next_line
+	puls	b,u
+
 	leax	b,x
 	bra	_display_text_graphic_loop
 

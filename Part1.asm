@@ -14,6 +14,7 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner (Deek)
+* Part of this code was written by Simon Jonassen (The Invisible Man)
 *
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
@@ -196,6 +197,9 @@ turn_on_interrupts:
 
 	jsr	switch_off_irq
 
+* This code was originally written by Simon Jonassen (The Invisible Man)
+* and then modified by me
+
 	lda	PIA0BC		; Enable VSync interrupt
 	ora	#3
 	sta	PIA0BC
@@ -205,6 +209,8 @@ turn_on_interrupts:
 	ora	#3
 	sta	PIA0AC
 	lda	PIA0AD
+
+* End code modified by me from code written by Simon Jonassen
 
 	jsr	switch_on_irq
 

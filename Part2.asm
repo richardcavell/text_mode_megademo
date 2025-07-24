@@ -241,32 +241,159 @@ call_decb_irq_handler:          ; We get significantly better performance
 * Outputs: Not applicable
 *************************
 
-UP TO HERE
-
 irq_service_routine:
 
-	lda	#1
-	sta	vblank_happened
+        lda     PIA0AC          ; Was it a VBlank or HSync?
+        bpl     service_vblank  ; VBlank - go there
 
-	lda	#DEBUG_MODE
-	beq	_skip_debug_visual_indication
+* If HSYNC, fallthrough to HSYNC handler
+
+*************************
+* Service HSYNC
+*
+* Inputs: Not applicable
+* Outputs: Not applicable
+*************************
+
+smp_pt: ldx     #0              ; pointer to sample
+end_pt: cmpx    #0              ; done ?
+        beq     quit_isr
+
+        lda     ,x+             ; Get the next byte of data
+        sta     AUDIO_PORT      ; and shove it into the audio port
+        stx     smp_pt+1        ; Self-modifying code here
+
+quit_isr:
+        lda     PIA0AD          ; Acknowledge HSYNC interrupt
+        rti
+
+*************************
+* Service VBlank
+*
+* Inputs: Not applicable
+* Outputs: Not applicable
+*************************
+
+service_vblank:
+
+        lda     waiting_for_vblank      ; The demo is waiting for the signal
+        bne     _no_dropped_frames      ; so let's give it to them
+
+        bsr     count_dropped_frame     ; If the demo is not ready for a
+        bra     _dropped_frame          ; vblank, then we drop a frame
+
+_no_dropped_frames:
+        bsr     signal_demo             ; VBlank has happened
+
+_dropped_frame:
+        bsr     print_dropped_frames
+        bsr     cycle_corner_character
+        bra     exit_irq_handler
+
+*********************
+* Count dropped frame
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+count_dropped_frame:
+
+        lda     dropped_frames
+        cmpa    #10
+        beq     _skip_increment         ; Stop counting dropped frames at 10
+
+        inca
+        sta     dropped_frames
+
+_skip_increment:
+        rts
+
+***************
+* Signal demo
+*
+* Inputs: None
+* Outputs: None
+***************
+
+signal_demo:
+
+        clr     waiting_for_vblank      ; No longer waiting
+        lda     #1                      ; If waiting for VBlank,
+        sta     vblank_happened         ; here's the signal
+
+        clr     dropped_frames
+
+        rts
+
+*********************
+* Print dropped frames
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+print_dropped_frames:
+
+        lda     dropped_frame_counter_toggle
+        beq     _do_not_print_frame_counter
+
+        lda     dropped_frames
+        cmpa    #10
+        blo     _adjust_a
+
+        lda     #94                     ; This is the up arrow
+        bra     _store_a
+
+_adjust_a:
+        adda    #'0'+64
+
+_store_a:
+        sta     LOWER_LEFT_CORNER       ; Put it in the lower-left corner
+
+_do_not_print_frame_counter:
+        rts
+
+************************
+* Cycle corner character
+*
+* Inputs: None
+* Outputs: None
+************************
+
+cycle:
+
+        FCB     0       ; If DEBUG_MODE is on, this will start with 255
 
 ; For debugging, this provides a visual indication that
-; our handler is running
+; our IRQ handler is running
 
-	inc	TEXTBUFEND-1	; The lower-right corner character cycles
+cycle_corner_character:
 
-_skip_debug_visual_indication:
+        lda     cycle
+        beq     _skip_cycle
 
-		; In the interests of making our IRQ handler run fast,
-		; the routine assumes that decb_irq_service_routine
-		; has been correctly initialized
+        inc     LOWER_RIGHT_CORNER ; The lower-right corner character cycles
 
-	jmp	[decb_irq_service_routine]
+_skip_cycle:
 
-decb_irq_service_routine:
+        rts
 
-	RZB	2
+******************
+* Exit IRQ handler
+******************
+
+exit_irq_handler:
+
+        lda     call_decb_irq_handler
+        beq     _rti_from_here
+        ldx     decb_irq_service_routine
+        beq     _rti_from_here
+        jmp     ,x
+
+_rti_from_here:
+        lda     PIA0BD                  ; Acknowledge interrupt
+        rti
 
 *********************
 * Turn off disk motor
@@ -298,30 +425,56 @@ AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
 turn_6bit_audio_on:
 
+       bsr     set_audio_port_on
+        bsr     set_ddra
+
+        rts
+
+*******************
+* Set audio port on
+*
+* Inputs: None
+* Outputs: None
+*******************
+
+set_audio_port_on:
+
 * This code was modified from code written by Trey Tomes
 
-	lda	AUDIO_PORT_ON
-	ora	#0b00001000
-	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
+        lda     AUDIO_PORT_ON
+        ora     #0b00001000
+        sta     AUDIO_PORT_ON   ; Turn on 6-bit audio
 
 * End code modified from code written by Trey Tomes
 
-* This code was written by other people (see here)
-* https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
+        rts
 
-	ldb	PIA2_CRA
-	andb	#0b11111011
-	stb	PIA2_CRA
+***************
+* Set DDRA
+*
+* Inputs: None
+* Outputs: None
+***************
 
-	lda	#0b11111100
-	sta	DDRA
+set_ddra:
 
-	orb	#0b00000100
-	stb	PIA2_CRA
+* This code was written by other people, taken from
+* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0>
+* and then modified by me
+
+        ldb     PIA2_CRA
+        andb    #0b11111011
+        stb     PIA2_CRA
+
+        lda     #0b11111100
+        sta     DDRA
+
+        orb     #0b00000100
+        stb     PIA2_CRA
 
 * End of code modified by me from code written by other people
 
-	rts
+        rts
 
 ********************
 * Turn on interrupts
@@ -366,7 +519,7 @@ TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
-****************************************
+******************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
@@ -374,94 +527,307 @@ TEXT_LINES	EQU	16
 * Output:
 * A = 0          -> A VBlank happened
 * A = (Non-zero) -> User is trying to skip
-****************************************
-
-POLCAT		EQU	$A000
-
-BREAK_KEY	EQU	3
-
-vblank_happened:
-
-	RZB	1
+******************************************
 
 wait_for_vblank_and_check_for_skip:
 
-	clr	vblank_happened
+        jsr     switch_off_irq_and_firq
+        clr     vblank_happened         ; See "Variables that are relevant to
+        lda     #1                      ; vertical blank timing" above
+        sta     waiting_for_vblank
+        jsr     switch_on_irq_and_firq
 
 _wait_for_vblank_and_check_for_skip_loop:
-	jsr	[POLCAT]
-	cmpa	#' '			; Space bar
-	beq	_wait_for_vblank_skip
-	cmpa	#BREAK_KEY		; Break key
-	beq	_wait_for_vblank_skip
-	ldb	#DEBUG_MODE
-	beq	_wait_for_vblank
-	cmpa	#'t'			; T key
-	beq	_wait_for_vblank_invert_toggle
-	cmpa	#'T'
-	beq	_wait_for_vblank_invert_toggle
-	ldb	_debug_mode_toggle
-	beq	_wait_for_vblank
+        bsr     poll_keyboard
+        cmpa    #1
+        beq     _skip
+        cmpa    #2
+        beq     _wait_for_vblank_and_check_for_skip_loop
 
-; If toggle is on, require an F to go forward 1 frame
+        tst     vblank_happened
+        beq     _wait_for_vblank_and_check_for_skip_loop
 
-	cmpa	#'f'
-	beq	_wait_for_vblank
-	cmpa	#'F'
-	beq	_wait_for_vblank
-	bra	_wait_for_vblank_and_check_for_skip_loop
+        clra            ; A VBlank happened
+        rts
 
-_wait_for_vblank:
-wvs	tst	$ff03	; Check for interrupt
-	bpl	wvs
-	lda	$ff02	; Acknowledge interrupt
+_skip:
+        lda     #1      ; User skipped
+        rts
 
-;	tst	vblank_happened
-;	beq	_wait_for_vblank_and_check_for_skip_loop
+*****************************
+* Define POLCAT and BREAK_KEY
+*****************************
 
-	clra		; A VBlank happened
-	rts
+; POLCAT is a pointer to a pointer
+
+POLCAT          EQU     $A000
+
+BREAK_KEY       EQU     3
+
+*******************************
+* Poll keyboard
+*
+* Inputs: None
+*
+* Output:
+* A = 0 No input
+* A = 1 User wants to skip
+* A = 2 Require an F to proceed
+*******************************
+
+poll_keyboard:
+
+        jsr     [POLCAT]                ; POLCAT is a pointer to a pointer
+        cmpa    #' '                    ; Space bar
+        beq     _wait_for_vblank_skip
+        cmpa    #BREAK_KEY              ; Break key
+        beq     _wait_for_vblank_skip
+
+        ldb     #DEBUG_MODE
+        bne     debugging_mode_is_on
+
+        clra            ; Debug mode is off, so exit normally
+        rts
 
 _wait_for_vblank_skip:
-	lda	#1	; User wants to skip
-	rts
+        lda     #1      ; User wants to skip
+        rts
 
-_wait_for_vblank_invert_toggle:
-	com	_debug_mode_toggle
-	bra	_wait_for_vblank
+*******************************
+* Debugging mode is on
+*
+* Inputs: None
+* Outputs:
+* A = 0 All normal
+* A = 2 Require F to go forward
+*******************************
 
-_debug_mode_toggle:
+debugging_mode_is_on:
 
-	RZB	1
+        cmpa    #'T'
+        beq     toggle_frame_by_frame
+        cmpa    #'C'
+        beq     toggle_cycle
+        cmpa    #'D'
+        beq     toggle_dropped_frame_counter
 
-**************************************
+_key_processed:
+        ldb     frame_by_frame_mode_toggle
+        bne     require_f
+
+        clra
+        rts
+
+**********************************
+* Invert frame-by-frame toggle
+*
+* Input:
+* A = Keypress
+*
+* Outputs: None
+**********************************
+
+frame_by_frame_mode_toggle:
+
+        RZB     1
+
+toggle_frame_by_frame:
+
+        com     frame_by_frame_mode_toggle
+        bra     _key_processed
+
+***************
+* Toggle cycle
+*
+* Inputs: None
+* Outputs: None
+***************
+
+toggle_cycle:
+
+        com     cycle
+        bne     _skip_redraw_cycle
+                                        ; If it's being turned off
+        lda     #GREEN_BOX              ; then draw over the lower-right
+        sta     LOWER_RIGHT_CORNER      ; corner
+
+_skip_redraw_cycle:
+        bra     _key_processed
+
+*****************************
+* Toggle dropped frame counter
+*
+* Inputs: None
+* Outputs: None
+******************************
+
+dropped_frame_counter_toggle:
+
+        FCB     0       ; If DEBUG_MODE is on, then this starts with 255
+
+toggle_dropped_frame_counter:
+
+        com     dropped_frame_counter_toggle
+        bne     _skip_redraw_dropped_frame_counter
+                                        ; If it's being turned off
+        lda     #GREEN_BOX              ; then draw over the lower-left
+        sta     LOWER_LEFT_CORNER       ; corner
+
+_skip_redraw_dropped_frame_counter:
+        bra     _key_processed
+
+*******************************
+* Require F
+*
+* Input:
+* A = Keypress
+*
+* Output:
+* A = 0 All is well
+* A = 2 Require an F to proceed
+*******************************
+
+require_f:
+
+        cmpa    #'F'            ; If toggle is on, require an F
+        beq     _forward                ; to go forward 1 frame
+
+        lda     #2              ; If no F, go back to polling the keyboard
+        rts
+
+_forward:
+        clra
+        rts
+
+***********************************
 * Wait for a number of frames
 *
 * Input:
-* A = number of frames
+* A = Number of frames
 *
 * Output:
-* A = 0          -> Successful waiting
-* A = (Non-zero) -> User wants to skip
-**************************************
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
 
 wait_frames:
+        tsta                            ; If A = 0, immediately exit
+        beq     _wait_frames_success
 
-	pshs	a
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	puls	a
-	bne	_wait_frames_skip	; User wants to skip
+        pshs    a
+        jsr     wait_for_vblank_and_check_for_skip
+        tsta
+        puls    a
+        bne     _wait_frames_skip       ; User wants to skip
 
-	deca
-	bne	wait_frames
+        deca
+        bne     wait_frames
 
-	clra
-	rts
+_wait_frames_success:
+        clra                            ; Normal termination
+        rts
 
 _wait_frames_skip:
-	lda	#1
-	rts
+        lda     #1                      ; User wants to skip
+        rts
+
+*********************
+* Get screen position
+*
+* Inputs:
+* A = Row (0-15)
+* B = Column (0-31)
+*
+* Output:
+* X = Screen position
+*********************
+
+get_screen_position:
+
+;   X = TEXTBUF + A * COLS_PER_LINE + B
+
+        pshs    b
+
+        ldx     #TEXTBUF
+        ldb     #COLS_PER_LINE
+        mul
+        leax    d,x
+
+        puls    b
+        abx
+
+        rts
+
+******************
+* Clear the screen
+*
+* Inputs: None
+* Outputs: None
+******************
+
+clear_screen:
+
+        ldx     #TEXTBUF
+        ldd     #(GREEN_BOX << 8 | GREEN_BOX)   ; Two green boxes
+
+_clear_screen_loop:
+        std     ,x++
+        std     ,x++
+        std     ,x++
+        std     ,x++
+
+        cmpx    #TEXTBUFEND             ; Finish in the lower-right corner
+        blo     _clear_screen_loop
+        rts
+
+*********************
+* Turn off interrupts
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+turn_off_interrupts:
+
+        jsr     switch_off_irq
+
+* This code is modified from code written by Simon Jonassen
+
+        lda     PIA0AC          ; Turn off HSYNC interrupt
+        anda    #0b11111110
+        sta     PIA0AC
+
+        lda     PIA0AD          ; Acknowledge any outstanding
+                                ; interrupt request
+
+* End of code modified from code written by Simon Jonassen
+
+        jsr     switch_on_irq
+
+        rts
+
+*************************************
+* Restore BASIC's IRQ service routine
+*
+* Inputs: None
+* Outputs: None
+*************************************
+
+restore_basic_irq_service_routine:
+
+        jsr     switch_off_irq
+        bsr     restore_irq_handler
+        jsr     switch_on_irq
+
+        rts
+
+restore_irq_handler:
+
+        lda     decb_irq_service_instruction
+        sta     IRQ_INSTRUCTION
+
+        ldx     decb_irq_service_routine
+        stx     IRQ_HANDLER
 
 **************
 * Title screen

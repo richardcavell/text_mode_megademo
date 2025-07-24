@@ -864,7 +864,7 @@ prepare_title_screen:
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
-
+						; Ignore the result
 	clra
 	clrb
 	ldx	#title_screen_graphic

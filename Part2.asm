@@ -13,20 +13,30 @@
 * Part of this code was written by a number of other authors
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
+* Part of this code was written by Simon Jonassen (The Invisible Man)
+*
+* The speech "RJFC Presents Text Mode Megademo" was created by this website:
+* https://speechsynthesis.online/
+* The voice is "Ryan"
+* The routine that plays the speech was written by Simon Jonassen
+*
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
 * Both graphics have been modified by me
 * Animation of the small creature by me
-* The speech "RJFC Presents Text Mode Megademo" was created by this website:
-* https://speechsynthesis.online/
-* The voice is "Ryan"
-* The routine that plays the speech was written by Simon Jonassen
 
-* DEBUG_MODE means you press T to toggle frame-by-frame mode.
-* In frame-by-frame mode, you press F to see the next frame.
-* Also, you can make the lower right corner character cycle when
-* the interrupt request service routine operates.
+* If DEBUG_MODE is non-zero, then Debug Mode is "on".
+* If Debug Mode is on:
+*   1) You can press T to toggle frame-by-frame mode
+*        In frame-by-frame mode, you press F to see the next frame.
+*   2) You can have the lower right corner character cycle when the
+*      interrupt request routine is called
+*        Press C to turn the cycling of the lower-right character off or on
+*   3) You can see if there are dropped frames
+*      The lower left corner will display how many frames have been skipped
+*        (0 to 9 and up arrow meaning 10 or more)
+*        Press D to turn the dropped frames counter off or on
 
 DEBUG_MODE	EQU	0
 
@@ -40,16 +50,19 @@ WAIT_PERIOD	EQU	25
 		ORG $1800
 
 	jsr	zero_dp_register		; Zero the DP register
+	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
-	jsr	switch_off_irq_and_firq
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
+	jsr	turn_on_interrupts		; And get the HSYNC active
 
 	jsr	title_screen			; First section
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
-
+	jsr	turn_off_interrupts		; Go back to what BASIC uses
 	jsr	uninstall_irq_service_routine
+
+	jsr	restore_basic_irq_service_routine
 
 	clra
 	clrb
@@ -72,6 +85,27 @@ zero_dp_register:
 
 	rts
 
+************************
+* Turn on debug features
+*
+* Inputs: None
+* Outputs: None
+************************
+
+turn_on_debug_features:
+
+        lda     #DEBUG_MODE
+        beq     _not_in_debug_mode
+
+        clra
+        coma                            ; Load #255 into these variables
+        sta     cycle
+        sta     dropped_frame_counter_toggle
+
+_not_in_debug_mode:
+        rts
+
+
 *********************************
 * Install our IRQ service routine
 *
@@ -79,23 +113,16 @@ zero_dp_register:
 * Outputs: None
 *********************************
 
-IRQ_HANDLER	EQU	$10D
-
 install_irq_service_routine:
 
-	bsr	switch_off_irq		; Switch off IRQ interrupts for now
+        bsr     switch_off_irq          ; Switch off IRQ interrupts for now
 
-	ldx	IRQ_HANDLER		; Load the current vector into X
-	stx	decb_irq_service_routine	; We will call it at the end
-						; of our own handler
+        bsr     get_irq_handler
+        bsr     set_irq_handler
 
-	ldx	#irq_service_routine
-	stx	IRQ_HANDLER		; Our own interrupt service routine
-					; is installed
+        bsr     switch_on_irq           ; Switch IRQ interrupts back on
 
-	bsr	switch_on_irq		; Switch IRQ interrupts back on
-
-	rts
+        rts
 
 ***************************
 * Switch IRQ interrupts off
@@ -123,11 +150,95 @@ switch_on_irq:
 
 	rts
 
-***************************************************
+*****************
+* Get IRQ handler
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+IRQ_INSTRUCTION EQU     $10C
+IRQ_HANDLER     EQU     $10D
+
+get_irq_handler:
+
+        lda     IRQ_INSTRUCTION         ; Should be JMP (extended)
+        sta     decb_irq_service_instruction
+
+        ldx     IRQ_HANDLER             ; Load the current vector into X
+        stx     decb_irq_service_routine        ; We could call it at the end
+                                                ; of our own handler
+        rts
+
+*****************
+* Set IRQ handler
+*
+* Inputs: None
+* Outputs: None
+*****************
+
+set_irq_handler:
+
+        ldx     #irq_service_routine
+        stx     IRQ_HANDLER             ; Our own interrupt service routine
+                                        ; is now installed
+
+        rts
+
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF         EQU     $400    ; We're not double-buffering in this part
+TEXTBUFSIZE     EQU     $200    ; so there's only one text screen
+TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE   EQU     32
+TEXT_LINES      EQU     16
+
+LOWER_LEFT_CORNER       EQU     $5E0
+LOWER_RIGHT_CORNER      EQU     $5FF
+
+******************************************************
+* Variables that are relevant to vertical blank timing
+******************************************************
+
+waiting_for_vblank:
+
+        RZB     1               ; The interrupt handler reads this
+
+vblank_happened:
+
+        RZB     1               ; and sets this
+
+dropped_frames:
+
+        RZB     1               ; From 0 to 10 (don't count more than 10)
+
+**********************************************
+* Variables relating to DECB's own IRQ handler
+**********************************************
+
+decb_irq_service_instruction:
+
+        RZB     1               ; Should be JMP (extended)
+
+decb_irq_service_routine:
+
+        RZB     2
+
+call_decb_irq_handler:          ; We get significantly better performance
+                                ; by ignoring DECB's IRQ handler
+        RZB     1
+
+*************************
 * Our IRQ handler
 *
-* Make sure decb_irq_service_routine is initialized
-***************************************************
+* Inputs: Not applicable
+* Outputs: Not applicable
+*************************
+
+UP TO HERE
 
 irq_service_routine:
 
@@ -208,6 +319,38 @@ turn_6bit_audio_on:
 * End of code modified by me from code written by other people
 
 	rts
+
+********************
+* Turn on interrupts
+********************
+
+PIA0AD  EQU     $FF00
+PIA0AC  EQU     $FF01
+PIA0BD  EQU     $FF02
+PIA0BC  EQU     $FF03
+
+turn_on_interrupts:
+
+        jsr     switch_off_irq_and_firq
+
+* This code was originally written by Simon Jonassen (The Invisible Man)
+* and then modified by me
+
+        lda     PIA0BC          ; Enable VSync interrupt
+        ora     #3
+        sta     PIA0BC
+        lda     PIA0BD          ; Acknowledge any outstanding VSync interrupt
+
+        lda     PIA0AC          ; Enable HSync interrupt
+        ora     #3
+        sta     PIA0AC
+        lda     PIA0AD          ; Acknowledge any outstanding HSync interrupt
+
+* End code modified by me from code written by Simon Jonassen
+
+        jsr     switch_on_irq_and_firq
+
+        rts
 
 *************************
 * Text buffer information

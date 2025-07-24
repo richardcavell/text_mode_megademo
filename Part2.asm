@@ -879,12 +879,14 @@ prepare_title_screen:
 ; This graphic was made by Microsoft Copilot and modified by me
 ; Animation done by me
 
+END_OF_TEXT	EQU	255
+
 title_screen_graphic:
 
 	FCV	"(\\/)",0
 	FCV	"(O-O)",0
 	FCV	"/> >\\",0
-	FCB	255
+	FCB	END_OF_TEXT
 
 title_screen_text:
 
@@ -895,7 +897,7 @@ title_screen_text:
 	FCB	12, 11
 	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
 	FCB	0		; So we manually terminate that line
-	FCB	255		; The end
+	FCB	END_OF_TEXT	; The end
 
 ***************
 * Display text
@@ -911,7 +913,7 @@ display_text:
 	tsta
 	bne	skip_display_text
 
-	jsr	play_sound	; Play the speech synthesis
+	jsr	play_speech	; Play the speech synthesis
 
 	clra
 skip_display_text:
@@ -1081,10 +1083,10 @@ _skip_drop_sequence:
 ***********************************
 * Print text
 *
-* Inputs:
+* Input:
 * X = Pointer to data block
 *
-* Outputs:
+* Output:
 * A = 0          Successful
 * A = (non-zero) User wants to skip
 ***********************************
@@ -1095,6 +1097,8 @@ print_text:
 
 _print_text_loop:
 	lda	,y+
+	cmpa	#END_OF_TEXT
+	beq	print_text_finished
 	ldb	,y+
 	tfr	y,x
 
@@ -1102,36 +1106,53 @@ _print_text_loop:
 	jsr	text_appears
 	puls	y
 	tsta
-	bne	_print_text_skipped
+	bne	print_text_skipped
 
 _find_zero:
 	tst	,y+
 	bne	_find_zero
 
-	lda	#255			; This marks the end of the text
-					;   lines
-	cmpa	,y			; Is that what we have?
-	bne	_print_text_loop	; If not, then print the next line
-					; If yes, then fall through
+	bra	_print_text_loop
+
+***********************************
+* Exit print text routine
+*
+* Input: None
+*
+* Output:
+* A = 0          Successful
+* A = (non-zero) User wants to skip
+***********************************
+
+print_text_finished:
+
 	clra
 	rts
 
-_print_text_skipped:
+print_text_skipped:
+
 	lda	#1			; User has skipped this
 	rts
 
-******************************************
-* Switch IRQ and FIRQ interrupts on or off
+************************************
+* Switch IRQ and FIRQ interrupts off
 *
 * Inputs: None
 * Outputs: None
-******************************************
+************************************
 
 switch_off_irq_and_firq:
 
 	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
 
 	rts
+
+***********************************
+* Switch IRQ and FIRQ interrupts on
+*
+* Inputs: None
+* Outputs: None
+***********************************
 
 switch_on_irq_and_firq:
 
@@ -1146,7 +1167,7 @@ switch_on_irq_and_firq:
 * Outputs: None
 *************************
 
-play_sound:
+play_speech:
 
 ; This routine was written by Simon Jonassen and slightly modified by me
 
@@ -1219,27 +1240,25 @@ w2	decb
 
 clear_line:
 
-	ldx	#TEXTBUF
-	ldb	#COLS_PER_LINE
-	mul
-	leax	d,x
+	clrb
+	jsr	get_screen_position	; X is our starting point
 
-	ldy	#GREEN_BOX << 8 | GREEN_BOX
+	ldu	#GREEN_BOX << 8 | GREEN_BOX
 	lda	#4
 
 _clear_line_loop:
-	sty	,x++
-	sty	,x++
-	sty	,x++
-	sty	,x++
+	stu	,x++
+	stu	,x++
+	stu	,x++
+	stu	,x++
 
 	deca
 	bne	_clear_line_loop
 
 	rts
 
-************************************************
-* Brings text onto the screen using an animation
+***********************************************
+* Bring text onto the screen using an animation
 *
 * Inputs:
 * A = Line number (0 to 15)
@@ -1249,7 +1268,7 @@ _clear_line_loop:
 * Outputs:
 * A = 0 Finished, everything is okay
 * A = (Non-zero) User wants to skip
-************************************************
+***********************************************
 
 text_appears:
 
@@ -1798,7 +1817,7 @@ display_text_graphic:
 _display_text_graphic_loop:
         lda     ,y+
         beq     _text_graphic_new_line
-        cmpa    #255
+        cmpa    #END_OF_TEXT
         beq	_display_text_graphic_finished
         sta     ,x+
         bra     _display_text_graphic_loop
@@ -1859,7 +1878,7 @@ opening_credits_text:
 	FCV	"AND ANOTHER BLAH BLAH BLAH"
 	FCB	0
 	FCB	0
-	FCB	255
+	FCB	END_OF_TEXT
 
 line:
 
@@ -1870,7 +1889,7 @@ roll_credits:
 _roll_credits_loop:
 
 	lda	,x
-	cmpa	#255
+	cmpa	#END_OF_TEXT
 	beq	_roll_credits_finished
 
 	pshs	x
@@ -2254,7 +2273,7 @@ ascii_art_cat:
 	FCV	"        ; '   : :'-:     ..'* ;",0
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0
-	FCB	255
+	FCB	END_OF_TEXT
 
 ascii_art_cat_end:
 

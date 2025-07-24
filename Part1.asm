@@ -46,6 +46,15 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
+*****************
+* Part 1 Sequence
+*
+* Inputs: None
+*
+* Output:
+* D = 0 Success
+*****************
+
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler

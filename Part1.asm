@@ -958,7 +958,7 @@ _forward:
 	rts
 
 *************************************************
-* Pluck - check to see if the screen is empty yet
+* Pluck - Check to see if the screen is empty yet
 *
 * Inputs: None
 *
@@ -981,7 +981,7 @@ _pluck_screen_not_empty:
 	rts
 
 **********************************************************
-* Pluck - check empty slots
+* Pluck - Check empty slots
 *
 * Inputs: None
 *

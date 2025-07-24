@@ -196,7 +196,7 @@ PIA0BC	EQU	$FF03
 
 turn_on_interrupts:
 
-	jsr	switch_off_irq
+	jsr	switch_off_irq_and_firq
 
 * This code was originally written by Simon Jonassen (The Invisible Man)
 * and then modified by me
@@ -213,7 +213,7 @@ turn_on_interrupts:
 
 * End code modified by me from code written by Simon Jonassen
 
-	jsr	switch_on_irq
+	jsr	switch_on_irq_and_firq
 
 	rts
 
@@ -993,7 +993,7 @@ _pluck_screen_not_empty:
 pluck_check_empty_slots:
 
 	bsr	get_pluck_data_end
-	pshs	x			; ,s is end of plucks data
+	pshs	x			; ,S is end of plucks data
 	ldx	#plucks_data
 
 _pluck_check_data:
@@ -1046,16 +1046,16 @@ pluck_are_lines_empty:
 
 	ldx	#pluck_line_counts
 
-_pluck_are_lines_empty_test_line:
+_test_line:
 	tst	,x+
-	bne	_pluck_are_lines_empty_line_not_empty
+	bne	_line_not_empty
 	cmpx	#pluck_line_counts_end
-	blo	_pluck_are_lines_empty_test_line
+	blo	_test_line
 
 	lda	#1			; Lines are now clear
 	rts
 
-_pluck_are_lines_empty_line_not_empty:
+_line_not_empty:
 	clra				; Lines are not clear
 	rts
 
@@ -1072,9 +1072,6 @@ spare_slot:
 
 process_pluck_1:
 
-	jsr	is_sound_slot_available		; Is the sound playing
-	beq	_process_pluck_2		; routine available?
-
 	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	_process_pluck_2		; No, just keep processing
@@ -1083,8 +1080,6 @@ process_pluck_1:
 
 	jsr	pluck_a_char			; Yes, pluck a character
 
-	lda	#2
-	jsr	wait_frames
 _process_pluck_2:
 
 	jsr	process_pluck_2			; Do one frame
@@ -1649,7 +1644,7 @@ joke_startup_messages:
 	FCV	"SKILL...% DONE",0,0
 	FCV	"INCLUDING EVER SO MANY",0
 	FCV	"AWESOME EFFECTS...% DONE",0,0
-	FCV	"READYING ALL YOUR FAVORITE",0
+	FCV	"READYING ALL YOUR FAVOURITE",0
 	FCV	"DEMO CLICHES...% DONE",0,0
 	FCV	"STARTING THE SHOW...%%%%%%"
 
@@ -1671,12 +1666,6 @@ display_messages:
 	ldu	#TEXTBUF
 
 _display_messages_loop:
-	pshs	x,u
-	jsr	is_sound_slot_available
-	tsta
-	puls	x,u
-	beq	_display_messages_loop
-
 	lda	,x+
 	beq	display_messages_next_line
 	cmpa	#'%' + 64
@@ -1820,14 +1809,8 @@ display_messages_play_sound:
 	ldu	#type_sound_end
 	jsr	play_sound		; Play the typing noise
 	puls	x,u
-	rts
-
+					; fallthrough
 _display_messages_skip_sound:
-	lda	#5
-	pshs	x,u
-	jsr	wait_frames
-	puls	x,u
-
 	rts
 
 ******************************************
@@ -1862,44 +1845,17 @@ switch_on_irq_and_firq:
 
 play_sound:
 
-	pshs	a,x,u
-	bsr	switch_off_irq_and_firq
-	puls	a,x,u
-
 * This code was modified from code written by Simon Jonassen
 
 	stx	smp_pt+1	; This is self-modifying code
 	stu	end_pt+1
 
+	ldx	#$1000
+xwait:	leax	-1,x
+	bne	xwait
+
 * End of code modified from code written by Simon Jonassen
 
-	bsr	switch_on_irq_and_firq
-	rts
-
-******************************
-* Is sound slot available
-*
-* Inputs: None
-* Output:
-* A = 0 Sound is still playing
-* A = 1 Sound has finished
-******************************
-
-is_sound_slot_available:
-
-	bsr	switch_off_irq_and_firq
-
-        ldx     smp_pt+1                ; Wait for previous sound
-        cmpx    end_pt+1                ; to finish playing
-        bne     _still_playing
-
-	bsr	switch_on_irq_and_firq
-	lda	#1			; Sound slot is available
-	rts
-
-_still_playing:
-	bsr	switch_on_irq_and_firq
-	clra
 	rts
 
 ******************

@@ -59,6 +59,7 @@ WAIT_PERIOD	EQU	25
 	jsr	loading_screen
 	jsr	turn_off_interrupts		; Go back to what BASIC uses
 	jsr	print_loading_text
+
 	jsr	restore_basic_irq_service_routine
 
 	clra

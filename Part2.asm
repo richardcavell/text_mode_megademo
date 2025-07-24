@@ -49,6 +49,17 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
+*****************
+* Part 2 Sequence
+*
+* Inputs: None
+*
+* Output:
+* D = 0 Success
+*****************
+
+start:
+
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
@@ -819,11 +830,36 @@ restore_irq_handler:
         ldx     decb_irq_service_routine
         stx     IRQ_HANDLER
 
-**************
+***************
 * Title screen
-**************
+*
+* Inputs: None
+* Outputs: None
+***************
 
 title_screen:
+
+	jsr	prepare_title_screen
+
+	jsr	display_text
+	tsta
+	bne	_skip_title_screen
+
+	jsr	title_screen_sequences
+	tsta
+	bne	_skip_title_screen
+
+_skip_title_screen:
+	rts
+
+**********************
+* Prepare title screen
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+prepare_title_screen:
 
 	jsr	clear_screen
 
@@ -835,18 +871,24 @@ title_screen:
 	ldx	#title_screen_graphic
 	jsr	display_text_graphic
 
-	bra	display_text
+	rts
+
+**********************
+* Title screen graphic
+**********************
 
 ; This graphic was made by Microsoft Copilot and modified by me
 ; Animation done by me
 
 title_screen_graphic:
+
 	FCV	"(\\/)",0
 	FCV	"(O-O)",0
 	FCV	"/> >\\",0
 	FCB	255
 
 title_screen_text:
+
 	FCB	5, 5
 	FCN	"RJFC"	; Each string ends with a zero when you use FCN
 	FCB	8, 9
@@ -856,93 +898,185 @@ title_screen_text:
 	FCB	0		; So we manually terminate that line
 	FCB	255		; The end
 
+***************
+* Display text
+*
+* Inputs: None
+* Outputs: None
+***************
+
 display_text:
 
 	ldx	#title_screen_text
-
 	jsr	print_text
 	tsta
-	bne	skip_title_screen
+	bne	skip_display_text
 
-; Play the speech synthesis
+	jsr	play_sound	; Play the speech synthesis
 
-	jsr	play_sound
+	clra
+skip_display_text:
+	rts
 
-; "Encase" the three text items
+***********************************
+* Title screen sequences
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
+
+title_screen_sequences:
+
+	bsr	encase_sequence
+	tsta
+	bne	_skip_title_screen_sequences
+
+	bsr	flash_sequence
+	tsta
+	bne	_skip_title_screen_sequences
+
+	bsr	flash_whole_screen
+	tsta
+	bne	_skip_title_screen_sequences
+
+	bsr	drop_sequence
+	tsta
+	bne	_skip_title_screen_sequences
+
+	clra
+_skip_title_screen_sequences:
+	rts
+
+***********************************
+* Encase sequence
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
+
+encase_sequence:	; "Encase" the three text items
 
 	lda	#5
 	clrb
 	jsr	encase_text
 	tsta
-	bne	skip_title_screen
+	bne	_skip_encase_sequence
 
 	lda	#8
 	ldb	#1
 	jsr	encase_text
 	tsta
-	bne	skip_title_screen
+	bne	_skip_encase_sequence
 
 	lda	#12
 	clrb
 	jsr	encase_text
 	tsta
-	bne	skip_title_screen
+	bne	_skip_encase_sequence
 
-* Now flash the text white
+	clra
+_skip_encase_sequence:
+	rts
+
+***********************************
+* Flash sequence
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
+
+flash_sequence:		; Now flash the text white
 
 	lda	#5
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	skip_title_screen
+	bne	skip_flash_sequence
 
 	lda	#8
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	skip_title_screen
+	bne	skip_flash_sequence
 
 	lda	#12
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	skip_title_screen
+	bne	skip_flash_sequence
 
-* Now flash the whole screen
+	clra
+_skip_flash_sequence:
+	rts
+
+***********************************
+* Flash whole screen
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
+
+flash_whole_screen:		; Now flash the whole screen
 
 	jsr	flash_screen
 	tsta
-	bne	skip_title_screen
+	bne	_skip_flash_whole_screen
 
 	jsr	flash_screen
 	tsta
-	bne	skip_title_screen
+	bne	_skip_flash_whole_screen
 
 	jsr	flash_screen
 	tsta
-	bne	skip_title_screen
+	bne	_skip_flash_whole_screen
 
-* Drop the lines off the bottom end of the screen
+	clra
+_skip_flash_whole_screen:
+	rts
+
+***********************************
+* Drop sequence
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
+
+drop_sequence:		; Drop the lines off the bottom end of the screen
 
 	lda	#11
 	jsr	drop_screen_content
 	tsta
-	bne	skip_title_screen
+	bne	_skip_drop_sequence
 
 	lda	#7
 	jsr	drop_screen_content
 	tsta
-	bne	skip_title_screen
+	bne	_skip_drop_sequence
 
 	lda	#4
 	jsr	drop_screen_content
 
-				; and fallthrough
+	clra
+	rts
 
-skip_title_screen:
+_skip_drop_sequence:
 	lda	#1
 	sta	creature_blink_finished
-
 	rts
 
 ***********************************

@@ -350,7 +350,6 @@ _skip_increment:
 signal_demo:
 
 	clr	waiting_for_vblank	; No longer waiting
-
 	lda	#1			; If waiting for VBlank,
 	sta	vblank_happened		; here's the signal
 

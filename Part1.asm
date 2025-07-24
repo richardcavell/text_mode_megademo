@@ -49,9 +49,9 @@ WAIT_PERIOD	EQU	25
 	jsr	zero_dp_register		; Zero the DP register
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
-	jsr	turn_on_interrupts		; Turn on interrupts
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
+	jsr	turn_on_interrupts		; Turn on interrupts
 
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
@@ -185,38 +185,6 @@ set_irq_handler:
 
 	rts
 
-********************
-* Turn on interrupts
-********************
-
-PIA0AD	EQU	$FF00
-PIA0AC	EQU	$FF01
-PIA0BD	EQU	$FF02
-PIA0BC	EQU	$FF03
-
-turn_on_interrupts:
-
-	jsr	switch_off_irq_and_firq
-
-* This code was originally written by Simon Jonassen (The Invisible Man)
-* and then modified by me
-
-	lda	PIA0BC		; Enable VSync interrupt
-	ora	#3
-	sta	PIA0BC
-	lda	PIA0BD		; Acknowledge any outstanding VSync interrupt
-
-	lda	PIA0AC		; Enable HSync interrupt
-	ora	#3
-	sta	PIA0AC
-	lda	PIA0AD		; Acknowledge any outstanding HSync interrupt
-
-* End code modified by me from code written by Simon Jonassen
-
-	jsr	switch_on_irq_and_firq
-
-	rts
-
 *************************
 * Text buffer information
 *************************
@@ -265,12 +233,12 @@ call_decb_irq_handler:		; We get significantly better performance
 				; by ignoring DECB's IRQ handler
 	RZB	1
 
-***************************************************
+*************************
 * Our IRQ handler
 *
 * Inputs: Not applicable
 * Outputs: Not applicable
-***************************************************
+*************************
 
 irq_service_routine:
 
@@ -504,6 +472,38 @@ set_ddra:
 	stb	PIA2_CRA
 
 * End of code modified by me from code written by other people
+
+	rts
+
+********************
+* Turn on interrupts
+********************
+
+PIA0AD	EQU	$FF00
+PIA0AC	EQU	$FF01
+PIA0BD	EQU	$FF02
+PIA0BC	EQU	$FF03
+
+turn_on_interrupts:
+
+	jsr	switch_off_irq_and_firq
+
+* This code was originally written by Simon Jonassen (The Invisible Man)
+* and then modified by me
+
+	lda	PIA0BC		; Enable VSync interrupt
+	ora	#3
+	sta	PIA0BC
+	lda	PIA0BD		; Acknowledge any outstanding VSync interrupt
+
+	lda	PIA0AC		; Enable HSync interrupt
+	ora	#3
+	sta	PIA0AC
+	lda	PIA0AD		; Acknowledge any outstanding HSync interrupt
+
+* End code modified by me from code written by Simon Jonassen
+
+	jsr	switch_on_irq_and_firq
 
 	rts
 

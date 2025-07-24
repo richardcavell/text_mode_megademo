@@ -1889,8 +1889,8 @@ is_sound_slot_available:
 
 	bsr	switch_off_irq_and_firq
 
-        ldy     smp_pt+1                ; Wait for previous sound
-        cmpy    end_pt+1                ; to finish playing
+        ldx     smp_pt+1                ; Wait for previous sound
+        cmpx    end_pt+1                ; to finish playing
         bne     _still_playing
 
 	bsr	switch_on_irq_and_firq

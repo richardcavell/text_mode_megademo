@@ -1182,10 +1182,11 @@ pluck_char_choose_line:
 
 	ldx	#pluck_line_counts
 
-	tst	a,x	; If there are no more characters on this line
+	ldb	a,x	; If there are no more characters on this line
 	beq	pluck_char_choose_line		; choose a different one
 
-	dec	a,x		; There'll be one less character after this
+	decb
+	stb	a,x		; There'll be one less character after this
 
 	rts
 

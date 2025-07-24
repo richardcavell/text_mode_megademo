@@ -25,7 +25,7 @@
 * https://www.asciiart.eu/animals/birds-land
 * Both graphics have been modified by me
 * Animation of the small creature by me
-
+*
 * If DEBUG_MODE is non-zero, then Debug Mode is "on".
 * If Debug Mode is on:
 *   1) You can press T to toggle frame-by-frame mode
@@ -76,6 +76,9 @@ WAIT_PERIOD	EQU	25
 
 **********************
 * Zero the DP register
+*
+* Inputs: None
+* Outputs: None
 **********************
 
 zero_dp_register:

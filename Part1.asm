@@ -56,8 +56,8 @@ WAIT_PERIOD	EQU	25
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
-	jsr	loading_screen
 	jsr	turn_off_interrupts		; Go back to what BASIC uses
+	jsr	loading_screen
 	jsr	print_loading_text
 
 	jsr	restore_basic_irq_service_routine

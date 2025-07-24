@@ -864,7 +864,7 @@ display_text:
 	tsta
 	bne	skip_title_screen
 
-; Play the sound
+; Play the speech synthesis
 
 	jsr	play_sound
 
@@ -2126,24 +2126,6 @@ ascii_art_cat_end:
 loading_text:
 
 	FCV	"LOADING...",0
-
-***********************************
-* Uninstall our IRQ service routine
-*
-* Inputs: None
-* Outputs: None
-***********************************
-
-uninstall_irq_service_routine:
-
-	jsr	switch_off_irq
-
-	ldx	decb_irq_service_routine
-	stx	IRQ_HANDLER
-
-	jsr	switch_on_irq
-
-	rts
 
 ************************************
 * Here is our raw data for our sound

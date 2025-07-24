@@ -65,7 +65,6 @@ start:
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
-	jsr	turn_on_interrupts		; And get the HSYNC active
 
 	jsr	title_screen			; First section
 	jsr	opening_credits			; Second section
@@ -434,10 +433,10 @@ AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
 turn_6bit_audio_on:
 
-       bsr     set_audio_port_on
-        bsr     set_ddra
+	bsr     set_audio_port_on
+	bsr     set_ddra
 
-        rts
+	rts
 
 *******************
 * Set audio port on
@@ -1000,19 +999,19 @@ flash_sequence:		; Now flash the text white
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	skip_flash_sequence
+	bne	_skip_flash_sequence
 
 	lda	#8
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	skip_flash_sequence
+	bne	_skip_flash_sequence
 
 	lda	#12
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	skip_flash_sequence
+	bne	_skip_flash_sequence
 
 	clra
 _skip_flash_sequence:
@@ -1827,6 +1826,8 @@ opening_credits:
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames		; Ignore return value
+
+	jsr	turn_on_interrupts		; Get the HSYNC active
 
 	ldx	#opening_credits_text
 	bsr	roll_credits

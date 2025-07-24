@@ -59,9 +59,8 @@ WAIT_PERIOD	EQU	25
 	jsr	title_screen			; First section
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
-	jsr	turn_off_interrupts		; Go back to what BASIC uses
-	jsr	uninstall_irq_service_routine
 
+	jsr	turn_off_interrupts		; Go back to what BASIC uses
 	jsr	restore_basic_irq_service_routine
 
 	clra
@@ -107,7 +106,6 @@ turn_on_debug_features:
 
 _not_in_debug_mode:
         rts
-
 
 *********************************
 * Install our IRQ service routine
@@ -508,17 +506,6 @@ turn_on_interrupts:
 
         rts
 
-*************************
-* Text buffer information
-*************************
-
-TEXTBUF		EQU	$400		; We're not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
-TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE	EQU	32
-TEXT_LINES	EQU	16
-
 ******************************************
 * Wait for VBlank and check for skip
 *
@@ -764,6 +751,9 @@ get_screen_position:
 * Inputs: None
 * Outputs: None
 ******************
+
+GREEN_BOX       EQU     $60     ; These are MC6847 codes
+WHITE_BOX       EQU     $CF
 
 clear_screen:
 
@@ -1083,31 +1073,6 @@ w2	decb
 
 ; End of routine written by Simon Jonassen and slightly modified by me
 
-	rts
-
-******************
-* Clear the screen
-*
-* Inputs: None
-* Outputs: None
-******************
-
-GREEN_BOX       EQU     $60
-WHITE_BOX       EQU     $CF
-
-clear_screen:
-
-	ldx	#TEXTBUF
-	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
-
-_clear_screen_loop:
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-
-	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
-	bne	_clear_screen_loop
 	rts
 
 *****************************

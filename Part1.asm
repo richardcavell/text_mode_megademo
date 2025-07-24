@@ -57,8 +57,8 @@ WAIT_PERIOD	EQU	25
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
 	jsr	loading_screen
-
 	jsr	turn_off_interrupts		; Go back to what BASIC uses
+	jsr	print_loading_text
 	jsr	restore_basic_irq_service_routine
 
 	clra
@@ -610,7 +610,7 @@ pluck_line_counts_end:
 * Plucks data
 *************
 
-MAX_SIMULTANEOUS_PLUCKS	EQU	1
+MAX_SIMULTANEOUS_PLUCKS	EQU	10
 
 plucks_data:
 
@@ -1992,6 +1992,17 @@ loading_screen:
 	clrb
 	ldx	#baby_elephant
 	jsr	display_text_graphic
+
+	rts
+
+***************
+* Loading text
+*
+* Inputs: None
+* Outputs: None
+***************
+
+print_loading_text:
 
 	lda	#15
 	ldx	#loading_text

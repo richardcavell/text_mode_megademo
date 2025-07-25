@@ -1485,13 +1485,10 @@ EQUALS_SIGN	EQU	125
 encase_text:
 
 	tfr	d,u		; U (lower 8 bits) is direction
-
-	ldb	#COLS_PER_LINE
-	mul
-	ldx	#TEXTBUF
-	leax	d,x		; X is our starting position
-
+	clrb
+	jsr	get_screen_position	; X is our starting position
 	tfr	u,d		; B is direction
+
 	tstb			; If 0, start on the left side
 	beq	_encase_text_loop
 
@@ -1503,11 +1500,23 @@ _encase_text_loop:
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	_encase_no_skip
+	beq	encase_text_more
 	rts			; Simply return a
+	bra	encase_text_more
 
-_encase_no_skip:
-_encase_text_more:
+*************************************
+* Encase text more
+*
+* Inputs:
+* B = Direction (0 = right, 1 = left)
+* X = Screen position
+*
+* Outputs:
+* A = 0 Finished, everything is okay
+* A = (Non-zero) User wants to skip
+*************************************
+
+encase_text_more:
 	pshs	b,x
 	bsr	creature_blink
 	puls	b,x

@@ -1660,21 +1660,30 @@ flash_text_white:
 	clrb
 	jsr	get_screen_position
 
-	ldy	#flash_text_storage
+	ldu	#flash_text_storage
 
 _flash_copy_line:
 	ldd	,x++		; Save the whole line
-	std	,y++
+	std	,u++
 
-	cmpy	#flash_text_storage_end
+	cmpu	#flash_text_storage_end
 	bne	_flash_copy_line
 
-				; Now the line has been saved,
-				; Turn all text to white
+	puls	b
+
+	bra	turn_text_white
+
+*******************************
+* Turn text white
+*
+* Inputs:
+* B = Number of times to flash
+* X = End of line to turn white
+*******************************
+
+turn_text_white:
 
 	leax	-COLS_PER_LINE,x	; Back to the start of the line
-
-	puls	b
 
 _flash_chars_loop:
 	pshs	b,x

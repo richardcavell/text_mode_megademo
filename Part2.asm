@@ -1567,16 +1567,19 @@ _encase_are_we_done:
 	bne	_encase_text_loop
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
+	clra
 	rts			; we are finished. Return A
 
 _encase_right:
 	tfr	d,u
 	tfr	x,d
-	andb	#0b00011111	; If X is evenly divisible
+	jsr	is_d_divisible_by_32
+	tsta
 	tfr	u,d
-	bne	_encase_text_loop	;   by 32, then
+	beq	_encase_text_loop
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
+	clra
 	rts			; we are finished. Return A
 
 **************************************

@@ -1957,15 +1957,9 @@ _skip_drop_screen:
 
 display_text_graphic:
 
-	tfr	x,y	; Y = graphic data
-
-	tfr	d,u	; Save B
-	ldb	#COLS_PER_LINE
-	mul
-	ldx	#TEXTBUF
-	leax	d,x
-	tfr	u,d	; B = column number
-	leax	b,x	; X = Screen memory to start at
+	pshs	b,x			; B = Column number
+	jsr	get_screen_position	; X = Screen position
+	puls	b,y			; Y = Graphic data
 
 _display_text_graphic_loop:
         lda     ,y+

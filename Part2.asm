@@ -1909,14 +1909,12 @@ drop_each_line:
 	inca
 	inca
 	bsr	drop_line		; Drop the bottom line
-	puls	a
 
-	pshs	a
+	lda	,s
 	inca
 	bsr	drop_line		; Drop the middle line
-	puls	a
 
-	pshs	a
+	lda	,s
 	bsr	drop_line		; Drop the top line
 	puls	a
 

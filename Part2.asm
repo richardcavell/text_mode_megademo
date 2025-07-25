@@ -1937,9 +1937,7 @@ drop_line:
 
 _do_drop:
 	clrb
-	pshs	x
 	jsr	get_screen_position
-	puls	x
 
 	ldb	#COLS_PER_LINE
 
@@ -1953,10 +1951,6 @@ _move_line_down:
 
 _drop_line_finished:
 	clra
-	rts
-
-_skip_drop_screen:
-	lda	#1
 	rts
 
 ************************

@@ -67,6 +67,7 @@ start:
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
 	jsr	title_screen			; First section
+	jsr	turn_on_interrupts		; Start the music
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
 

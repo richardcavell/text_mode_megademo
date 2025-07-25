@@ -2014,7 +2014,7 @@ opening_credits:
 	jsr	clear_screen
 
 	lda	#WAIT_PERIOD
-	jsr	wait_frames		; Ignore return value
+	jsr	wait_frames			; Ignore return value
 
 	jsr	turn_on_interrupts		; Get the HSYNC active
 

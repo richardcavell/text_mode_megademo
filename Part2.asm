@@ -1094,23 +1094,23 @@ _skip_drop_sequence:
 
 print_text:
 
-	tfr	x,y
+	tfr	x,u
 
 _print_text_loop:
-	lda	,y+
+	lda	,u+
 	cmpa	#END_OF_TEXT
 	beq	print_text_finished
-	ldb	,y+
-	tfr	y,x
+	ldb	,u+
+	tfr	u,x
 
-	pshs	y
+	pshs	u
 	jsr	text_appears
-	puls	y
+	puls	u
 	tsta
 	bne	print_text_skipped
 
 _find_zero:
-	tst	,y+
+	tst	,u+
 	bne	_find_zero
 
 	bra	_print_text_loop

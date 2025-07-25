@@ -1331,6 +1331,7 @@ text_appears_buff_box:
 ******************************************
 
 text_appears_keep_going:
+
 	pshs	b,x,u
 	bsr	creature_blink	; The creature in the top-left corner
 	puls	b,x,u
@@ -1344,26 +1345,39 @@ text_appears_keep_going:
 	leau	-1,u		; It was a zero we retrieved: Repoint U
 				; And fall through to using a green box
 
-_text_appears_green_box:
 	tstb
 	beq	_text_appears_skip_decrement
+
+_text_appears_green_box:
 
 	decb
 
 _text_appears_skip_decrement:
 	lda	#GREEN_BOX	; Put a green box in A
+	bra	text_appears_store_char
 
-***************************
+********************************
 * Text appears - Store char
+*
+* Inputs:
+* A = Character to print
+* B = Countdown to when to print
+* X = Screen position
+* U = String position
+*
+* Outputs:
+* A = 0	Success
+********************************
 
-_text_appears_store_char:
+text_appears_store_char:
+
 	sta	,x+	; Put the relevant character (green box or char) into
-			;   the relevant position
+			;   the relevant position (X)
 
-	pshs	d
+	pshs	b
 	tfr	x,d
 	jsr	is_d_divisible_by_32
-	puls	d
+	puls	b
 	beq	text_appears_buff_box	; If no, then go back and do it again
 
 	clra			; User has not chosen to skip

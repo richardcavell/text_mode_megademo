@@ -1782,17 +1782,17 @@ flash_text_storage_end:
 flash_screen:
 
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage	; We overwrite the sound data
+	ldu	#flash_screen_storage	; We overwrite the sound data
 
 _flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
-	std	,y++			; on the screen
+	std	,u++			; on the screen
 	ldd	,x++
-	std	,y++
+	std	,u++
 	ldd	,x++
-	std	,y++
+	std	,u++
 	ldd	,x++
-	std	,y++
+	std	,u++
 
 	cmpx	#TEXTBUFEND
 	blo	_flash_screen_copy_loop
@@ -1842,16 +1842,16 @@ _skip_flash_screen_3:
 
 _skip_flash_screen_4:
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage
+	ldu	#flash_screen_storage
 
 _flash_screen_restore_loop:
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
 
 	cmpx	#TEXTBUFEND

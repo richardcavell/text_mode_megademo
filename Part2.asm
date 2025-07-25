@@ -1657,10 +1657,8 @@ flash_text_white:
 	decb			; We test at the bottom
 	pshs	b
 
-	ldb	#COLS_PER_LINE
-	mul
-	ldx	#TEXTBUF
-	leax	d,x		; X = starting position
+	clrb
+	jsr	get_screen_position
 
 	ldy	#flash_text_storage
 

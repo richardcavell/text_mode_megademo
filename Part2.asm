@@ -1931,18 +1931,15 @@ drop_each_line:
 ********************************
 
 drop_line:
+
 	cmpa	#TEXT_LINES-1
-	blo	_do_drop
-
-	clra
-	rts				; Off the bottom end of the screen
-
+	bhs	_drop_line_finished	; Off the bottom end of the screen
 
 _do_drop:
-	ldb	#COLS_PER_LINE
-	mul
-	ldx	#TEXTBUF
-	leax	d,x			; X = pointer to a line of the screen
+	clrb
+	pshs	x
+	jsr	get_screen_position
+	puls	x
 
 	ldb	#COLS_PER_LINE
 
@@ -1954,6 +1951,7 @@ _move_line_down:
 	decb
 	bne	_move_line_down
 
+_drop_line_finished:
 	clra
 	rts
 

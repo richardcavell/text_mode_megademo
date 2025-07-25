@@ -1525,9 +1525,26 @@ encase_text_more:
 	lda	#GREEN_BOX	; Green box (space)
 
 	cmpa	,x		; If x points to a green box...
-	bne	_encase_char_found
+	bne	encase_char_found
 
 	lda	#EQUALS_SIGN	; then put a '=' in it
+
+	bra	encase_store_and_adjust
+
+*************************************
+* Encase store and adjust
+*
+* Inputs:
+* A = Character to store
+* B = Direction (0 = right, 1 = left)
+* X = Screen position
+*
+* Outputs:
+* A = 0 Finished, everything is okay
+* A = (Non-zero) User wants to skip
+*************************************
+
+encase_store_and_adjust:
 
 	tstb
 	bne	_encase_backwards
@@ -1542,7 +1559,20 @@ _encase_backwards:
 _encase_finished_storing:
 	bra	_encase_are_we_done	; Go back and do the next one
 
-_encase_char_found:
+*************************************
+* Encase char found
+*
+* Inputs:
+* B = Direction (0 = right, 1 = left)
+* X = Screen position
+*
+* Outputs:
+* A = 0 Finished, everything is okay
+* A = (Non-zero) User wants to skip
+*************************************
+
+encase_char_found:
+
 	lda	#EQUALS_SIGN		; This is '='
 	sta	-COLS_PER_LINE,x	; add '=' above
 	sta	+COLS_PER_LINE,x	;   and below

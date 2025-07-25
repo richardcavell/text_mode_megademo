@@ -1484,14 +1484,14 @@ EQUALS_SIGN	EQU	125
 
 encase_text:
 
-	tfr	d,y		; Y (lower 8 bits) is direction
+	tfr	d,u		; U (lower 8 bits) is direction
 
 	ldb	#COLS_PER_LINE
 	mul
 	ldx	#TEXTBUF
 	leax	d,x		; X is our starting position
 
-	tfr	y,d		; B is direction
+	tfr	u,d		; B is direction
 	tstb			; If 0, start on the left side
 	beq	_encase_text_loop
 
@@ -1550,21 +1550,21 @@ _encase_are_we_done:
 	tstb
 	beq	_encase_right	; If we're going right
 
-	tfr	d,y
+	tfr	d,u
 	tfr	x,d
 	andb	#0b00011111
 	cmpb	#0b00011111	; If X mod 32 == 31
-	tfr	y,d
+	tfr	u,d
 	bne	_encase_text_loop
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
 	rts			; we are finished. Return A
 
 _encase_right:
-	tfr	d,y
+	tfr	d,u
 	tfr	x,d
 	andb	#0b00011111	; If X is evenly divisible
-	tfr	y,d
+	tfr	u,d
 	bne	_encase_text_loop	;   by 32, then
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing

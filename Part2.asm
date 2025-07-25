@@ -1303,7 +1303,7 @@ text_appears:
 	puls	b,u		; B is the character position to start
 				;   printing the string
 
-_text_appears_buff_box:
+text_appears_buff_box:
 	lda	#WHITE_BOX	; A buff (whiteish) box
 	sta	,x		; Put it on the screen
 
@@ -1311,10 +1311,26 @@ _text_appears_buff_box:
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x,u
 	tsta			; Has the user chosen to skip?
-	beq	_text_appears_keep_going
-	rts			; If yes, just return a
+	beq	text_appears_keep_going	; If no, keep going
 
-_text_appears_keep_going:
+	lda	#1
+	rts			; If yes, return
+
+******************************************
+* Text appears - Keep going
+*
+* Inputs:
+* B = Column to start printing
+* X = Screen position to start
+* U = String, null-terminated
+*
+* Outputs:
+* B = (Updated)   Column to start printing
+* X = (Unchanged) Screen position to start
+* U = (Updated)   String, null-terminated
+******************************************
+
+text_appears_keep_going:
 	pshs	b,x,u
 	bsr	creature_blink	; The creature in the top-left corner
 	puls	b,x,u
@@ -1323,7 +1339,7 @@ _text_appears_keep_going:
 	bne	_text_appears_green_box	; yet
 
 	lda	,u+		; Get the next character from the string
-	bne	_text_appears_store_char	; And put it on the screen
+	bne	text_appears_store_char	; And put it on the screen
 
 	leau	-1,u		; It was a zero we retrieved: Repoint U
 				; And fall through to using a green box
@@ -1337,6 +1353,9 @@ _text_appears_green_box:
 _text_appears_skip_decrement:
 	lda	#GREEN_BOX	; Put a green box in A
 
+***************************
+* Text appears - Store char
+
 _text_appears_store_char:
 	sta	,x+	; Put the relevant character (green box or char) into
 			;   the relevant position
@@ -1345,7 +1364,7 @@ _text_appears_store_char:
 	tfr	x,d
 	jsr	is_d_divisible_by_32
 	puls	d
-	beq	_text_appears_buff_box	; If no, then go back and do it again
+	beq	text_appears_buff_box	; If no, then go back and do it again
 
 	clra			; User has not chosen to skip
 	rts			; Return to the main code

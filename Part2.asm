@@ -1720,16 +1720,15 @@ _flash_finished:
 
 flash_chars_white:
 
-_flash_chars_white_loop:
 	lda	,x
-
-	cmpa	#125		; '='
-	beq	_flash_chars_not_flashable
 
 	cmpa	#65		; Is it from A to
 	blo	_flash_chars_not_flashable
 	cmpa	#127		; question mark
 	bhi	_flash_chars_not_flashable
+
+	cmpa	#125		; '='
+	beq	_flash_chars_not_flashable
 
 	lda	#WHITE_BOX	; a white (buff) box
 	sta	,x		; store it, and fall through
@@ -1737,8 +1736,11 @@ _flash_chars_white_loop:
 _flash_chars_not_flashable:
 	leax	1,x
 	tfr	x,d
-	andb	#0b00011111	; Calculate x mod 32
-	bne	_flash_chars_white_loop	; If more, go back
+	pshs	b,x
+	jsr	is_d_divisible_by_32
+	tsta
+	puls	b,x
+	beq	flash_chars_white	; If more, go back
 
 	rts
 

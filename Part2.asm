@@ -1344,12 +1344,10 @@ text_appears_keep_going:
 
 	leau	-1,u		; It was a zero we retrieved: Repoint U
 				; And fall through to using a green box
-
 	tstb
 	beq	_text_appears_skip_decrement
 
 _text_appears_green_box:
-
 	decb
 
 _text_appears_skip_decrement:
@@ -1383,74 +1381,94 @@ text_appears_store_char:
 	clra			; User has not chosen to skip
 	rts			; Return to the main code
 
-*****************
-* Creature blinks
-*
-* Inputs: None
-* Outputs: None
-*****************
+**************************
+* Creature blink variables
+**************************
 
 creature_blink_finished:
 	RZB	1
+
+creature_blink_frames:
+	RZB	2
+
+creature_blink_is_blinking:
+	RZB	1
+
+****************
+* Creature blink
+*
+* Inputs: None
+* Outputs: None
+****************
 
 creature_blink:
 
 	tst	creature_blink_finished
 	bne	_creature_blink_skip
 
-	ldd	_creature_blink_frames
+	ldd	creature_blink_frames
 	addd	#1
-	std	_creature_blink_frames
+	std	creature_blink_frames
 
-	lda	_creature_blink_is_blinking
-	beq	_creature_blink_open_eyes
+	lda	creature_blink_is_blinking
+	beq	creature_blink_eyes_are_open
 
-	ldd	_creature_blink_frames
+	ldd	creature_blink_frames
 	cmpd	#5
-	blo	_creature_blink_take_no_action
+	blo	_creature_blink_skip
 
-; Open the creature's eyes
+	bra	creature_open_eyes
 
-	clr	_creature_blink_is_blinking
+_creature_blink_skip:
+	rts
+
+**********************
+* Creature - Open eyes
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+creature_open_eyes:
+
+	clr	creature_blink_is_blinking
 	clra
 	clrb
-	std	_creature_blink_frames
+	std	creature_blink_frames
 
 	ldx	#TEXTBUF+COLS_PER_LINE+1
 	lda	#'O'
 	sta	,x
 	sta	2,x
 
-_creature_blink_skip:
 	rts
 
-_creature_blink_open_eyes:
+**************************
+* Creature - Eyes are open
+*
+* Inputs: None
+* Outputs: None
+**************************
 
-	ldd	_creature_blink_frames
+creature_blink_eyes_are_open:
+
+	ldd	creature_blink_frames
 	cmpd	#85
-	blo	_creature_blink_take_no_action
-
-; Close the creature's eyes
+	blo	_creature_blink_skip_2
 
 	lda	#1
-	sta	_creature_blink_is_blinking
+	sta	creature_blink_is_blinking
 	clra
 	clrb
-	std	_creature_blink_frames
+	std	creature_blink_frames
 
-	ldx	#TEXTBUF+COLS_PER_LINE+1
+	ldx	#TEXTBUF+COLS_PER_LINE+1	; Close the eyes
 	lda	#'-' + 64
 	sta	,x
 	sta	2,x
 
-_creature_blink_take_no_action:
+_creature_blink_skip_2:
 	rts
-
-_creature_blink_is_blinking:
-	RZB	1
-
-_creature_blink_frames:
-	RZB	2
 
 *************************************
 * Encases text on the screen

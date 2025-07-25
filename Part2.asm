@@ -1959,10 +1959,10 @@ display_text_graphic:
 
 	pshs	b,x			; B = Column number
 	jsr	get_screen_position	; X = Screen position
-	puls	b,y			; Y = Graphic data
+	puls	b,u			; U = Graphic data
 
 _display_text_graphic_loop:
-        lda     ,y+
+        lda     ,u+
         beq     _text_graphic_new_line
         cmpa    #END_OF_TEXT
         beq	_display_text_graphic_finished
@@ -1970,17 +1970,33 @@ _display_text_graphic_loop:
         bra     _display_text_graphic_loop
 
 _text_graphic_new_line:
-	tfr	d,u		; Save register B
-        tfr     x,d
-        andb    #0b11100000
-        addd    #COLS_PER_LINE
-        tfr     d,x
-	tfr	u,d		; Get B back
+	pshs	b,u
+	bsr	move_to_next_line
+	puls	b,u
 	leax	b,x
 	bra	_display_text_graphic_loop
 
 _display_text_graphic_finished:
 	rts
+
+***************************************
+* Move to next line
+*
+* Input:
+* X = Screen position pointer
+*
+* Output:
+* X = (Updated) Screen position pointer
+***************************************
+
+move_to_next_line:
+
+        tfr     x,d
+        addd    #COLS_PER_LINE
+        andb    #0b11100000
+        tfr     d,x
+
+        rts
 
 *****************
 * Opening credits

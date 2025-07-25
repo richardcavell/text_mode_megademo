@@ -1343,9 +1343,9 @@ _text_appears_store_char:
 
 	pshs	d
 	tfr	x,d
-	andb	#0b00011111	; Is the character position divisible by 32?
+	jsr	is_d_divisible_by_32
 	puls	d
-	bne	_text_appears_buff_box	; If no, then go back and do it again
+	beq	_text_appears_buff_box	; If no, then go back and do it again
 
 	clra			; User has not chosen to skip
 	rts			; Return to the main code

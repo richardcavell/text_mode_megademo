@@ -1258,6 +1258,29 @@ _clear_line_loop:
 
 	rts
 
+************************************
+* Is D divisible by 32
+*
+* Inputs:
+* D = any unsigned number or pointer
+*
+* Output:
+* A = 0           No it isn't
+* A = (Non-zero)  Yes it is
+************************************
+
+is_d_divisible_by_32:
+
+        andb    #0b00011111
+        beq     _divisible
+
+        clra
+        rts
+
+_divisible:
+        lda     #1
+        rts
+
 ***********************************************
 * Bring text onto the screen using an animation
 *
@@ -1274,12 +1297,10 @@ _clear_line_loop:
 text_appears:
 
 	tfr	x,u		; U = string to print
-	pshs	b
-	ldy	#TEXTBUF
-	ldb	#COLS_PER_LINE
-	mul
-	leax	d,y		; X is where to start the animation
-	puls	b		; B is the character position to start
+	pshs	b,u
+	clrb
+	jsr	get_screen_position	; X is where to start the animation
+	puls	b,u		; B is the character position to start
 				;   printing the string
 
 _text_appears_buff_box:

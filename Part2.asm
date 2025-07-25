@@ -1517,6 +1517,7 @@ _encase_text_loop:
 *************************************
 
 encase_text_more:
+
 	pshs	b,x
 	bsr	creature_blink
 	puls	b,x
@@ -1557,7 +1558,22 @@ _encase_chars_found_backwards:
 				; fallthrough
 _encase_are_we_done:
 	tstb
-	beq	_encase_right	; If we're going right
+	beq	encase_right	; If we're going right
+	bra	encase_left
+
+*************************************
+* Encase left
+*
+* Inputs:
+* B = Direction (0 = right, 1 = left)
+* X = Screen position
+*
+* Outputs:
+* A = 0 Finished, everything is okay
+* A = (Non-zero) User wants to skip
+*************************************
+
+encase_left:
 
 	tfr	d,u
 	tfr	x,d
@@ -1570,7 +1586,20 @@ _encase_are_we_done:
 	clra
 	rts			; we are finished. Return A
 
-_encase_right:
+*************************************
+* Encase right
+*
+* Inputs:
+* B = Direction (0 = right, 1 = left)
+* X = Screen position
+*
+* Outputs:
+* A = 0 Finished, everything is okay
+* A = (Non-zero) User wants to skip
+*************************************
+
+encase_right:
+
 	tfr	d,u
 	tfr	x,d
 	jsr	is_d_divisible_by_32

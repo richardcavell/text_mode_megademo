@@ -1755,21 +1755,23 @@ _flash_chars_not_flashable:
 
 restore_chars:
 
-	ldy	#flash_text_storage
+	ldu	#flash_text_storage
 
 _flash_restore_chars:
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
 
-	cmpy	#flash_text_storage_end
+	cmpu	#flash_text_storage_end
 	bne	_flash_restore_chars
 
 	rts
 
 flash_text_storage:
+
 	RZB	COLS_PER_LINE
+
 flash_text_storage_end:
 
 **************************

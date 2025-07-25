@@ -1866,20 +1866,20 @@ _flash_screen_skip_5:
 	jsr	wait_for_vblank_and_check_for_skip
 	rts				; Return A
 
-********************************
+*********************
 * Drop screen content
 *
 * Inputs:
-* A = starting line
-********************************
+* A = Starting line
+*********************
 
 drop_screen_content:
 
 	pshs	a
-	bsr	_drop_each_line
+	bsr	drop_each_line
 	tsta
-	bne	_skip_drop_each_line
 	puls	a
+	bne	_skip_drop_each_line
 
 	inca				; Next time, start a line lower
 
@@ -1891,23 +1891,31 @@ drop_screen_content:
 	rts
 
 _skip_drop_each_line:
-	leas	1,s
+	lda	#1
 	rts
 
-_drop_each_line:
+*******************
+* Drop each line
+*
+* Inputs:
+* A = Starting line
+*******************
+
+drop_each_line:
+
 	pshs	a
 	inca
 	inca
-	bsr	_drop_line		; Drop the bottom line
+	bsr	drop_line		; Drop the bottom line
 	puls	a
 
 	pshs	a
 	inca
-	bsr	_drop_line		; Drop the middle line
+	bsr	drop_line		; Drop the middle line
 	puls	a
 
 	pshs	a
-	bsr	_drop_line		; Drop the top line
+	bsr	drop_line		; Drop the top line
 	puls	a
 
 	jsr	clear_line		; Clear the top line
@@ -1915,7 +1923,14 @@ _drop_each_line:
 	jsr	wait_for_vblank_and_check_for_skip
 	rts
 
-_drop_line:
+********************************
+* Drop line
+*
+* Inputs:
+* A = Starting line
+********************************
+
+drop_line:
 	cmpa	#TEXT_LINES-1
 	blo	_do_drop
 

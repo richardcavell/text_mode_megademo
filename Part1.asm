@@ -203,10 +203,10 @@ TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
-BOTTOM_LINE	EQU	(TEXT_LINES-1)
-
 LOWER_LEFT_CORNER	EQU	$5E0
 LOWER_RIGHT_CORNER	EQU	$5FF
+
+BOTTOM_LINE	EQU	(TEXT_LINES-1)
 
 ******************************************************
 * Variables that are relevant to vertical blank timing
@@ -239,6 +239,15 @@ decb_irq_service_routine:
 call_decb_irq_handler:		; We get significantly better performance
 				; by ignoring DECB's IRQ handler
 	RZB	1
+
+*****************************
+* PIA memory-mapped registers
+*****************************
+
+PIA0AD	EQU	$FF00
+PIA0AC	EQU	$FF01
+PIA0BD	EQU	$FF02
+PIA0BC	EQU	$FF03
 
 *************************
 * Our IRQ handler
@@ -485,11 +494,6 @@ set_ddra:
 ********************
 * Turn on interrupts
 ********************
-
-PIA0AD	EQU	$FF00
-PIA0AC	EQU	$FF01
-PIA0BD	EQU	$FF02
-PIA0BC	EQU	$FF03
 
 turn_on_interrupts:
 

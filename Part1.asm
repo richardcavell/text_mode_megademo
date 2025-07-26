@@ -104,10 +104,10 @@ zero_dp_register:
 
 turn_on_debug_features:
 
-	lda	#DEBUG_MODE
+	lda	#DEBUG_MODE		; If we are in DEBUG mode,
 	beq	_not_in_debug_mode
 
-	lda	#255			; Load #255 into these variables
+	lda	#255			; load #255 into these variables
 	sta	cycle_lower_right
 	sta	dropped_frame_counter_toggle
 
@@ -187,9 +187,8 @@ get_irq_handler:
 
 set_irq_handler:
 
-	ldx	#irq_service_routine
-	stx	IRQ_HANDLER		; Our own interrupt service routine
-					; is now installed
+	ldx	#irq_service_routine	; Our own interrupt service routine
+	stx	IRQ_HANDLER		; is now installed
 
 	rts
 

@@ -270,6 +270,8 @@ irq_service_routine:
 * Outputs: Not applicable
 *************************
 
+* This code was written by Simon Jonassen and modified by me
+
 smp_pt:	ldx	#0		; pointer to sample
 end_pt:	cmpx	#0		; done ?
 	beq	quit_isr
@@ -281,6 +283,8 @@ end_pt:	cmpx	#0		; done ?
 quit_isr:
 	lda	PIA0AD		; Acknowledge HSYNC interrupt
 	rti
+
+* End of code that was written by Simon Jonassen and modified by me
 
 *************************
 * Service VBlank

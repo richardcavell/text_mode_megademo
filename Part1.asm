@@ -109,7 +109,7 @@ turn_on_debug_features:
 
 	clra
 	coma				; Load #255 into these variables
-	sta	cycle
+	sta	cycle_lower_right
 	sta	dropped_frame_counter_toggle
 
 _not_in_debug_mode:
@@ -369,7 +369,7 @@ _do_not_print_frame_counter:
 * Outputs: None
 ************************
 
-cycle:
+cycle_lower_right:
 
 	FCB	0	; If DEBUG_MODE is on, this will start with 255
 
@@ -378,7 +378,7 @@ cycle:
 
 cycle_corner_character:
 
-	lda	cycle
+	lda	cycle_lower_right
 	beq	_skip_cycle
 
 	inc	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
@@ -912,7 +912,7 @@ toggle_frame_by_frame:
 
 toggle_cycle:
 
-	com	cycle
+	com	cycle_lower_right
 	bne	_skip_redraw_cycle
 					; If it's being turned off
 	lda	#GREEN_BOX		; then draw over the lower-right

@@ -741,7 +741,7 @@ increment_u:
 	tfr	x,d
 	bsr	is_d_divisible_by_32
 	tsta
-	puls	x,u
+	puls	x,u		; Does not affect Condition Codes
 	bne	_increment
 
 	rts

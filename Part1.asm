@@ -588,14 +588,14 @@ get_screen_position:
 
 ;   X = TEXTBUF + A * COLS_PER_LINE + B
 
-	pshs	b
+	tfr	d,u
 
 	ldx	#TEXTBUF
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
 
-	puls	b
+	tfr	u,d
 	abx
 
 	rts
@@ -608,7 +608,7 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
 					; our skip message
 
-GREEN_BOX	EQU	$60	; These are MC6847 codes
+GREEN_BOX	EQU	$60		; These are MC6847 codes
 WHITE_BOX	EQU	$CF
 
 simultaneous_plucks:

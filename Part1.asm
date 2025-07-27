@@ -445,7 +445,7 @@ AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 turn_6bit_audio_on:
 
 	bsr	set_audio_port_on
-	bsr	set_ddra
+	bsr	set_ddra_bits_to_input
 
 	rts
 
@@ -457,6 +457,18 @@ turn_6bit_audio_on:
 *******************
 
 set_audio_port_on:
+
+* This is modified by me from code written by Simon Jonassen
+
+	lda	PIA0BC
+	anda	#0b11110111
+	sta	PIA0BC
+
+	lda	PIA0AC
+	anda	#0b11110111
+	sta	PIA0AC
+
+* End code modified from code written by Simon Jonassen
 
 * This code was modified from code written by Trey Tomes
 
@@ -475,7 +487,7 @@ set_audio_port_on:
 * Outputs: None
 ***************
 
-set_ddra:
+set_ddra_bits_to_input:
 
 * This code was written by other people, taken from
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm

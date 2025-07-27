@@ -754,7 +754,7 @@ _increment:
 ************************************
 * Is D divisible by 32
 *
-* Inputs:
+* Input:
 * D = any unsigned number or pointer
 *
 * Output:

@@ -783,23 +783,15 @@ _divisible:
 
 pluck_loop:
 
-; If the screen is empty, we finish
-
-	jsr	pluck_is_screen_empty
-	tsta
-	bne	_pluck_finished
-
-; If the user wants to skip, we finish
-
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	bne	_pluck_finished
-
-; Otherwise, keep going
-
 	jsr	process_pluck_1
 
-	bra	pluck_loop
+	jsr	pluck_is_screen_empty
+	tsta				; If the screen is empty, we finish
+	bne	_pluck_finished
+
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta				; If the user wants to skip, we finish
+	beq	pluck_loop
 
 _pluck_finished:
 	rts

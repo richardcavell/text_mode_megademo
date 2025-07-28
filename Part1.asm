@@ -945,6 +945,7 @@ toggle_cycle:
 
 	com	cycle_lower_right
 	bne	_skip_redraw_cycle
+
 					; If it's being turned off
 	lda	#GREEN_BOX		; then draw over the lower-right
 	sta	LOWER_RIGHT_CORNER	; corner
@@ -967,6 +968,7 @@ toggle_dropped_frame_counter:
 
 	com	dropped_frame_counter_toggle
 	bne	_skip_redraw_dropped_frame_counter
+
 					; If it's being turned off
 	lda	#GREEN_BOX		; then draw over the lower-left
 	sta	LOWER_LEFT_CORNER	; corner

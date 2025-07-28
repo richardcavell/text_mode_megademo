@@ -785,12 +785,12 @@ pluck_loop:
 
 	jsr	process_pluck_1
 
-	jsr	pluck_is_screen_empty
-	tsta				; If the screen is empty, we finish
-	bne	_pluck_finished
-
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta				; If the user wants to skip, we finish
+	bne	_pluck_finished
+
+	jsr	pluck_is_screen_empty
+	tsta				; If the screen is empty, we finish
 	beq	pluck_loop
 
 _pluck_finished:

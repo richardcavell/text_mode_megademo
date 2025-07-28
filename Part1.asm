@@ -892,8 +892,10 @@ _wait_for_vblank_skip:
 *******************************
 * Debugging mode is on
 *
-* Inputs: None
-* Outputs:
+* Input:
+* A = Keypress
+*
+* Output:
 * A = 0 All normal
 * A = 2 Require F to go forward
 *******************************

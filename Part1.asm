@@ -1179,7 +1179,7 @@ process_pluck_1:
 	tsta
 	beq	_process_pluck_2		; No, just keep processing
 
-	stx	spare_slot	; Save for later use
+	stx	spare_slot			; Save for later use
 
 	jsr	pluck_a_char			; Yes, pluck a character
 

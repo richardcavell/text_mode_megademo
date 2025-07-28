@@ -1156,7 +1156,6 @@ _test_line:
 
 _lines_are_clear:
 	lda	#1			; Lines are now clear
-	sta	cached_pluck_lines_empty
 	rts
 
 _line_not_empty:

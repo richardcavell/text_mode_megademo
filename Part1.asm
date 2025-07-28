@@ -35,7 +35,7 @@
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -224,6 +224,10 @@ dropped_frames:
 
 	RZB	1		; From 0 to 10 (don't count more than 10)
 
+waiting_for_f:
+
+	RZB	1		; You have to press F to go forward
+
 **********************************************
 * Variables relating to DECB's own IRQ handler
 **********************************************
@@ -317,6 +321,9 @@ _dropped_frame:
 *********************
 
 count_dropped_frame:
+
+	lda	waiting_for_f
+	bne	_skip_increment
 
 	lda	dropped_frames
 	cmpa	#10
@@ -808,18 +815,17 @@ _pluck_finished:
 
 wait_for_vblank_and_check_for_skip:
 
-	jsr	switch_off_irq_and_firq
 	clr	vblank_happened		; See "Variables that are relevant to
 	lda	#1			; vertical blank timing" above
 	sta	waiting_for_vblank
-	jsr	switch_on_irq_and_firq
+	clr	waiting_for_f
 
 _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
 	cmpa	#1
 	beq	_skip
 	cmpa	#2
-	beq	_wait_for_vblank_and_check_for_skip_loop
+	beq	wait_for_f
 
 	tst	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
@@ -830,6 +836,19 @@ _wait_for_vblank_and_check_for_skip_loop:
 _skip:
 	lda	#1	; User skipped
 	rts
+
+***************
+* Waiting for F
+*
+* Inputs: None
+* Outputs: None
+***************
+
+wait_for_f:
+
+	lda	#1
+	sta	waiting_for_f
+	bra	_wait_for_vblank_and_check_for_skip_loop
 
 *****************************
 * Define POLCAT and BREAK_KEY

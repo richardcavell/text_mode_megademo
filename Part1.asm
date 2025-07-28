@@ -1111,7 +1111,40 @@ get_pluck_data_end:
 * A = (Non-zero) All lines are clear
 ************************************
 
+cached_pluck_lines_empty_is_good:
+
+	RZB	1
+
+cached_pluck_lines_empty:
+
+	RZB	1
+
 pluck_are_lines_empty:
+
+	tst	cached_pluck_lines_empty_is_good
+	bne	_return_cache
+
+	bsr	pluck_are_lines_empty_2
+	ldb	#1
+	stb	cached_pluck_lines_empty_is_good
+	sta	cached_pluck_lines_empty
+	rts
+
+_return_cache:
+	lda	cached_pluck_lines_empty
+	rts
+
+************************************
+* Pluck - Are lines empty 2
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Lines are not clear
+* A = (Non-zero) All lines are clear
+************************************
+
+pluck_are_lines_empty_2:
 
 	ldx	#pluck_line_counts
 
@@ -1121,7 +1154,9 @@ _test_line:
 	cmpx	#pluck_line_counts_end
 	blo	_test_line
 
+_lines_are_clear:
 	lda	#1			; Lines are now clear
+	sta	cached_pluck_lines_empty
 	rts
 
 _line_not_empty:
@@ -1250,6 +1285,8 @@ pluck_char_choose_line:
 
 	decb
 	stb	a,x		; There'll be one less character after this
+
+	clr	cached_pluck_lines_empty_is_good ; Dirty this cache
 
 	rts
 

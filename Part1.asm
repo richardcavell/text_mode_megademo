@@ -827,7 +827,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	cmpa	#2
 	beq	wait_for_f
 
-	tst	vblank_happened
+	lda	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
 
 	clra		; A VBlank happened
@@ -1039,7 +1039,7 @@ cache_slots_being_used:
 
 pluck_check_empty_slots:
 
-	tst	cache_slots_being_used
+	lda	cache_slots_being_used
 	bne	_slots_used
 	bsr	pluck_check_empty_slots_2	; Return what this returns
 	sta	cache_slots_being_used
@@ -1121,7 +1121,7 @@ cached_pluck_lines_empty:
 
 pluck_are_lines_empty:
 
-	tst	cached_pluck_lines_empty_is_good
+	lda	cached_pluck_lines_empty_is_good
 	bne	_return_cache
 
 	bsr	pluck_are_lines_empty_2
@@ -1149,7 +1149,7 @@ pluck_are_lines_empty_2:
 	ldx	#pluck_line_counts
 
 _test_line:
-	tst	,x+
+	lda	,x+
 	bne	_line_not_empty
 	cmpx	#pluck_line_counts_end
 	blo	_test_line
@@ -1227,22 +1227,18 @@ pluck_find_loop:
 
 	cmpx	2,s
 	bhs	_pluck_find_no_empty_slot
-	tst	,x			; compare to #PLUCK_PHASE_NOTHING
+	lda	,x			; compare to #PLUCK_PHASE_NOTHING
 	beq	_pluck_find_found_empty
 	leax	4,x
 	bra	pluck_find_loop
 
 _pluck_find_no_empty_slot:
-
 	ldx	#0
 	clra
-
 	rts
 
 _pluck_find_found_empty:
-
 	lda	#1		; We return X as well
-
 	rts
 
 ***************************

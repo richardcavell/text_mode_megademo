@@ -1211,7 +1211,7 @@ pluck_find_a_spare_slot:
 	rts
 
 *****************************************
-* Pluck find loop
+* Pluck - Find loop
 *
 * Inputs:
 *   X = Pointer to pluck data

@@ -1032,7 +1032,34 @@ _pluck_screen_not_empty:
 * A = (Non-zero) All slots are empty
 **********************************************************
 
+cache_slots_being_used:
+
+	RZB	1		; Non-zero means at least 1 is being used
+				; Zero means we must check
+
 pluck_check_empty_slots:
+
+	tst	cache_slots_being_used
+	bne	_slots_used
+	bsr	pluck_check_empty_slots_2	; Return what this returns
+	sta	cache_slots_being_used
+	rts
+
+_slots_used:
+	clra
+	rts
+
+**********************************************************
+* Pluck - Check empty slots 2
+*
+* Inputs: None
+*
+* Output:
+* A = 0 At least 1 slot is being used, screen is not clear
+* A = (Non-zero) All slots are empty
+**********************************************************
+
+pluck_check_empty_slots_2:
 
 	bsr	get_pluck_data_end
 	pshs	x			; ,S is end of plucks data
@@ -1525,6 +1552,8 @@ pluck_phase_3_ended:		; Character has gone off the right side
 
 	lda	#PLUCK_PHASE_NOTHING
 	sta	,u		; This slot is now empty
+
+	clr	cache_slots_being_used	; We must count the slots again
 
 	lda	number_of_plucked_chars
 	inca

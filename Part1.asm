@@ -1269,6 +1269,8 @@ _no_chars_left:
 * A = Line number
 *********************************
 
+; TODO: This really should be made to run faster
+
 pluck_char_choose_line:
 
 	bsr	pluck_char_choose_random_line	; Chosen line is in A

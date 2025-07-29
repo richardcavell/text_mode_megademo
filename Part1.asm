@@ -1512,15 +1512,15 @@ pluck_char:
 
 	rts
 
-************************************************
+************************************************************
 * Pluck - Register
 *
 * Input:
 * X = Screen position of character being plucked
 *
 * Outputs:
-* X = Screen position of character being plucked
-************************************************
+* X = (Unchanged) Screen position of character being plucked
+************************************************************
 
 pluck_register:
 
@@ -1579,6 +1579,8 @@ pluck_play_sound:
 process_pluck_2:
 
 	ldu	#plucks_data
+	jsr	get_pluck_data_end
+	pshs	x		; ,S = End of pluck data
 
 _pluck_do_each_pluck:
 	lda	,u
@@ -1590,9 +1592,10 @@ _pluck_do_each_pluck:
 	puls	u
 
 	leau	4,u
-	cmpu	#plucks_data_end
+	cmpu	,s
 	blo	_pluck_do_each_pluck
 
+	leas	2,s
 	rts
 
 **********************

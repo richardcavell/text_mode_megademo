@@ -1093,7 +1093,32 @@ _pluck_check_data_not_empty:
 * X = Address
 ********************
 
+cached_pluck_data_end:
+
+	RZB	2
+
+cached_pluck_data_end_is_good:
+
+	RZB	1
+
 get_pluck_data_end:
+
+	lda	cached_pluck_data_end_is_good
+	beq	calculate_pluck_data_end
+
+	ldx	cached_pluck_data_end
+	rts
+
+**************************
+* Calculate pluck data end
+*
+* Inputs: None
+*
+* Outputs:
+* X = Address
+**************************
+
+calculate_pluck_data_end:
 
 ; X = #plucks_data + 4 * simultaneous_plucks
 
@@ -1102,6 +1127,11 @@ get_pluck_data_end:
 	lsla
 	lsla
 	leax	a,x
+
+	stx	cached_pluck_data_end	; Cache the result
+	lda	#1
+	sta	cached_pluck_data_end_is_good
+
 	rts
 
 ************************************
@@ -1402,23 +1432,45 @@ _skip_cache_dirtying:
 
 pluck_get_char:
 
-	jsr	get_end_of_line
+	pshs	a
+	jsr	get_pluck_data_end
+	puls	a
+	pshs	x		;,S = End of pluck data
 
-	lda	#GREEN_BOX	; Green box (space)
+	jsr	get_end_of_line	; X = Screen position (going backwards)
 
-_pluck_a_char_find_non_space:
+	lda	#GREEN_BOX	; A = Green box (space)
+
+	bra	pluck_get_char_2
+
+*******************************************************
+* Pluck - Get char 2
+*
+* Inputs:
+*  A = Green box (space character)
+*  X = Screen position to search (backwards) from
+* ,S = End of pluck data
+*
+* Outputs:
+*  X = Pointer to screen position of pluckable character
+*******************************************************
+
+pluck_get_char_2:
+
 	cmpa	,-x		; Go backwards until we find a non-space
-	beq	_pluck_a_char_find_non_space
+	beq	pluck_get_char_2
 
 	ldu	#plucks_data+2	; This checks whether the found char is
 				; already being plucked
 _pluck_a_char_check:
 	cmpx	,u
-	beq	_pluck_a_char_find_non_space
+	beq	pluck_get_char_2
 
 	leau	4,u
-	cmpu	#plucks_data_end
+	cmpu	,s
 	blo	_pluck_a_char_check
+
+	leas	2,s		; Return X
 
 	rts
 
@@ -1689,6 +1741,7 @@ _increase_plucks:
 	beq	_no_increase
 
 	inc	simultaneous_plucks
+	clr	cached_pluck_data_end_is_good	; Trash this cache
 	clr	number_of_plucked_chars
 
 _no_increase:

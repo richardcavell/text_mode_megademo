@@ -1316,7 +1316,7 @@ _skip_collation:
 	bra	_pluck_collate_loop
 
 _pluck_collate_finished:
-	rts
+	rts		; Return A
 
 ******************************
 * Pluck - Choose a line
@@ -1335,6 +1335,9 @@ pluck_char_choose_a_line:
 	puls	a
 
 	mul			; A is a random number from 0 to no. lines
+
+	ldx	#pluck_collated_lines
+	lda	a,x		; Get the actual line number
 
 	ldx	#pluck_line_counts
 	dec	a,x		; There'll be one less character after this

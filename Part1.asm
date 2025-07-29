@@ -399,6 +399,9 @@ cycle_corner_character:
 	lda	cycle_lower_right
 	beq	_skip_cycle
 
+	lda	waiting_for_f
+	bne	_skip_cycle
+
 	inc	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
 
 _skip_cycle:

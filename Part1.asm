@@ -1291,7 +1291,7 @@ pluck_end_collated_lines:
 
 collation_needs_rebuilding:
 
-	FCB	1
+	FCB	255
 
 collation_number_of_lines:
 

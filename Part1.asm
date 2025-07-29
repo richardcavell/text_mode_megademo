@@ -1272,7 +1272,7 @@ _no_chars_left:
 pluck_char_choose_line:
 
 	bsr	pluck_collate_non_zero_lines
-	bsr	pluck_choose_a_line
+	bsr	pluck_char_choose_a_line
 	rts
 
 *********************************
@@ -1329,8 +1329,9 @@ _pluck_collate_finished:
 ******************************
 
 pluck_char_choose_a_line:
+
 	pshs	a
-	bsr	get_random	; Random number in B
+	jsr	get_random	; Random number in B
 	puls	a
 
 	mul			; A is a random number from 0 to no. lines

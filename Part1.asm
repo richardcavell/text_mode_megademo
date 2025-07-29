@@ -1258,7 +1258,7 @@ pluck_a_char:
 	bne	_no_chars_left
 	bsr	pluck_char_choose_line
 	bsr	pluck_get_char
-	bsr	pluck_char
+	jsr	pluck_char
 
 _no_chars_left:
 	rts		; No more unplucked characters left on the screen

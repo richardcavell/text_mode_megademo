@@ -1584,6 +1584,7 @@ process_pluck_2:
 
 _pluck_do_each_pluck:
 	lda	,u
+	beq	_no_pluck_happening	; This will run faster
 	ldb	1,u
 	ldx	2,u
 
@@ -1591,6 +1592,7 @@ _pluck_do_each_pluck:
 	bsr	pluck_do_one_pluck
 	puls	u
 
+_no_pluck_happening:
 	leau	4,u
 	cmpu	,s
 	blo	_pluck_do_each_pluck
@@ -1612,8 +1614,8 @@ _pluck_do_each_pluck:
 
 pluck_do_one_pluck:
 
-	cmpa	#PLUCK_PHASE_NOTHING	; tsta
-	beq	pluck_phase_0	; Nothing happening
+;	cmpa	#PLUCK_PHASE_NOTHING	; tsta
+;	beq	pluck_phase_0	; Nothing happening
 
 	cmpa	#PLUCK_PHASE_TURN_WHITE
 	beq	pluck_phase_1	; We are white

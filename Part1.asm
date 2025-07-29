@@ -1341,9 +1341,11 @@ pluck_char_choose_a_line:
 
 	ldx	#pluck_line_counts
 	dec	a,x		; There'll be one less character after this
+	bne	_skip_cache_dirtying
 
 	clr	cached_pluck_lines_empty_is_good ; Dirty this cache
 
+_skip_cache_dirtying:
 	rts
 
 *******************************************************

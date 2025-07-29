@@ -1269,40 +1269,76 @@ _no_chars_left:
 * A = Line number
 *********************************
 
-; TODO: This really should be made to run faster
-
 pluck_char_choose_line:
 
-	bsr	pluck_char_choose_random_line	; Chosen line is in A
-
-	ldx	#pluck_line_counts
-
-	ldb	a,x	; If there are no more characters on this line
-	beq	pluck_char_choose_line		; choose a different one
-
-	decb
-	stb	a,x		; There'll be one less character after this
-
-	clr	cached_pluck_lines_empty_is_good ; Dirty this cache
-
+	bsr	pluck_collate_non_zero_lines
+	bsr	pluck_choose_a_line
 	rts
 
 *********************************
-* Pluck char - Choose random line
+* Pluck - Collated non-zero lines
+*********************************
+
+pluck_collated_lines:
+
+	RZB	PLUCK_LINES
+
+pluck_end_collated_lines:
+
+********************************
+* Pluck - Collate non-zero lines
 *
 * Inputs: None
 *
 * Output:
-* A = Chosen line
-*********************************
+* A = Number of non-zero lines
+********************************
 
-pluck_char_choose_random_line:
+pluck_collate_non_zero_lines:
 
-	jsr	get_random 	; Get a random number in D
-	tfr	b,a
-	anda	#0b00001111	; Make the random number between 0 and 15
-	cmpa	#BOTTOM_LINE
-	beq	pluck_char_choose_random_line	; But don't choose line 15
+	ldx	#pluck_line_counts
+	ldu	#pluck_collated_lines
+	clra
+	clrb
+
+_pluck_collate_loop:
+	cmpx	#pluck_line_counts_end
+	bhs	_pluck_collate_finished
+
+	tst	,x+
+	beq	_skip_collation
+
+	stb	,u+
+	inca
+
+_skip_collation:
+	incb
+	bra	_pluck_collate_loop
+
+_pluck_collate_finished:
+	rts
+
+******************************
+* Pluck - Choose a line
+*
+* Inputs:
+* A = Number of collated lines
+*
+* Output:
+* A = Chosen line number
+******************************
+
+pluck_char_choose_a_line:
+	pshs	a
+	bsr	get_random	; Random number in B
+	puls	a
+
+	mul			; A is a random number from 0 to no. lines
+
+	ldx	#pluck_line_counts
+	dec	a,x		; There'll be one less character after this
+
+	clr	cached_pluck_lines_empty_is_good ; Dirty this cache
 
 	rts
 

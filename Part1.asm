@@ -1764,6 +1764,7 @@ _no_increase:
 ***********************************
 
 wait_frames:
+
 	tsta				; If A = 0, immediately exit
 	beq	_wait_frames_success
 
@@ -1862,7 +1863,7 @@ get_random_no_feedback:
 
 joke_startup_screen:
 
-	jsr	clear_screen	; Just clear the screen
+	jsr	clear_screen			; Just clear the screen
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
@@ -1927,10 +1928,13 @@ _display_messages_loop:
 	tsta
 	beq	_display_messages_loop	; If branch is taken,
 					; user has not skipped
+	bra	_display_messages_skip
+
 **********************************
 * Display messages - Exit routines
 *
 * Inputs: None
+*
 * Outputs:
 * A = 0 Normal termination
 * A = 1 User wants to skip

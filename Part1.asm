@@ -1398,6 +1398,7 @@ _skip_cache_dirtying:
 *******************************************************
 
 pluck_get_char:
+
 	jsr	get_end_of_line
 
 	lda	#GREEN_BOX	; Green box (space)

@@ -60,6 +60,7 @@ WAIT_PERIOD	EQU	25
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
+	jsr	turn_1bit_audio_on		; Turn on 1-bit audio
 	jsr	turn_on_interrupts		; Turn on interrupts
 
 	jsr	display_skip_message
@@ -275,7 +276,7 @@ dpval	lda	#*/256
 irq_service_routine:
 
 	lda	PIA0AC		; Was it a VBlank or HSync?
-	bpl	service_vblank	; VBlank - go there
+	lbpl	service_vblank	; VBlank - go there
 
 * If HSYNC, fallthrough to HSYNC handler
 
@@ -288,6 +289,8 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
+* This code plays a sample through the 6-bit DAC
+
 smp_pt:	ldx	#0		; pointer to sample
 end_pt:	cmpx	#0		; done ?
 	beq	quit_isr
@@ -296,9 +299,65 @@ end_pt:	cmpx	#0		; done ?
 	sta	AUDIO_PORT	; and shove it into the audio port
 	stx	smp_pt+1	; Self-modifying code here
 
+note    dec     <frames+1       ;
+        bne     sum             ;
+        dec     <frames
+        bne     sum
+        ldd     #$2c0           ;2c0    #of irq's to process before note update
+        std     <frames
+
+seq
+oldu	ldu	#zix            ;save pattern position
+curnote	pulu    d               ;load 2 notes from pattern
+        cmpu    #endzix         ;we done ?
+        bne     plnote          ;nope - play it again sam
+        ldu     #zix            ;start over
+plnote  stu     <oldu+1         ;restore pattern position to start
+
+        ldu     #freqtab        ;pointer to frequency table
+        ldx     a,u             ;get note1 value
+        stx     <freq+1         ;store to freq counter
+        ldx     b,u             ;get note2 value
+        stx     <freq2+1        ;store to freq counter
+
 quit_isr:
 	lda	PIA0AD		; Acknowledge HSYNC interrupt
 	rti
+
+sum     ldd     #$0000          ;cumulative addition, we use A as inherent saw
+freq    addd    #$0000          ;frequency to add
+        std     <sum+1          ;store back to addition
+
+sum2    ldd     #$0000          ;cumulative add (oscillator)
+freq2   addd    #$0000          ;freq to add
+        std     <sum2+1         ;and we store back to sum #2
+                                        ;we have a value in A from prev addition
+add     adda    <sum+1          ;add v1 to current A from summation
+        rora                    ;/2 with possible carry to beat overload 
+        sta     $ff20           ;set the hardware
+
+	lda	PIA0AD		; Acknowledge HSYNC interrupt
+	rti
+
+frames  fdb     $2c0
+
+                align   $100
+;******************************************************
+;equal tempered 12 note per octave frequency table
+;
+; HSYNC/2 (7.875Khz)
+;******************************************************
+
+freqtab
+;c0     fdb     0,70,75,79,83,88,94,99,105,111,118,125
+;c1     fdb     0,141,149,158,167,177,188,199,211,223,237,251
+c2      fdb     0,282,298,316,335,355,376,398,422,447,474,502
+c3      fdb     532,563,597,632,670,710,752,796,844,894,947,1003
+c4      fdb     1063,1126,1193,1264,1339,1419,1503,1593,1688,1788,1894,2007
+c5      fdb     2126,2253,2387,2529,2679,2838,3007,3186,3375,3576,3789,4014
+c6      fdb     4252,4505,4773,5057,5358,5676,6014,6371,6750,7152,7577,8028
+c7      fdb     8505,9011,9546,10114,10716,11353,12028,12743,13501,14303,15154,16055
+c8      fdb     17010,18021,19093,20228,21431,22705,24056,25486,27001,28607,30308,32110
 
 * End of code that was written by Simon Jonassen and modified by me
 
@@ -528,6 +587,33 @@ set_ddra_bits_to_input:
 * End of code modified by me from code written by other people
 
 	rts
+
+*********************
+* Turn 1-bit audio on
+*********************
+
+PIA1BD	EQU	$FF20
+PIA1BC	EQU	$FF23
+
+turn_1bit_audio_on:
+
+* This code was originally written by Simon Jonassen (The Invisible Man)
+* and then modified by me
+
+        lda             PIA1BC
+        anda            #$fb
+        sta             PIA1BC
+
+        ldb             PIA1BD
+        orb             #$02
+        stb             PIA1BD
+
+        ora             #$04
+        sta             PIA1BC
+        lda             PIA1BD
+	rts
+
+* End code modified by me from code written by Simon Jonassen
 
 ********************
 * Turn on interrupts
@@ -2346,3 +2432,10 @@ type_sound:
 	INCLUDEBIN "Sounds/Type/Type.raw"
 
 type_sound_end:
+
+****************************
+* Here is our raw music data
+****************************
+
+zix     include         "Simon/pop.asm"
+endzix  equ             *

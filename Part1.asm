@@ -267,6 +267,20 @@ dpval:	lda	#*/256
 * End of code written by Simon Jonassen and modified by me
 
 *************************
+* Service VBlank hop
+*
+* Inputs: None
+* Outputs: None
+*************************
+
+; This exists to make the second instruction in irq_service_routine bpl
+; instead of lbpl
+
+service_vblank_hop:
+
+	jmp	service_vblank
+
+*************************
 * Our IRQ handler
 *
 * Inputs: Not applicable
@@ -275,8 +289,8 @@ dpval:	lda	#*/256
 
 irq_service_routine:
 
-	lda	PIA0AC		; Was it a VBlank or HSync?
-	lbpl	service_vblank	; VBlank - go there
+	lda	PIA0AC			; Was it a VBlank or HSync?
+	bpl	service_vblank_hop	; VBlank - go there
 
 * If HSYNC, fallthrough to HSYNC handler
 

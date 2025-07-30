@@ -60,6 +60,7 @@ WAIT_PERIOD	EQU	25
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
+	jsr	set_dp_register_for_music	; For music playback
 	jsr	turn_on_interrupts		; Turn on interrupts
 
 	jsr	display_skip_message
@@ -253,6 +254,28 @@ PIA0AD	EQU	$FF00
 PIA0AC	EQU	$FF01
 PIA0BD	EQU	$FF02
 PIA0BC	EQU	$FF03
+
+	align	$100		; for our DP register
+
+************************************
+* Set DP register for music playback
+*
+* Inputs: None
+* Outputs: None
+************************************
+
+* This code was written by Simon Jonassen and modified by me
+
+set_dp_register_for_music:
+
+setdp	jsr	switch_off_irq_and_firq
+dpval	lda	#*/256
+	tfr	a,dp
+	setdp	dpval
+	jsr	switch_on_irq_and_firq
+	rts
+
+* End of code written by Simon Jonassen and modified by me
 
 *************************
 * Our IRQ handler

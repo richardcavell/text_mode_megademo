@@ -70,6 +70,7 @@ WAIT_PERIOD	EQU	25
 	jsr	print_loading_text
 
 	jsr	restore_basic_irq_service_routine
+	jsr	zero_dp_register		; Zero the DP register
 
 	clra
 	clrb

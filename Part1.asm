@@ -316,6 +316,7 @@ end_pt:	cmpx	#0		; done ?
 * This code plays music through the 1-bit audio circuit
 
 play_1bit:
+
 ;********************************************
 ; PLAYER ROUTINE
 ;********************************************

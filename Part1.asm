@@ -55,12 +55,11 @@ WAIT_PERIOD	EQU	25
 * D = 0 Success
 *****************
 
-	jsr	zero_dp_register		; Zero the DP register
+	jsr	set_dp_register_for_music	; For music playback
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
-	jsr	set_dp_register_for_music	; For music playback
 	jsr	turn_on_interrupts		; Turn on interrupts
 
 	jsr	display_skip_message
@@ -82,20 +81,6 @@ WAIT_PERIOD	EQU	25
 *****************************************************************************
 
 * Assume that no registers are preserved
-
-**********************
-* Zero the DP register
-*
-* Inputs: None
-* Outputs: None
-**********************
-
-zero_dp_register:
-
-	clra
-	tfr	a, dp
-
-	rts
 
 ************************
 * Turn on debug features
@@ -189,8 +174,11 @@ get_irq_handler:
 
 set_irq_handler:
 
-	ldx	#irq_service_routine	; Our own interrupt service routine
-	stx	IRQ_HANDLER		; is now installed
+	lda	#$0e			; DP JMP
+	sta	IRQ_INSTRUCTION		; Shaves off 1 byte
+
+	lda	#irq_service_routine&255
+	sta	IRQ_HANDLER
 
 	rts
 
@@ -2326,6 +2314,20 @@ restore_irq_handler:
 
 	ldx	decb_irq_service_routine
 	stx	IRQ_HANDLER
+
+	rts
+
+**********************
+* Zero the DP register
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+zero_dp_register:
+
+	clra
+	tfr	a, dp
 
 	rts
 

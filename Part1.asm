@@ -289,17 +289,29 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
-* This code plays a sample through the 6-bit DAC
+* This code plays two samples through the 6-bit DAC
 
-smp_pt:	ldx	#0		; pointer to sample
-end_pt:	cmpx	#0		; done ?
-	beq	silent
+smp_1:	ldx	#0		; pointer to sample
+end_1:	cmpx	#0		; done ?
+	beq	snd1_silent
 
 	lda	,x+		; Get the next byte of data
-	sta	AUDIO_PORT	; and shove it into the audio port
-	stx	smp_pt+1	; Self-modifying code here
+	stx	smp_1+1		; Self-modifying code here
+	bra	snd2
 
-silent:
+snd1_silent:
+	clra
+snd2:
+smp_2:	ldx	#0
+end_2:	cmpx	#0
+	beq	snd2_silent
+
+	adda	,x+
+	stx	smp_2+1
+
+snd2_silent:
+	sta	AUDIO_PORT	; Shove it into the audio port
+
 	lda	PIA0AD		; Acknowledge interrupt
 	rti
 
@@ -1633,7 +1645,6 @@ place_white_box:
 
 pluck_play_sound:
 
-	lda	#1
 	ldx	#pop_sound
 	ldu	#pop_sound_end
 	jsr	play_sound	; Play the pluck noise
@@ -2135,7 +2146,6 @@ display_messages_play_sound:
 	beq	_display_messages_skip_sound
 
 	pshs	x,u
-	lda	#1
 	ldx	#type_sound
 	ldu	#type_sound_end
 	jsr	play_sound		; Play the typing noise
@@ -2150,14 +2160,18 @@ _display_messages_skip_sound:
 * Inputs: None
 *
 * Output:
-* A = (Non-zero)
+* A = (Non-zero) Yes, there is a spare slot
 * A = 0 No, all sound capability is being used
 **********************************************
 
 is_there_a_spare_sound_slot:
 
-	ldx	smp_pt+1
-	cmpx	end_pt+1
+	ldx	smp_1+1
+	cmpx	end_1+1
+	beq	_spare_slot_found
+
+	ldx	smp_2+1
+	cmpx	end_2+1
 	beq	_spare_slot_found
 
 	clra
@@ -2171,7 +2185,6 @@ _spare_slot_found:
 * Play a sound sample
 *
 * Inputs:
-* A = The delay between samples
 * X = The sound data
 * U = The end of the sound data
 *
@@ -2184,9 +2197,20 @@ play_sound:
 
 	jsr	switch_off_irq
 
-	stx	smp_pt+1	; This is self-modifying code
-	stu	end_pt+1
+	ldy	smp_1+1
+	cmpy	end_1+1
+	bne	_sound_2
 
+_sound_1:
+	stx	smp_1+1		; This is self-modifying code
+	stu	end_1+1
+	bra	_play_sound_end
+
+_sound_2:
+	stx	smp_2+1		; This is self-modifying code
+	stu	end_2+1
+
+_play_sound_end:
 	jsr	switch_on_irq
 
 * End of code modified from code written by Simon Jonassen

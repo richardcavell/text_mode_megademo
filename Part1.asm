@@ -180,7 +180,10 @@ IRQ_HANDLER	EQU	$10D
 
 get_irq_handler:
 
-	ldx	IRQ_HANDLER		; Load the current vector into X
+	lda	IRQ_INSTRUCTION
+	sta	decb_irq_service_instruction
+
+	ldx	IRQ_HANDLER			; Load the current vector into X
 	stx	decb_irq_service_routine	; We could call it at the end
 						; of our own handler
 	rts
@@ -263,22 +266,6 @@ PIA0AC	EQU	$FF01
 PIA0BD	EQU	$FF02
 PIA0BC	EQU	$FF03
 
-	align	$100		; for our DP register
-
-*************************
-* Service VBlank hop
-*
-* Inputs: None
-* Outputs: None
-*************************
-
-; This exists to make the second instruction in irq_service_routine bpl
-; instead of lbpl
-
-service_vblank_hop:
-
-	jmp	service_vblank
-
 *************************
 * Our IRQ handler
 *
@@ -289,7 +276,7 @@ service_vblank_hop:
 irq_service_routine:
 
 	lda	PIA0AC			; Was it a VBlank or HSync?
-	bpl	service_vblank_hop	; VBlank - go there
+	bpl	service_vblank		; VBlank - go there
 
 * If HSYNC, fallthrough to HSYNC handler
 
@@ -313,8 +300,10 @@ end_pt:	cmpx	#0		; done ?
 	stx	smp_pt+1	; Self-modifying code here
 
 silent:
-	lda	PIA0BD		; Acknowledge interrupt
+	lda	PIA0AD		; Acknowledge interrupt
 	rti
+
+* End of code written by Simon Jonassen and modified by me
 
 *************************
 * Service VBlank
@@ -542,33 +531,6 @@ set_ddra_bits_to_input:
 * End of code modified by me from code written by other people
 
 	rts
-
-*********************
-* Turn 1-bit audio on
-*********************
-
-PIA1BD	EQU	$FF22
-PIA1BC	EQU	$FF23
-
-turn_1bit_audio_on:
-
-* This code was originally written by Simon Jonassen (The Invisible Man)
-* and then modified by me
-
-        lda             PIA1BC
-        anda            #$fb
-        sta             PIA1BC
-
-        ldb             PIA1BD
-        orb             #$02
-        stb             PIA1BD
-
-        ora             #$04
-        sta             PIA1BC
-        lda             PIA1BD
-	rts
-
-* End code modified by me from code written by Simon Jonassen
 
 ********************
 * Turn on interrupts

@@ -55,7 +55,7 @@ WAIT_PERIOD	EQU	25
 * D = 0 Success
 *****************
 
-	jsr	zero_dp_register		; Zero the DP register
+	jsr	set_dp_register_for_hsync
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
@@ -82,19 +82,25 @@ WAIT_PERIOD	EQU	25
 
 * Assume that no registers are preserved
 
-**********************
-* Zero the DP register
+************************************
+* Set DP register for music playback
 *
 * Inputs: None
 * Outputs: None
-**********************
+************************************
 
-zero_dp_register:
+* This code was written by Simon Jonassen and modified by me
 
-	clra
-	tfr	a, dp
+set_dp_register_for_hsync:
 
+	jsr	switch_off_irq_and_firq
+dpval:	lda	#irq_service_routine/256
+	tfr	a,dp
+	setdp	dpval
+	jsr	switch_on_irq_and_firq
 	rts
+
+* End of code written by Simon Jonassen and modified by me
 
 ************************
 * Turn on debug features
@@ -170,9 +176,6 @@ IRQ_INSTRUCTION	EQU	$10C
 IRQ_HANDLER	EQU	$10D
 
 get_irq_handler:
-
-	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
-	sta	decb_irq_service_instruction
 
 	ldx	IRQ_HANDLER		; Load the current vector into X
 	stx	decb_irq_service_routine	; We could call it at the end
@@ -258,26 +261,6 @@ PIA0BD	EQU	$FF02
 PIA0BC	EQU	$FF03
 
 	align	$100		; for our DP register
-
-************************************
-* Set DP register for music playback
-*
-* Inputs: None
-* Outputs: None
-************************************
-
-* This code was written by Simon Jonassen and modified by me
-
-set_dp_register_for_music:
-
-	jsr	switch_off_irq_and_firq
-dpval:	lda	#*/256
-	tfr	a,dp
-	setdp	dpval
-	jsr	switch_on_irq_and_firq
-	rts
-
-* End of code written by Simon Jonassen and modified by me
 
 *************************
 * Service VBlank hop
@@ -2449,6 +2432,20 @@ restore_irq_handler:
 
 	rts
 
+**********************
+* Zero the DP register
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+zero_dp_register:
+
+	clra
+	tfr	a, dp
+
+	rts
+
 *************************************
 * Here is our raw data for our sounds
 *************************************
@@ -2464,10 +2461,3 @@ type_sound:
 	INCLUDEBIN "Sounds/Type/Type.raw"
 
 type_sound_end:
-
-****************************
-* Here is our raw music data
-****************************
-
-zix     include         "Simon/pop.asm"
-endzix  equ             *

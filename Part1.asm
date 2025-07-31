@@ -82,6 +82,20 @@ WAIT_PERIOD	EQU	25
 
 * Assume that no registers are preserved
 
+**********************
+* Zero the DP register
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+zero_dp_register:
+
+	clra
+	tfr	a, dp
+
+	rts
+
 ************************
 * Turn on debug features
 *
@@ -2432,20 +2446,6 @@ restore_irq_handler:
 
 	ldx	decb_irq_service_routine
 	stx	IRQ_HANDLER
-
-	rts
-
-**********************
-* Zero the DP register
-*
-* Inputs: None
-* Outputs: None
-**********************
-
-zero_dp_register:
-
-	clra
-	tfr	a, dp
 
 	rts
 

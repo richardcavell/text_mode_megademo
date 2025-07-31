@@ -55,12 +55,11 @@ WAIT_PERIOD	EQU	25
 * D = 0 Success
 *****************
 
-	jsr	set_dp_register_for_music	; For music playback
+	jsr	zero_dp_register		; Zero the DP register
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
-	jsr	turn_1bit_audio_on		; Turn on 1-bit audio
 	jsr	turn_on_interrupts		; Turn on interrupts
 
 	jsr	display_skip_message

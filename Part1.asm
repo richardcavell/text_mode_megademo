@@ -1,4 +1,4 @@
-* This is Part 1 of Text Mode Demo
+	* This is Part 1 of Text Mode Demo
 * by Richard Cavell
 * June - July 2025
 *
@@ -35,7 +35,7 @@
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -662,6 +662,7 @@ pluck_line_counts_end:
 * Plucks data
 *************
 
+INITIAL_PLUCK_DELAY	EQU	5
 MAX_SIMULTANEOUS_PLUCKS	EQU	10
 
 plucks_data:
@@ -1223,6 +1224,10 @@ spare_slot:
 
 process_pluck_1:
 
+	jsr	is_there_a_spare_sound_slot	; Can we play the sound?
+	tsta
+	beq	_process_pluck_2		; No, just keep processing
+
 	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
 	tsta
 	beq	_process_pluck_2		; No, just keep processing
@@ -1300,13 +1305,64 @@ pluck_a_char:
 
 	bsr	pluck_are_lines_empty
 	tsta
-	bne	_no_chars_left
+	bne	_no_pluck
+
+	bsr	pluck_delay_as_needed
+	tsta
+	bne	_no_pluck
+
 	bsr	pluck_char_choose_line
-	bsr	pluck_get_char
+	jsr	pluck_get_char
 	jsr	pluck_char
 
-_no_chars_left:
+_no_pluck:
 	rts		; No more unplucked characters left on the screen
+
+***********************
+* Pluck delay variables
+***********************
+
+pluck_delay:
+
+	FCB	INITIAL_PLUCK_DELAY
+
+pluck_delay_counter:
+
+	RZB	1
+
+********************************
+* Pluck - Delay as needed
+*
+* Inputs: None
+*
+* Output:
+* A = 0 Don't delay the plucks
+* A = (Non-zero) Delay the pluck
+********************************
+
+pluck_delay_as_needed:
+
+	lda	pluck_delay_counter
+	beq	_new_one
+	deca
+	sta	pluck_delay_counter
+	lda	#1
+	rts
+
+_new_one:
+	lda	pluck_delay
+	beq	_no_delay
+	ldb	#WAIT_PERIOD
+	mul
+	decb
+	stb	pluck_delay_counter
+	dec	pluck_delay
+	clra
+	rts
+
+_no_delay:
+	clra
+	rts
 
 *********************************
 * Pluck a character - Choose line
@@ -1751,14 +1807,22 @@ pluck_phase_3_ended:		; Character has gone off the right side
 	sta	number_of_plucked_chars
 
 	cmpa	simultaneous_plucks
-	beq	_increase_plucks
+	beq	_go_faster
 
 	rts
 
-_increase_plucks:
+_go_faster:
 
 	cmpa	#MAX_SIMULTANEOUS_PLUCKS
 	beq	_no_increase
+
+	lda	pluck_delay		; Reduce the delay before we increase
+	beq	_increase_plucks	; the number of plucks
+
+	deca
+	sta	pluck_delay
+
+_increase_plucks:
 
 	inc	simultaneous_plucks
 	clr	cached_pluck_data_end_is_good	; Trash this cache
@@ -2080,6 +2144,29 @@ display_messages_play_sound:
 _display_messages_skip_sound:
 	rts
 
+**********************************************
+* Is there a spare sound slot
+*
+* Inputs: None
+*
+* Output:
+* A = (Non-zero)
+* A = 0 No, all sound capability is being used
+**********************************************
+
+is_there_a_spare_sound_slot:
+
+	ldx	smp_pt+1
+	cmpx	end_pt+1
+	beq	_spare_slot_found
+
+	clra
+	rts
+
+_spare_slot_found:
+	lda	#1
+	rts
+
 *******************************
 * Play a sound sample
 *
@@ -2095,12 +2182,12 @@ play_sound:
 
 * This code was modified from code written by Simon Jonassen
 
+	jsr	switch_off_irq
+
 	stx	smp_pt+1	; This is self-modifying code
 	stu	end_pt+1
 
-	ldx	#$1000
-xwait:	leax	-1,x
-	bne	xwait
+	jsr	switch_on_irq
 
 * End of code modified from code written by Simon Jonassen
 

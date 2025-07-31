@@ -594,12 +594,12 @@ set_audio_port_on:
 
 	rts
 
-***************
-* Set DDRA
+************************
+* Set DDRA bits to input
 *
 * Inputs: None
 * Outputs: None
-***************
+************************
 
 set_ddra_bits_to_input:
 

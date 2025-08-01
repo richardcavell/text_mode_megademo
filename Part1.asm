@@ -35,7 +35,7 @@
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -272,8 +272,8 @@ PIA0BC	EQU	$FF03
 
 irq_service_routine:
 
-	lda	PIA0AC		; Was it a VBlank or HSync?
-	bpl	service_vblank	; VBlank - go there
+	lda	PIA0BC		; Was it a VBlank or HSync?
+	bmi	service_vblank	; VBlank - go there
 
 * If HSYNC, fallthrough to HSYNC handler
 

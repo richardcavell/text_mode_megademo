@@ -300,14 +300,14 @@ quit_isr:
 
 * End of code that was written by Simon Jonassen and modified by me
 
+	IF	DEBUG_MODE
+
 ********************************
 * Service VBlank (DEBUG version)
 *
 * Inputs: Not applicable
 * Outputs: Not applicable
 ********************************
-
-	IF	DEBUG_MODE
 
 service_vblank:
 
@@ -327,6 +327,8 @@ _dropped_frame:
 
 	ENDIF
 
+	IF	(DEBUG_MODE==0)
+
 ************************************
 * Service VBlank (non-DEBUG version)
 *
@@ -334,16 +336,17 @@ _dropped_frame:
 * Outputs: Not applicable
 ************************************
 
-	IF	(DEBUG_MODE==0)
-
 service_vblank:
 
 	lda	waiting_for_vblank	; The demo is waiting for the signal
 	beq	_dropped_frame
-	bsr	signal_demo		; VBlank has happened
+	clr	waiting_for_vblank	; No longer waiting
+	lda	#1			; If waiting for VBlank,
+	sta	vblank_happened		; here's the signal
 
 _dropped_frame:
-	bra	exit_irq_handler
+	lda	PIA0BD			; Acknowledge interrupt
+	rti
 
 	ENDIF
 

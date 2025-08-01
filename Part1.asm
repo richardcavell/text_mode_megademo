@@ -93,11 +93,11 @@ WAIT_PERIOD	EQU	25
 
 set_dp_register_for_hsync:
 
-	jsr	switch_off_irq
+	jsr	switch_off_irq_and_firq
 	lda	#irq_service_routine/256
 	tfr	a,dp
 	SETDP	irq_service_routine/256
-	jsr	switch_on_irq
+	jsr	switch_on_irq_and_firq
 	rts
 
 * End of code written by Simon Jonassen and modified by me
@@ -180,7 +180,7 @@ get_irq_handler:
 	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
 	sta	decb_irq_service_instruction
 
-	ldx	IRQ_HANDLER		; Load the current vector into X
+	ldx	IRQ_HANDLER			; Load the current vector into X
 	stx	decb_irq_service_routine	; We could call it at the end
 						; of our own handler
 	rts
@@ -1244,7 +1244,11 @@ spare_slot:
 
 process_pluck_1:
 
-	jsr	pluck_find_a_spare_slot		; Is there a spare slot?
+	jsr	is_there_a_spare_sound_slot	; Is there a spare sound slot?
+	tsta
+	beq	_process_pluck_2		; No, just keep processing
+
+	jsr	pluck_find_a_spare_slot		; Is there a spare data slot?
 	tsta
 	beq	_process_pluck_2		; No, just keep processing
 
@@ -1598,7 +1602,6 @@ place_white_box:
 
 pluck_play_sound:
 
-	lda	#1
 	ldx	#pop_sound
 	ldu	#pop_sound_end
 	jsr	play_sound	; Play the pluck noise
@@ -2092,7 +2095,6 @@ display_messages_play_sound:
 	beq	_display_messages_skip_sound
 
 	pshs	x,u
-	lda	#1
 	ldx	#type_sound
 	ldu	#type_sound_end
 	jsr	play_sound		; Play the typing noise
@@ -2127,6 +2129,28 @@ switch_on_irq_and_firq:
 
 	rts
 
+*****************************
+* Is there a spare sound slot
+*
+* Inputs: None
+* Output:
+* A = (Non-zero) Yes
+* A = 0 No
+*****************************
+
+is_there_a_spare_sound_slot:
+
+	ldx	smp_pt+1
+	cmpx	end_pt+1
+	beq	_spare_slot
+
+	clra
+	rts
+
+_spare_slot:
+	lda	#1
+	rts
+
 *******************************
 * Play a sound sample
 *
@@ -2142,14 +2166,14 @@ play_sound:
 
 * This code was modified from code written by Simon Jonassen
 
-	stx	smp_pt+1	; This is self-modifying code
-	stu	end_pt+1
-
-	ldx	#$1000
-xwait:	leax	-1,x
-	bne	xwait
+	stx	>smp_pt+1	; This is self-modifying code
+	stu	>end_pt+1
 
 * End of code modified from code written by Simon Jonassen
+
+	ldx     #$1000
+xwait:	leax    -1,x
+	bne     xwait
 
 	rts
 

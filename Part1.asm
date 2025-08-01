@@ -34,6 +34,9 @@
 *      The lower left corner will display how many frames have been skipped
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
+*   4) You can see the number of simultaneous plucks
+*      In the lower left corner, to the right of the dropped frame counter
+*      From 0 to 9, plus up arrow meaning 10 or more
 
 DEBUG_MODE	EQU	1
 
@@ -343,6 +346,7 @@ _no_dropped_frames:
 
 _dropped_frame:
 	bsr	print_dropped_frames
+	bsr	print_simultaneous_plucks
 	bsr	cycle_corner_character
 	bra	exit_irq_handler
 
@@ -437,6 +441,43 @@ _store_a:
 
 _do_not_print_frame_counter:
 	rts
+
+***************************
+* Print simultaneous plucks
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+print_simultaneous_plucks:
+
+	clra
+	ldx	#plucks_data
+
+_simul_loop:
+	tst	,x
+	beq	_skip_count_simul
+
+	inca
+
+_skip_count_simul:
+	leax	4,x
+	cmpx	#plucks_data_end
+	blo	_simul_loop
+
+        cmpa    #10
+        blo     _adjust_sp_counter
+
+        lda     #94                     ; This is the up arrow
+        bra     _store_sp_counter
+
+_adjust_sp_counter:
+        adda    #'0'+64
+
+_store_sp_counter:
+        sta     LOWER_LEFT_CORNER+1       ; Put it in the lower-left corner + 1
+
+        rts
 
 ************************
 * Cycle corner character

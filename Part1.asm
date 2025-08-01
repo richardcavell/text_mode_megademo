@@ -8,13 +8,13 @@
 * This demo part is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
+* Part of this code was written by Simon Jonassen (The Invisible Man)
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by a number of other authors
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner (Deek)
-* Part of this code was written by Simon Jonassen (The Invisible Man)
 *
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
@@ -262,8 +262,6 @@ PIA0AD	EQU	$FF00
 PIA0AC	EQU	$FF01
 PIA0BD	EQU	$FF02
 PIA0BC	EQU	$FF03
-
-	align	$100		; for our DP register
 
 *************************
 * Our IRQ handler
@@ -526,12 +524,12 @@ set_audio_port_on:
 
 	rts
 
-***************
-* Set DDRA
+************************
+* Set DDRA bits to input
 *
 * Inputs: None
 * Outputs: None
-***************
+************************
 
 set_ddra_bits_to_input:
 
@@ -2166,14 +2164,14 @@ play_sound:
 
 * This code was modified from code written by Simon Jonassen
 
-	stx	>smp_pt+1	; This is self-modifying code
-	stu	>end_pt+1
-
-* End of code modified from code written by Simon Jonassen
+	stx	smp_pt+1	; This is self-modifying code
+	stu	end_pt+1
 
 	ldx     #$1000
 xwait:	leax    -1,x
 	bne     xwait
+
+* End of code modified from code written by Simon Jonassen
 
 	rts
 

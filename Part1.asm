@@ -1,6 +1,6 @@
 * This is Part 1 of Text Mode Demo
 * by Richard Cavell
-* June - July 2025
+* June - August 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -35,7 +35,7 @@
 *        (0 to 9 and up arrow meaning 10 or more)
 *        Press D to turn the dropped frames counter off or on
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -55,7 +55,7 @@ WAIT_PERIOD	EQU	25
 * D = 0 Success
 *****************
 
-	jsr	set_dp_register_for_music	; For music playback
+	jsr	set_dp_register_for_hsync	; For sound playback
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
@@ -81,6 +81,26 @@ WAIT_PERIOD	EQU	25
 *****************************************************************************
 
 * Assume that no registers are preserved
+
+***************************
+* Set DP register for HSYNC
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+* This code was written by Simon Jonassen and modified by me
+
+set_dp_register_for_hsync:
+
+	jsr	switch_off_irq
+	lda	#irq_service_routine/256
+	tfr	a,dp
+	SETDP	irq_service_routine/256
+	jsr	switch_on_irq
+	rts
+
+* End of code written by Simon Jonassen and modified by me
 
 ************************
 * Turn on debug features
@@ -245,26 +265,6 @@ PIA0BC	EQU	$FF03
 
 	align	$100		; for our DP register
 
-************************************
-* Set DP register for music playback
-*
-* Inputs: None
-* Outputs: None
-************************************
-
-* This code was written by Simon Jonassen and modified by me
-
-set_dp_register_for_music:
-
-setdp	jsr	switch_off_irq_and_firq
-dpval	lda	#*/256
-	tfr	a,dp
-	setdp	dpval
-	jsr	switch_on_irq_and_firq
-	rts
-
-* End of code written by Simon Jonassen and modified by me
-
 *************************
 * Our IRQ handler
 *
@@ -302,12 +302,14 @@ quit_isr:
 
 * End of code that was written by Simon Jonassen and modified by me
 
-*************************
-* Service VBlank
+********************************
+* Service VBlank (DEBUG version)
 *
 * Inputs: Not applicable
 * Outputs: Not applicable
-*************************
+********************************
+
+	IF	DEBUG_MODE
 
 service_vblank:
 
@@ -324,6 +326,28 @@ _dropped_frame:
 	bsr	print_dropped_frames
 	bsr	cycle_corner_character
 	bra	exit_irq_handler
+
+	ENDIF
+
+************************************
+* Service VBlank (non-DEBUG version)
+*
+* Inputs: Not applicable
+* Outputs: Not applicable
+************************************
+
+	IF	(DEBUG_MODE==0)
+
+service_vblank:
+
+	lda	waiting_for_vblank	; The demo is waiting for the signal
+	beq	_dropped_frame
+	bsr	signal_demo		; VBlank has happened
+
+_dropped_frame:
+	bra	exit_irq_handler
+
+	ENDIF
 
 *********************
 * Count dropped frame

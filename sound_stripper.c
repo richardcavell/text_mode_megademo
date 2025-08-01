@@ -82,6 +82,8 @@ main(int argc, char *argv[])
 	{
 		c &= 0xfc;	/* the lowest 2 bits = 0 */
 
+		c >>= 2;	/* appear in the lowest 6 bits */
+
 		if (fputc(c, output_fp) == EOF)
 		{
 			(void) fprintf(stderr, "%s%s%s%i%c",

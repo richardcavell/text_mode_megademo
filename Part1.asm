@@ -286,15 +286,36 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
-smp_pt:	ldx	#0		; pointer to sample
-end_pt:	cmpx	#0		; done ?
-	beq	quit_isr
+smp_1:	ldx	#0		; pointer to sample
+end_1:	cmpx	#0		; done ?
+	beq	_silent_1
 
 	lda	,x+		; Get the next byte of data
-	sta	AUDIO_PORT	; and shove it into the audio port
-	stx	smp_pt+1	; Self-modifying code here
+	stx	smp_1+1		; Self-modifying code here
+	bra	smp_2
 
-quit_isr:
+_silent_1:
+	clra
+
+smp_2:	ldx	#0
+end_2:	cmpx	#0
+	beq	_silent_2
+
+	adda	,x+
+	stx	smp_2+1
+
+_silent_2:
+
+smp_3:	ldx	#0
+end_3:	cmpx	#0
+	beq	_silent_3
+
+	adda	,x+
+	stx	smp_3+1
+
+_silent_3:
+	sta	AUDIO_PORT	; and shove it into the audio port
+
 	lda	PIA0AD		; Acknowledge HSYNC interrupt
 	rti
 
@@ -2072,7 +2093,7 @@ display_messages_big_pause:
 display_messages_pause:
 
 	pshs	x,u
-	lda	#1
+	lda	#5
 	jsr	wait_frames
 	puls	x,u
 	rts
@@ -2141,8 +2162,16 @@ switch_on_irq_and_firq:
 
 is_there_a_spare_sound_slot:
 
-	ldx	smp_pt+1
-	cmpx	end_pt+1
+	ldx	smp_1+1
+	cmpx	end_1+1
+	beq	_spare_slot
+
+	ldx	smp_2+1
+	cmpx	end_2+1
+	beq	_spare_slot
+
+	ldx	smp_3+1
+	cmpx	end_3+1
 	beq	_spare_slot
 
 	clra
@@ -2156,7 +2185,6 @@ _spare_slot:
 * Play a sound sample
 *
 * Inputs:
-* A = The delay between samples
 * X = The sound data
 * U = The end of the sound data
 *
@@ -2165,14 +2193,59 @@ _spare_slot:
 
 play_sound:
 
+	ldy	smp_1+1
+	cmpy	end_1+1
+	bne	_slot_2
+
 * This code was modified from code written by Simon Jonassen
 
-	stx	smp_pt+1	; This is self-modifying code
-	stu	end_pt+1
+	stx	smp_1+1		; This is self-modifying code
+	stu	end_1+1
 
-	ldx     #$1000
-xwait:	leax    -1,x
-	bne     xwait
+* End of code modified from code written by Simon Jonassen
+
+	rts
+
+*******************************
+* Slot 2
+*
+* Inputs:
+* X = The sound data
+* U = The end of the sound data
+*
+* Outputs: None
+*******************************
+
+_slot_2:
+	ldy	smp_2+1
+	cmpy	end_2+1
+	bne	_slot_3
+
+* This code was modified from code written by Simon Jonassen
+
+	stx	smp_2+1		; This is self-modifying code
+	stu	end_2+1
+
+* End of code modified from code written by Simon Jonassen
+
+	rts
+
+*******************************
+* Slot 3
+*
+* Inputs:
+* X = The sound data
+* U = The end of the sound data
+*
+* Outputs: None
+*******************************
+
+_slot_3:
+
+* This code was modified from code written by Simon Jonassen
+
+	stx	smp_3+1		; This is self-modifying code
+	stu	end_3+1
 
 * End of code modified from code written by Simon Jonassen
 

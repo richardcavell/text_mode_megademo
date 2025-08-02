@@ -182,7 +182,7 @@ get_irq_handler:
 	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
 	sta	decb_irq_service_instruction
 
-	ldx	IRQ_HANDLER			; Load the current vector into X
+	ldx	IRQ_HANDLER			; Load the current vector
 	stx	decb_irq_service_routine	; We could call it at the end
 						; of our own handler
 	rts

@@ -203,8 +203,6 @@ set_irq_handler:
 	lda	#irq_service_routine&255
 	sta	IRQ_HANDLER
 
-; The last byte stays the same
-
 	rts
 
 *************************
@@ -291,16 +289,16 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
-	clra
-
 smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?
 	beq	_silent_1
 
-	adda	,x+		; Get the next byte of data
+	lda	,x+		; Get the next byte of data
 	stx	smp_1+1		; Self-modifying code here
+	bra	smp_2
 
 _silent_1:
+	clra
 
 smp_2:	ldx	#0
 end_2:	cmpx	#0

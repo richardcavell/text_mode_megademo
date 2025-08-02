@@ -319,6 +319,15 @@ end_3:	cmpx	#0
 	stx	smp_3+1
 
 _silent_3:
+
+smp_4:	ldx	#0
+end_4:	cmpx	#0
+	beq	_silent_4
+
+	adda	,x+
+	stx	smp_4+1
+
+_silent_4:
 	sta	AUDIO_PORT	; and shove it into the audio port
 
 	lda	PIA0AD		; Acknowledge HSYNC interrupt
@@ -748,7 +757,7 @@ pluck_line_counts_end:
 * Plucks data
 *************
 
-MAX_SIMULTANEOUS_PLUCKS	EQU	10
+MAX_SIMULTANEOUS_PLUCKS	EQU	2
 
 plucks_data:
 
@@ -2217,6 +2226,10 @@ is_there_a_spare_sound_slot:
 	cmpx	end_3+1
 	beq	_spare_slot
 
+	ldx	smp_4+1
+	cmpx	end_4+1
+	beq	_spare_slot
+
 	clra
 	rts
 
@@ -2284,6 +2297,9 @@ _slot_2:
 *******************************
 
 _slot_3:
+	ldy	smp_3+1
+	cmpy	end_3+1
+	bne	_slot_4
 
 * This code was modified from code written by Simon Jonassen
 
@@ -2292,6 +2308,12 @@ _slot_3:
 
 * End of code modified from code written by Simon Jonassen
 
+	rts
+
+_slot_4:
+
+	stx	smp_4+1		; This is self-modifying code
+	stu	end_4+1
 	rts
 
 ******************

@@ -75,8 +75,7 @@ WAIT_PERIOD	EQU	25
 	jsr	restore_basic_irq_service_routine
 	jsr	zero_dp_register		; Zero the DP register
 
-	clra
-	clrb
+	ldd	#0
 	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************

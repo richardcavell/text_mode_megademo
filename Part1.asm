@@ -296,7 +296,7 @@ smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?
 	beq	_silent_1
 
-	adda	,x+		; Get the next byte of data
+	lda	,x+		; Get the next byte of data
 	stx	smp_1+1		; Self-modifying code here
 
 _silent_1:

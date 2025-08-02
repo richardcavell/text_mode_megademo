@@ -294,39 +294,39 @@ irq_service_routine:
 
 smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?
-	beq	_silent_1
+	beq	_1_is_silent
 
 	lda	,x+		; Get the next byte of data
 	stx	smp_1+1		; Self-modifying code here
 
-_silent_1:
+_1_is_silent:
 
 smp_2:	ldx	#0
 end_2:	cmpx	#0
-	beq	_silent_2
+	beq	_2_is_silent
 
 	adda	,x+
 	stx	smp_2+1
 
-_silent_2:
+_2_is_silent:
 
 smp_3:	ldx	#0
 end_3:	cmpx	#0
-	beq	_silent_3
+	beq	_3_is_silent
 
 	adda	,x+
 	stx	smp_3+1
 
-_silent_3:
+_3_is_silent:
 
 smp_4:	ldx	#0
 end_4:	cmpx	#0
-	beq	_silent_4
+	beq	_4_is_silent
 
 	adda	,x+
 	stx	smp_4+1
 
-_silent_4:
+_4_is_silent:
 	sta	AUDIO_PORT	; and shove it into the audio port
 
 	lda	PIA0AD		; Acknowledge HSYNC interrupt
@@ -756,7 +756,7 @@ pluck_line_counts_end:
 * Plucks data
 *************
 
-MAX_SIMULTANEOUS_PLUCKS	EQU	10
+MAX_SIMULTANEOUS_PLUCKS	EQU	2
 
 plucks_data:
 

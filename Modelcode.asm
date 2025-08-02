@@ -38,7 +38,7 @@
 *      In the lower left corner, to the right of the dropped frame counter
 *      From 0 to 9, plus up arrow meaning 10 or more
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -75,8 +75,7 @@ WAIT_PERIOD	EQU	25
 	jsr	restore_basic_irq_service_routine
 	jsr	zero_dp_register		; Zero the DP register
 
-	clra
-	clrb
+	ldd	#0
 	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************
@@ -203,6 +202,8 @@ set_irq_handler:
 	lda	#irq_service_routine&255
 	sta	IRQ_HANDLER
 
+; The last byte stays the same
+
 	rts
 
 *************************
@@ -289,16 +290,16 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
+	clra
+
 smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?
 	beq	_silent_1
 
-	lda	,x+		; Get the next byte of data
+	adda	,x+		; Get the next byte of data
 	stx	smp_1+1		; Self-modifying code here
-	bra	smp_2
 
 _silent_1:
-	clra
 
 smp_2:	ldx	#0
 end_2:	cmpx	#0
@@ -317,6 +318,15 @@ end_3:	cmpx	#0
 	stx	smp_3+1
 
 _silent_3:
+
+smp_4:	ldx	#0
+end_4:	cmpx	#0
+	beq	_silent_4
+
+	adda	,x+
+	stx	smp_4+1
+
+_silent_4:
 	sta	AUDIO_PORT	; and shove it into the audio port
 
 	lda	PIA0AD		; Acknowledge HSYNC interrupt
@@ -2215,6 +2225,10 @@ is_there_a_spare_sound_slot:
 	cmpx	end_3+1
 	beq	_spare_slot
 
+	ldx	smp_4+1
+	cmpx	end_4+1
+	beq	_spare_slot
+
 	clra
 	rts
 
@@ -2282,6 +2296,9 @@ _slot_2:
 *******************************
 
 _slot_3:
+	ldy	smp_3+1
+	cmpy	end_3+1
+	bne	_slot_4
 
 * This code was modified from code written by Simon Jonassen
 
@@ -2290,6 +2307,12 @@ _slot_3:
 
 * End of code modified from code written by Simon Jonassen
 
+	rts
+
+_slot_4:
+
+	stx	smp_4+1		; This is self-modifying code
+	stu	end_4+1
 	rts
 
 ******************

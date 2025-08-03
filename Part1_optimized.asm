@@ -22,23 +22,6 @@
 * https://commons.wikimedia.org/wiki/File:Modelm.ogg
 *
 * The ASCII art of the baby elephant is by Shanaka Dias at asciiart.eu
-*
-* If DEBUG_MODE is non-zero, then Debug Mode is "on".
-* If Debug Mode is on:
-*   1) You can press T to toggle frame-by-frame mode
-*        In frame-by-frame mode, you press F to see the next frame.
-*   2) You can have the lower right corner character cycle when the
-*      interrupt request routine is called
-*        Press C to turn the cycling of the lower-right character off or on
-*   3) You can see if there are dropped frames
-*      The lower left corner will display how many frames have been skipped
-*        (0 to 9 and up arrow meaning 10 or more)
-*        Press D to turn the dropped frames counter off or on
-*   4) You can see the number of simultaneous plucks
-*      In the lower left corner, to the right of the dropped frame counter
-*      From 0 to 9, plus up arrow meaning 10 or more
-
-DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -60,7 +43,6 @@ WAIT_PERIOD	EQU	25
 
 	jsr	setup_backbuffer		; Ready for double buffering
 	jsr	set_dp_register_for_hsync	; For sound playback
-	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
@@ -127,25 +109,6 @@ set_dp_register_for_hsync:
 	rts
 
 * End of code written by Simon Jonassen and modified by me
-
-************************
-* Turn on debug features
-*
-* Inputs: None
-* Outputs: None
-************************
-
-turn_on_debug_features:
-
-	lda	#DEBUG_MODE		; If we are in DEBUG mode,
-	beq	_not_in_debug_mode
-
-	lda	#255			; load #255 into these variables
-	sta	cycle_lower_right
-	sta	dropped_frame_counter_toggle
-
-_not_in_debug_mode:
-	rts
 
 *********************************
 * Install our IRQ service routine
@@ -234,12 +197,12 @@ set_irq_handler:
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400	; We're not double-buffering in the second
-TEXTBUFSIZE	EQU	$200	; part, so there's only one text screen
+TEXTBUF		EQU	$400	; There's only one text screen
+TEXTBUFSIZE	EQU	$200
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
-BACKBUF		EQU	back_buffer	; In the first part, we're double-
-BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)	; buffering
+BACKBUF		EQU	back_buffer	; We're double-buffering
+BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
@@ -261,14 +224,6 @@ vblank_happened:
 
 	RZB	1		; and sets this
 
-dropped_frames:
-
-	RZB	1		; From 0 to 10 (don't count more than 10)
-
-waiting_for_f:
-
-	RZB	1		; You have to press F to go forward
-
 **********************************************
 * Variables relating to DECB's own IRQ handler
 **********************************************
@@ -280,10 +235,6 @@ decb_irq_service_instruction:
 decb_irq_service_routine:
 
 	RZB	2
-
-call_decb_irq_handler:		; We get significantly better performance
-				; by ignoring DECB's IRQ handler
-	RZB	1
 
 *****************************
 * PIA memory-mapped registers
@@ -361,37 +312,6 @@ _4_is_silent:
 
 * End of code that was written by Simon Jonassen and modified by me
 
-	IF	DEBUG_MODE
-
-********************************
-* Service VBlank (DEBUG version)
-*
-* Inputs: Not applicable
-* Outputs: Not applicable
-********************************
-
-service_vblank:
-
-	lda	waiting_for_vblank	; The demo is waiting for the signal
-	bne	_no_dropped_frames	; so let's give it to them
-
-	bsr	count_dropped_frame	; If the demo is not ready for a
-	bra	_dropped_frame		; vblank, then we drop a frame
-
-_no_dropped_frames:
-	bsr	signal_demo		; VBlank has happened
-
-_dropped_frame:
-	bsr	copy_buffer
-	bsr	print_dropped_frames
-	bsr	print_simultaneous_plucks
-	bsr	cycle_corner_character
-	bra	exit_irq_handler
-
-	ENDIF
-
-	IF	(DEBUG_MODE==0)
-
 ************************************
 * Service VBlank (non-DEBUG version)
 *
@@ -412,198 +332,42 @@ service_vblank:
 
 _copy_loop:	; Copy the backbuffer to the text screen
 
-	ldd	,u++
-	std	,x++
-        ldd     ,u++
-        std     ,x++
-	cmpx	#TEXTBUFEND
-	blo	_copy_loop
+; This code was contributed by Simon Jonassen
+
+        pulu    d,y
+        std     ,x
+        sty     2,x
+        pulu    d,y
+        std     4,x
+        sty     6,x
+        pulu    d,y
+        std     8,x
+        sty     10,x
+
+        pulu    d,y
+        std     12,x
+        sty     14,x
+        pulu    d,y
+        std     16,x
+        sty     18,x
+        pulu    d,y
+        std     20,x
+        sty     22,x
+
+        pulu    d,y
+        std     24,x
+        sty     26,x
+        pulu    d,y
+        std     28,x
+        sty     30,x
+
+; End of code contributed by Simon Jonassen
+
+        leax    COLS_PER_LINE,x
+        cmpx    #TEXTBUFEND
+        blo     _copy_loop
 
 _dropped_frame:
-	lda	PIA0BD			; Acknowledge interrupt
-	rti
-
-	ENDIF
-
-*********************
-* Count dropped frame
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-count_dropped_frame:
-
-	lda	waiting_for_f
-	bne	_skip_increment
-
-	lda	dropped_frames
-	cmpa	#10
-	beq	_skip_increment		; Stop counting dropped frames at 10
-
-	inca
-	sta	dropped_frames
-
-_skip_increment:
-	rts
-
-***************
-* Signal demo
-*
-* Inputs: None
-* Outputs: None
-***************
-
-signal_demo:
-
-	clr	waiting_for_vblank	; No longer waiting
-	lda	#1			; If waiting for VBlank,
-	sta	vblank_happened		; here's the signal
-
-	clr	dropped_frames
-
-	rts
-
-***************
-* Copy buffer
-*
-* Inputs: None
-* Outputs: None
-***************
-
-copy_buffer:
-
-	ldx	#TEXTBUF
-	ldu	#BACKBUF
-
-_copy_buffer_loop:     ; Copy the backbuffer to the text screen
-
-        ldd     ,u++
-        std     ,x++
-        ldd     ,u++
-        std     ,x++
-
-        cmpx    #TEXTBUFEND
-        blo     _copy_buffer_loop
-
-	rts
-
-**********************
-* Print dropped frames
-*
-* Inputs: None
-* Outputs: None
-**********************
-
-print_dropped_frames:
-
-	lda	dropped_frame_counter_toggle
-	beq	_do_not_print_frame_counter
-
-	lda	dropped_frames
-	cmpa	#10
-	blo	_adjust_a
-
-	lda	#94			; This is the up arrow
-	bra	_store_a
-
-_adjust_a:
-	adda	#'0'+64
-
-_store_a:
-	sta	LOWER_LEFT_CORNER	; Put it in the lower-left corner
-
-_do_not_print_frame_counter:
-	rts
-
-***************************
-* Print simultaneous plucks
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-print_simultaneous_plucks:
-
-	clra
-	ldx	#plucks_data
-
-_simul_loop:
-	tst	,x
-	beq	_skip_count_simul
-
-	inca
-
-_skip_count_simul:
-	leax	4,x
-	cmpx	#plucks_data_end
-	blo	_simul_loop
-
-        cmpa    #10
-        blo     _adjust_sp_counter
-
-        lda     #94                     ; This is the up arrow
-        bra     _store_sp_counter
-
-_adjust_sp_counter:
-        adda    #'0'+64
-
-_store_sp_counter:
-        sta     LOWER_LEFT_CORNER+1       ; Put it in the lower-left corner + 1
-
-        rts
-
-************************
-* Cycle corner character
-*
-* Inputs: None
-* Outputs: None
-************************
-
-cycle_lower_right:
-
-	FCB	0	; If DEBUG_MODE is on, this will start with 255
-
-character:
-
-	FCB	'A'
-
-; For debugging, this provides a visual indication that
-; our IRQ handler is running
-
-cycle_corner_character:
-
-	lda	cycle_lower_right
-	beq	_skip_cycle
-
-	lda	character
-
-	ldb	waiting_for_f
-	bne	_skip_inc
-
-	inca
-
-_skip_inc:
-	sta	character
-	sta	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
-
-_skip_cycle:
-
-	rts
-
-******************
-* Exit IRQ handler
-******************
-
-exit_irq_handler:
-
-	lda	call_decb_irq_handler
-	beq	_rti_from_here
-	ldx	decb_irq_service_routine
-	beq	_rti_from_here
-	jmp	,x
-
-_rti_from_here:
 	lda	PIA0BD			; Acknowledge interrupt
 	rti
 
@@ -760,12 +524,9 @@ skip_message:
 display_message:
 
 	leau	,x		; Credit to Simon Jonassen for this line
-;	pshs	u				; U = string
 
 	clrb
 	bsr	get_screen_position		; X = Screen position
-
-;	puls	u
 
 _display_message_loop:
 	cmpx	#BACKBUFEND
@@ -816,10 +577,6 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 GREEN_BOX	EQU	$60		; These are MC6847 codes
 WHITE_BOX	EQU	$CF
 
-simultaneous_plucks:
-
-	RZB	1
-
 pluck_line_counts:
 
 	RZB PLUCK_LINES			; 15 zeroes
@@ -857,12 +614,7 @@ PLUCK_PHASE_PULLING	EQU	3
 
 pluck_the_screen:
 
-; First, start with just one pluck at a time
-
-	lda	#1
-	sta	simultaneous_plucks
-
-; Second, count the number of characters on each line of the screen
+; Count the number of characters on each line of the screen
 
 	jsr	pluck_count_chars_per_line
 
@@ -1131,7 +883,6 @@ toggle_cycle:
 
 	com	cycle_lower_right
 	bne	_skip_redraw_cycle
-
 					; If it's being turned off
 	lda	#GREEN_BOX		; then draw over the lower-right
 	sta	LOWER_RIGHT_CORNER	; corner
@@ -1218,11 +969,6 @@ _pluck_screen_not_empty:
 * A = (Non-zero) All slots are empty
 **********************************************************
 
-cache_slots_being_used:
-
-	RZB	1		; Non-zero means at least 1 is being used
-				; Zero means we must check
-
 pluck_check_empty_slots:
 
 	lda	cache_slots_being_used
@@ -1247,7 +993,7 @@ _slots_used:
 
 pluck_check_empty_slots_2:
 
-	bsr	get_pluck_data_end
+	ldx	#plucks_data_end
 
 	stx	oldx+1		; Simon Jonassen contributed this line
 
@@ -1265,59 +1011,6 @@ oldx	cmpx	#$0000		; and this one
 
 _pluck_check_data_not_empty:
 	clra				; There are plucks happening
-	rts
-
-********************
-* Get pluck data end
-*
-* Inputs: None
-*
-* Outputs:
-* X = Address
-********************
-
-cached_pluck_data_end:
-
-	RZB	2
-
-cached_pluck_data_end_is_good:
-
-	RZB	1
-
-get_pluck_data_end:
-
-	lda	cached_pluck_data_end_is_good
-	beq	calculate_pluck_data_end
-
-	ldx	cached_pluck_data_end
-	rts
-
-**************************
-* Calculate pluck data end
-*
-* Inputs: None
-*
-* Outputs:
-* X = Address
-**************************
-
-calculate_pluck_data_end:
-
-; X = #plucks_data + 4 * simultaneous_plucks
-
-	ldx	#plucks_data
-
-; Simon Jonassen contributed to this code
-	ldb	simultaneous_plucks	; Multiply this by 4
-	lslb
-	lslb
-	abx
-; End of code that Simon Jonassen contributed to
-
-	stx	cached_pluck_data_end	; Cache the result
-	lda	#1
-	sta	cached_pluck_data_end_is_good
-
 	rts
 
 ************************************
@@ -1425,7 +1118,7 @@ _process_pluck_2:
 
 pluck_find_a_spare_slot:
 
-	bsr	get_pluck_data_end
+	ldx	#plucks_data_end
 	pshs	x			; ,S = End of pluck lines
 	ldx	#plucks_data		;  X = Our pointer to pluck data
 
@@ -1624,7 +1317,7 @@ _skip_cache_dirtying:
 pluck_get_char:
 
 	sta	olda2+1		; Simon Jonassen contributed this line
-	jsr	get_pluck_data_end
+	ldx	#plucks_data_end
 olda2:	lda	#$00		; and this one
 	pshs	x		;,S = End of pluck data
 
@@ -1771,7 +1464,7 @@ pluck_play_sound:
 process_pluck_2:
 
 	ldu	#plucks_data
-	jsr	get_pluck_data_end
+	ldx	#plucks_data_end
 	pshs	x		; ,S = End of pluck data
 
 _pluck_do_each_pluck:
@@ -1914,10 +1607,6 @@ pluck_phase_3:
 * Outputs: None
 *********************
 
-number_of_plucked_chars:
-
-	RZB	1
-
 pluck_phase_3_ended:		; Character has gone off the right side
 
 	lda	#PLUCK_PHASE_NOTHING
@@ -1925,25 +1614,6 @@ pluck_phase_3_ended:		; Character has gone off the right side
 
 	clr	cache_slots_being_used	; We must count the slots again
 
-	lda	number_of_plucked_chars
-	inca
-	sta	number_of_plucked_chars
-
-	cmpa	simultaneous_plucks
-	beq	_increase_plucks
-
-	rts
-
-_increase_plucks:
-
-	cmpa	#MAX_SIMULTANEOUS_PLUCKS
-	beq	_no_increase
-
-	inc	simultaneous_plucks
-	clr	cached_pluck_data_end_is_good	; Trash this cache
-	clr	number_of_plucked_chars
-
-_no_increase:
 	rts
 
 ***********************************

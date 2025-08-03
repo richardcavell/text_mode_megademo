@@ -685,13 +685,13 @@ skip_message:
 
 display_message:
 
-	tfr	x,u
-	pshs	u				; U = string
+	leau	,x		; Credit to Simon Jonassen for this line
+;	pshs	u				; U = string
 
 	clrb
 	bsr	get_screen_position		; X = Screen position
 
-	puls	u
+;	puls	u
 
 _display_message_loop:
 	cmpx	#TEXTBUFEND
@@ -719,14 +719,14 @@ get_screen_position:
 
 ;   X = TEXTBUF + A * COLS_PER_LINE + B
 
-	tfr	d,u
+	std	dval+1		; This was added by Simon Jonassen
 
 	ldx	#TEXTBUF
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
 
-	tfr	u,d
+dval:	ldd	#$0000		; And this
 	abx
 
 	rts
@@ -856,11 +856,11 @@ _skip_count:
 
 increment_u:
 
-	pshs	x,u
+;	pshs	x,u		; Simon Jonassen contributed the semicolons
 	tfr	x,d
 	bsr	is_d_divisible_by_32
 	tsta
-	puls	x,u		; Does not affect Condition Codes
+;	puls	x,u		; Does not affect Condition Codes
 	bne	_increment
 
 	rts
@@ -1174,22 +1174,22 @@ _slots_used:
 pluck_check_empty_slots_2:
 
 	bsr	get_pluck_data_end
-	pshs	x			; ,S is end of plucks data
+
+	stx	oldx+1		; Simon Jonassen contributed this line
+
 	ldx	#plucks_data
 
 _pluck_check_data:
 	lda	,x
 	bne	_pluck_check_data_not_empty
 	leax	4,x
-	cmpx	,s
+oldx	cmpx	#$0000		; and this one
 	blo	_pluck_check_data
 
-	puls	x
 	lda	#1			; There are no plucks happening
 	rts
 
 _pluck_check_data_not_empty:
-	puls	x
 	clra				; There are plucks happening
 	rts
 
@@ -1232,10 +1232,13 @@ calculate_pluck_data_end:
 ; X = #plucks_data + 4 * simultaneous_plucks
 
 	ldx	#plucks_data
-	lda	simultaneous_plucks	; Multiply this by 4
-	lsla
-	lsla
-	leax	a,x
+
+; Simon Jonassen contributed to this code
+	ldb	simultaneous_plucks	; Multiply this by 4
+	lslb
+	lslb
+	abx
+; End of code that Simon Jonassen contributed to
 
 	stx	cached_pluck_data_end	; Cache the result
 	lda	#1
@@ -1481,8 +1484,9 @@ pluck_collate_non_zero_lines_2:
 
 	ldx	#pluck_line_counts
 	ldu	#pluck_collated_lines
-	clra
-	clrb
+;	clra
+;	clrb
+	ldd	#$0000	; Simon Jonassen contributed this line
 
 _pluck_collate_loop:
 	cmpx	#pluck_line_counts_end
@@ -1513,9 +1517,9 @@ _pluck_collate_finished:
 
 pluck_char_choose_a_line:
 
-	pshs	a
+	sta	olda1+1
 	jsr	get_random	; Random number in B
-	puls	a
+olda1:	lda	#$00
 
 	mul			; A is a random number from 0 to no. lines
 
@@ -1545,9 +1549,9 @@ _skip_cache_dirtying:
 
 pluck_get_char:
 
-	pshs	a
+	sta	olda2+1		; Simon Jonassen contributed this line
 	jsr	get_pluck_data_end
-	puls	a
+olda2:	lda	#$00		; and this one
 	pshs	x		;,S = End of pluck data
 
 	jsr	get_end_of_line	; X = Screen position (going backwards)
@@ -1637,18 +1641,20 @@ pluck_char:
 
 pluck_register:
 
-	tfr	x,u
+;	tfr	x,u
+	leau	,x		; Contributed by Simon Jonassen
 	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
 	ldb	,u		; B = the character being plucked
 				; X is the slot
 				; U is the screen position
 	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
-	sta	,x+		; Store our new phase
-	stb	,x+		; the character
+;	sta	,x+		; Store our new phase
+;	stb	,x+		; the character
+	std	,x++		; SJ contributed this line as well
 	stu	,x		; And where it is
 
-	tfr	u,x		; Return X
-
+;	tfr	u,x		; Return X
+	leax	,u		; SJ contributed this line
 	rts
 
 *********************
@@ -1700,9 +1706,11 @@ _pluck_do_each_pluck:
 	ldb	1,u
 	ldx	2,u
 
-	pshs	u
+;	pshs	u		; Simon Jonassen contributed this
+	stu	oldu+1
 	bsr	pluck_do_one_pluck
-	puls	u
+;	puls	u
+oldu:	ldu	#$0000		; and this
 
 _no_pluck_happening:
 	leau	4,u
@@ -2074,11 +2082,13 @@ _display_messages_end:
 
 display_messages_next_line:
 
-	pshs	x
+;	pshs	x
+	stx	oldx2+1		; Simon Jonassen contributed this line
 	tfr	u,x
 	bsr	move_to_next_line
 	tfr	x,u
-	puls	x
+oldx2:	ldx	#$0000		; and this one
+;	puls	x
 
 	pshs	x,u
 	lda	#5

@@ -8,7 +8,7 @@
 * This demo part is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* Part of this code was written by Simon Jonassen (The Invisible Man)
+* Parts of this code were written by Simon Jonassen (The Invisible Man)
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by a number of other authors
@@ -58,6 +58,7 @@ WAIT_PERIOD	EQU	25
 * D = 0 Success
 *****************
 
+	jsr	setup_backbuffer		; Ready for double buffering
 	jsr	set_dp_register_for_hsync	; For sound playback
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
@@ -68,9 +69,9 @@ WAIT_PERIOD	EQU	25
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
-	jsr	turn_off_interrupts		; Go back to what BASIC uses
 	jsr	loading_screen
 	jsr	print_loading_text
+	jsr	turn_off_interrupts		; Go back to what BASIC uses
 
 	jsr	restore_basic_irq_service_routine
 	jsr	zero_dp_register		; Zero the DP register
@@ -83,6 +84,29 @@ WAIT_PERIOD	EQU	25
 *****************************************************************************
 
 * Assume that no registers are preserved
+
+******************
+* Setup backbuffer
+*
+* Inputs: None
+* Outputs: None
+******************
+
+setup_backbuffer:
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_setup_loop:
+	ldd	,x++
+	std	,u++
+	ldd	,x++
+	std	,u++
+
+	cmpx	#TEXTBUFEND
+	blo	_setup_loop
+
+	rts
 
 ***************************
 * Set DP register for HSYNC
@@ -182,7 +206,7 @@ get_irq_handler:
 	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
 	sta	decb_irq_service_instruction
 
-	ldx	IRQ_HANDLER			; Load the current vector into X
+	ldx	IRQ_HANDLER			; Load the current vector
 	stx	decb_irq_service_routine	; We could call it at the end
 						; of our own handler
 	rts
@@ -210,9 +234,12 @@ set_irq_handler:
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400	; We're not double-buffering in this part
-TEXTBUFSIZE	EQU	$200	; so there's only one text screen
+TEXTBUF		EQU	$400	; We're not double-buffering in the second
+TEXTBUFSIZE	EQU	$200	; part, so there's only one text screen
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
+
+BACKBUF		EQU	back_buffer	; In the first part, we're double-
+BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)	; buffering
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
@@ -294,39 +321,39 @@ irq_service_routine:
 
 smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?
-	beq	_silent_1
+	beq	_1_is_silent
 
-	adda	,x+		; Get the next byte of data
+	lda	,x+		; Get the next byte of data
 	stx	smp_1+1		; Self-modifying code here
 
-_silent_1:
+_1_is_silent:
 
 smp_2:	ldx	#0
 end_2:	cmpx	#0
-	beq	_silent_2
+	beq	_2_is_silent
 
 	adda	,x+
 	stx	smp_2+1
 
-_silent_2:
+_2_is_silent:
 
 smp_3:	ldx	#0
 end_3:	cmpx	#0
-	beq	_silent_3
+	beq	_3_is_silent
 
 	adda	,x+
 	stx	smp_3+1
 
-_silent_3:
+_3_is_silent:
 
 smp_4:	ldx	#0
 end_4:	cmpx	#0
-	beq	_silent_4
+	beq	_4_is_silent
 
 	adda	,x+
 	stx	smp_4+1
 
-_silent_4:
+_4_is_silent:
 	sta	AUDIO_PORT	; and shove it into the audio port
 
 	lda	PIA0AD		; Acknowledge HSYNC interrupt
@@ -355,6 +382,7 @@ _no_dropped_frames:
 	bsr	signal_demo		; VBlank has happened
 
 _dropped_frame:
+	bsr	copy_buffer
 	bsr	print_dropped_frames
 	bsr	print_simultaneous_plucks
 	bsr	cycle_corner_character
@@ -378,6 +406,18 @@ service_vblank:
 	clr	waiting_for_vblank	; No longer waiting
 	lda	#1			; If waiting for VBlank,
 	sta	vblank_happened		; here's the signal
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_copy_loop:	; Copy the backbuffer to the text screen
+
+	ldd	,u++
+	std	,x++
+        ldd     ,u++
+        std     ,x++
+	cmpx	#TEXTBUFEND
+	blo	_copy_loop
 
 _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
@@ -421,6 +461,30 @@ signal_demo:
 	sta	vblank_happened		; here's the signal
 
 	clr	dropped_frames
+
+	rts
+
+***************
+* Copy buffer
+*
+* Inputs: None
+* Outputs: None
+***************
+
+copy_buffer:
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_copy_buffer_loop:     ; Copy the backbuffer to the text screen
+
+        ldd     ,u++
+        std     ,x++
+        ldd     ,u++
+        std     ,x++
+
+        cmpx    #TEXTBUFEND
+        blo     _copy_buffer_loop
 
 	rts
 
@@ -500,6 +564,10 @@ cycle_lower_right:
 
 	FCB	0	; If DEBUG_MODE is on, this will start with 255
 
+character:
+
+	FCB	'A'
+
 ; For debugging, this provides a visual indication that
 ; our IRQ handler is running
 
@@ -508,10 +576,16 @@ cycle_corner_character:
 	lda	cycle_lower_right
 	beq	_skip_cycle
 
-	lda	waiting_for_f
-	bne	_skip_cycle
+	lda	character
 
-	inc	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
+	ldb	waiting_for_f
+	bne	_skip_inc
+
+	inca
+
+_skip_inc:
+	sta	character
+	sta	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
 
 _skip_cycle:
 
@@ -685,16 +759,16 @@ skip_message:
 
 display_message:
 
-	tfr	x,u
-	pshs	u				; U = string
+	leau	,x		; Credit to Simon Jonassen for this line
+;	pshs	u				; U = string
 
 	clrb
 	bsr	get_screen_position		; X = Screen position
 
-	puls	u
+;	puls	u
 
 _display_message_loop:
-	cmpx	#TEXTBUFEND
+	cmpx	#BACKBUFEND
 	bhs	_display_message_finished	; End of text buffer
 	lda	,u+
 	beq	_display_message_finished	; Terminating zero was found
@@ -717,16 +791,16 @@ _display_message_finished:
 
 get_screen_position:
 
-;   X = TEXTBUF + A * COLS_PER_LINE + B
+;   X = BACKBUF + A * COLS_PER_LINE + B
 
-	tfr	d,u
-
-	ldx	#TEXTBUF
+	stb	dval+1		; This was added by Simon Jonassen
+				; and refined by me
+	ldx	#BACKBUF
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
 
-	tfr	u,d
+dval:	ldb	#$00		; And this
 	abx
 
 	rts
@@ -756,7 +830,7 @@ pluck_line_counts_end:
 * Plucks data
 *************
 
-MAX_SIMULTANEOUS_PLUCKS	EQU	10
+MAX_SIMULTANEOUS_PLUCKS	EQU	2
 
 plucks_data:
 
@@ -806,7 +880,7 @@ pluck_the_screen:
 
 pluck_count_chars_per_line:
 
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldu	#pluck_line_counts
 
 _pluck_count_loop:
@@ -856,11 +930,11 @@ _skip_count:
 
 increment_u:
 
-	pshs	x,u
+;	pshs	x,u		; Simon Jonassen contributed the semicolons
 	tfr	x,d
 	bsr	is_d_divisible_by_32
 	tsta
-	puls	x,u		; Does not affect Condition Codes
+;	puls	x,u		; Does not affect Condition Codes
 	bne	_increment
 
 	rts
@@ -1174,22 +1248,22 @@ _slots_used:
 pluck_check_empty_slots_2:
 
 	bsr	get_pluck_data_end
-	pshs	x			; ,S is end of plucks data
+
+	stx	oldx+1		; Simon Jonassen contributed this line
+
 	ldx	#plucks_data
 
 _pluck_check_data:
 	lda	,x
 	bne	_pluck_check_data_not_empty
 	leax	4,x
-	cmpx	,s
+oldx	cmpx	#$0000		; and this one
 	blo	_pluck_check_data
 
-	puls	x
 	lda	#1			; There are no plucks happening
 	rts
 
 _pluck_check_data_not_empty:
-	puls	x
 	clra				; There are plucks happening
 	rts
 
@@ -1232,10 +1306,13 @@ calculate_pluck_data_end:
 ; X = #plucks_data + 4 * simultaneous_plucks
 
 	ldx	#plucks_data
-	lda	simultaneous_plucks	; Multiply this by 4
-	lsla
-	lsla
-	leax	a,x
+
+; Simon Jonassen contributed to this code
+	ldb	simultaneous_plucks	; Multiply this by 4
+	lslb
+	lslb
+	abx
+; End of code that Simon Jonassen contributed to
 
 	stx	cached_pluck_data_end	; Cache the result
 	lda	#1
@@ -1481,8 +1558,9 @@ pluck_collate_non_zero_lines_2:
 
 	ldx	#pluck_line_counts
 	ldu	#pluck_collated_lines
-	clra
-	clrb
+;	clra
+;	clrb
+	ldd	#$0000	; Simon Jonassen contributed this line
 
 _pluck_collate_loop:
 	cmpx	#pluck_line_counts_end
@@ -1513,9 +1591,9 @@ _pluck_collate_finished:
 
 pluck_char_choose_a_line:
 
-	pshs	a
+	sta	olda1+1
 	jsr	get_random	; Random number in B
-	puls	a
+olda1:	lda	#$00
 
 	mul			; A is a random number from 0 to no. lines
 
@@ -1545,9 +1623,9 @@ _skip_cache_dirtying:
 
 pluck_get_char:
 
-	pshs	a
+	sta	olda2+1		; Simon Jonassen contributed this line
 	jsr	get_pluck_data_end
-	puls	a
+olda2:	lda	#$00		; and this one
 	pshs	x		;,S = End of pluck data
 
 	jsr	get_end_of_line	; X = Screen position (going backwards)
@@ -1637,18 +1715,20 @@ pluck_char:
 
 pluck_register:
 
-	tfr	x,u
+;	tfr	x,u
+	leau	,x		; Contributed by Simon Jonassen
 	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
 	ldb	,u		; B = the character being plucked
 				; X is the slot
 				; U is the screen position
 	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
-	sta	,x+		; Store our new phase
-	stb	,x+		; the character
+;	sta	,x+		; Store our new phase
+;	stb	,x+		; the character
+	std	,x++		; SJ contributed this line as well
 	stu	,x		; And where it is
 
-	tfr	u,x		; Return X
-
+;	tfr	u,x		; Return X
+	leax	,u		; SJ contributed this line
 	rts
 
 *********************
@@ -1700,9 +1780,11 @@ _pluck_do_each_pluck:
 	ldb	1,u
 	ldx	2,u
 
-	pshs	u
+;	pshs	u		; Simon Jonassen contributed this
+	stu	oldu+1
 	bsr	pluck_do_one_pluck
-	puls	u
+;	puls	u
+oldu:	ldu	#$0000		; and this
 
 _no_pluck_happening:
 	leau	4,u
@@ -2024,7 +2106,7 @@ joke_startup_messages:
 
 display_messages:
 
-	ldu	#TEXTBUF
+	ldu	#BACKBUF
 
 _display_messages_loop:
 	lda	,x+
@@ -2074,11 +2156,13 @@ _display_messages_end:
 
 display_messages_next_line:
 
-	pshs	x
+;	pshs	x
+	stx	oldx2+1		; Simon Jonassen contributed this line
 	tfr	u,x
 	bsr	move_to_next_line
 	tfr	x,u
-	puls	x
+oldx2:	ldx	#$0000		; and this one
+;	puls	x
 
 	pshs	x,u
 	lda	#5
@@ -2324,7 +2408,7 @@ _slot_4:
 
 clear_screen:
 
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
 
 _clear_screen_loop:
@@ -2333,7 +2417,7 @@ _clear_screen_loop:
 	std	,x++
 	std	,x++
 
-	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
+	cmpx	#BACKBUFEND		; Finish in the lower-right corner
 	blo	_clear_screen_loop
 	rts
 
@@ -2421,6 +2505,8 @@ print_loading_text:
 	lda	#15
 	ldx	#loading_text
 	jsr	display_message
+	lda	#1
+	jsr	wait_frames
 
 	rts
 
@@ -2532,3 +2618,15 @@ type_sound:
 	INCLUDEBIN "Sounds/Type/Type.raw"
 
 type_sound_end:
+
+**************************
+* Our backbuffer goes here
+**************************
+
+	align	COLS_PER_LINE
+
+back_buffer:
+
+	RZB	512,GREEN_BOX
+
+back_buffer_end:

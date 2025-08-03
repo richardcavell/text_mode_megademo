@@ -8,7 +8,7 @@
 * This demo part is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
-* Part of this code was written by Simon Jonassen (The Invisible Man)
+* Parts of this code were written by Simon Jonassen (The Invisible Man)
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by a number of other authors
@@ -388,10 +388,10 @@ service_vblank:
 
 _copy_loop:	; Copy the backbuffer to the text screen
 
-	ldd	,x++
-	std	,u++
-        ldd     ,x++
-        std     ,u++
+	ldd	,u++
+	std	,x++
+        ldd     ,u++
+        std     ,x++
 	cmpx	#TEXTBUF_END
 	blo	_copy_loop
 
@@ -454,10 +454,10 @@ copy_buffer:
 
 _copy_buffer_loop:     ; Copy the backbuffer to the text screen
 
-        ldd     ,x++
-        std     ,u++
-        ldd     ,x++
-        std     ,u++
+        ldd     ,u++
+        std     ,x++
+        ldd     ,u++
+        std     ,x++
 
         cmpx    #TEXTBUF_END
         blo     _copy_buffer_loop

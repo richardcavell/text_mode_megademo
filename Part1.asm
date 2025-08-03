@@ -58,6 +58,7 @@ WAIT_PERIOD	EQU	25
 * D = 0 Success
 *****************
 
+	jsr	setup_backbuffer		; Ready for double buffering
 	jsr	set_dp_register_for_hsync	; For sound playback
 	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
@@ -215,7 +216,7 @@ TEXTBUFSIZE	EQU	$200	; part, so there's only one text screen
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
 BACKBUF		EQU	back_buffer	; In the first part, we're double-
-BACKBUF_END	EQU	(BACKBUF+TEXTBUFSIZE)	; buffering
+BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)	; buffering
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
@@ -392,7 +393,7 @@ _copy_loop:	; Copy the backbuffer to the text screen
 	std	,x++
         ldd     ,u++
         std     ,x++
-	cmpx	#TEXTBUF_END
+	cmpx	#TEXTBUFEND
 	blo	_copy_loop
 
 _dropped_frame:
@@ -459,7 +460,7 @@ _copy_buffer_loop:     ; Copy the backbuffer to the text screen
         ldd     ,u++
         std     ,x++
 
-        cmpx    #TEXTBUF_END
+        cmpx    #TEXTBUFEND
         blo     _copy_buffer_loop
 
 	rts
@@ -693,6 +694,29 @@ turn_on_interrupts:
 
 	rts
 
+******************
+* Setup backbuffer
+*
+* Inputs: None
+* Outputs: None
+******************
+
+setup_backbuffer:
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_setup_loop:
+	ldd	,x++
+	std	,u++
+	ldd	,x++
+	std	,u++
+
+	cmpx	#TEXTBUFEND
+	blo	_setup_loop
+
+	rts
+
 **************************************************
 * Display skip message at the bottom of the screen
 *
@@ -734,7 +758,7 @@ display_message:
 ;	puls	u
 
 _display_message_loop:
-	cmpx	#TEXTBUFEND
+	cmpx	#BACKBUFEND
 	bhs	_display_message_finished	; End of text buffer
 	lda	,u+
 	beq	_display_message_finished	; Terminating zero was found
@@ -757,11 +781,11 @@ _display_message_finished:
 
 get_screen_position:
 
-;   X = TEXTBUF + A * COLS_PER_LINE + B
+;   X = BACKBUF + A * COLS_PER_LINE + B
 
 	std	dval+1		; This was added by Simon Jonassen
 
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
@@ -846,7 +870,7 @@ pluck_the_screen:
 
 pluck_count_chars_per_line:
 
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldu	#pluck_line_counts
 
 _pluck_count_loop:
@@ -2072,7 +2096,7 @@ joke_startup_messages:
 
 display_messages:
 
-	ldu	#TEXTBUF
+	ldu	#BACKBUF
 
 _display_messages_loop:
 	lda	,x+
@@ -2374,7 +2398,7 @@ _slot_4:
 
 clear_screen:
 
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
 
 _clear_screen_loop:
@@ -2383,7 +2407,7 @@ _clear_screen_loop:
 	std	,x++
 	std	,x++
 
-	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
+	cmpx	#BACKBUFEND		; Finish in the lower-right corner
 	blo	_clear_screen_loop
 	rts
 

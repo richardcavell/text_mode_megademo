@@ -69,9 +69,9 @@ WAIT_PERIOD	EQU	25
 	jsr	display_skip_message
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
-	jsr	turn_off_interrupts		; Go back to what BASIC uses
 	jsr	loading_screen
 	jsr	print_loading_text
+	jsr	turn_off_interrupts		; Go back to what BASIC uses
 
 	jsr	restore_basic_irq_service_routine
 	jsr	zero_dp_register		; Zero the DP register
@@ -84,6 +84,29 @@ WAIT_PERIOD	EQU	25
 *****************************************************************************
 
 * Assume that no registers are preserved
+
+******************
+* Setup backbuffer
+*
+* Inputs: None
+* Outputs: None
+******************
+
+setup_backbuffer:
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_setup_loop:
+	ldd	,x++
+	std	,u++
+	ldd	,x++
+	std	,u++
+
+	cmpx	#TEXTBUFEND
+	blo	_setup_loop
+
+	rts
 
 ***************************
 * Set DP register for HSYNC
@@ -694,29 +717,6 @@ turn_on_interrupts:
 
 	rts
 
-******************
-* Setup backbuffer
-*
-* Inputs: None
-* Outputs: None
-******************
-
-setup_backbuffer:
-
-	ldx	#TEXTBUF
-	ldu	#BACKBUF
-
-_setup_loop:
-	ldd	,x++
-	std	,u++
-	ldd	,x++
-	std	,u++
-
-	cmpx	#TEXTBUFEND
-	blo	_setup_loop
-
-	rts
-
 **************************************************
 * Display skip message at the bottom of the screen
 *
@@ -783,14 +783,14 @@ get_screen_position:
 
 ;   X = BACKBUF + A * COLS_PER_LINE + B
 
-	std	dval+1		; This was added by Simon Jonassen
-
+	stb	dval+1		; This was added by Simon Jonassen
+				; and refined by me
 	ldx	#BACKBUF
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
 
-dval:	ldd	#$0000		; And this
+dval:	ldb	#$00		; And this
 	abx
 
 	rts
@@ -2615,6 +2615,6 @@ type_sound_end:
 
 back_buffer:
 
-	RZB	512
+	RZB	512,GREEN_BOX
 
 back_buffer_end:

@@ -2587,6 +2587,8 @@ type_sound_end:
 * Our backbuffer goes here
 **************************
 
+	align	COLS_PER_LINE
+
 back_buffer:
 
 	RZB	512

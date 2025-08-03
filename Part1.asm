@@ -38,7 +38,7 @@
 *      In the lower left corner, to the right of the dropped frame counter
 *      From 0 to 9, plus up arrow meaning 10 or more
 
-DEBUG_MODE	EQU	1
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 

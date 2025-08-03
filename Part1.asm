@@ -38,7 +38,7 @@
 *      In the lower left corner, to the right of the dropped frame counter
 *      From 0 to 9, plus up arrow meaning 10 or more
 
-DEBUG_MODE	EQU	0
+DEBUG_MODE	EQU	1
 
 * Between each section, wait this number of frames
 
@@ -564,6 +564,10 @@ cycle_lower_right:
 
 	FCB	0	; If DEBUG_MODE is on, this will start with 255
 
+character:
+
+	FCB	'A'
+
 ; For debugging, this provides a visual indication that
 ; our IRQ handler is running
 
@@ -572,10 +576,16 @@ cycle_corner_character:
 	lda	cycle_lower_right
 	beq	_skip_cycle
 
-	lda	waiting_for_f
-	bne	_skip_cycle
+	lda	character
 
-	inc	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
+	ldb	waiting_for_f
+	bne	_skip_inc
+
+	inca
+
+_skip_inc:
+	sta	character
+	sta	LOWER_RIGHT_CORNER ; The lower-right corner character cycles
 
 _skip_cycle:
 

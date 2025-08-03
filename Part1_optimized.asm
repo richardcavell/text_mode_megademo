@@ -756,14 +756,11 @@ wait_for_vblank_and_check_for_skip:
 	clr	vblank_happened		; See "Variables that are relevant to
 	lda	#1			; vertical blank timing" above
 	sta	waiting_for_vblank
-	clr	waiting_for_f
 
 _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
-	cmpa	#1
-	beq	_skip
-	cmpa	#2
-	beq	wait_for_f
+	tsta
+	bne	_skip
 
 	lda	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
@@ -774,19 +771,6 @@ _wait_for_vblank_and_check_for_skip_loop:
 _skip:
 	lda	#1	; User skipped
 	rts
-
-***************
-* Waiting for F
-*
-* Inputs: None
-* Outputs: None
-***************
-
-wait_for_f:
-
-	lda	#1
-	sta	waiting_for_f
-	bra	_wait_for_vblank_and_check_for_skip_loop
 
 *****************************
 * Define POLCAT and BREAK_KEY
@@ -817,123 +801,11 @@ poll_keyboard:
 	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
 
-	ldb	#DEBUG_MODE
-	bne	debugging_mode_is_on
-
 	clra		; Debug mode is off, so exit normally
 	rts
 
 _wait_for_vblank_skip:
 	lda	#1	; User wants to skip
-	rts
-
-*******************************
-* Debugging mode is on
-*
-* Input:
-* A = Keypress
-*
-* Output:
-* A = 0 All normal
-* A = 2 Require F to go forward
-*******************************
-
-debugging_mode_is_on:
-
-	cmpa	#'T'
-	beq	toggle_frame_by_frame
-	cmpa	#'C'
-	beq	toggle_cycle
-	cmpa	#'D'
-	beq	toggle_dropped_frame_counter
-
-_key_processed:
-	ldb	frame_by_frame_mode_toggle
-	bne	require_f
-
-	clra
-	rts
-
-**********************************
-* Invert frame-by-frame toggle
-*
-* Input:
-* A = Keypress
-*
-* Outputs: None
-**********************************
-
-frame_by_frame_mode_toggle:
-
-	RZB	1
-
-toggle_frame_by_frame:
-
-	com	frame_by_frame_mode_toggle
-	bra	_key_processed
-
-***************
-* Toggle cycle
-*
-* Inputs: None
-* Outputs: None
-***************
-
-toggle_cycle:
-
-	com	cycle_lower_right
-	bne	_skip_redraw_cycle
-					; If it's being turned off
-	lda	#GREEN_BOX		; then draw over the lower-right
-	sta	LOWER_RIGHT_CORNER	; corner
-
-_skip_redraw_cycle:
-	bra	_key_processed
-
-******************************
-* Toggle dropped frame counter
-*
-* Inputs: None
-* Outputs: None
-******************************
-
-dropped_frame_counter_toggle:
-
-	FCB	0	; If DEBUG_MODE is on, then this starts with 255
-
-toggle_dropped_frame_counter:
-
-	com	dropped_frame_counter_toggle
-	bne	_skip_redraw_dropped_frame_counter
-
-					; If it's being turned off
-	lda	#GREEN_BOX		; then draw over the lower-left
-	sta	LOWER_LEFT_CORNER	; corner
-
-_skip_redraw_dropped_frame_counter:
-	bra	_key_processed
-
-*******************************
-* Require F
-*
-* Input:
-* A = Keypress
-*
-* Output:
-* A = 0 All is well
-* A = 2 Require an F to proceed
-*******************************
-
-require_f:
-
-	cmpa	#'F'		; If toggle is on, require an F
-	beq	_forward		; to go forward 1 frame
-
-	lda	#2		; If no F, go back to polling the keyboard
-	rts
-
-_forward:
-	clra
 	rts
 
 *************************************************
@@ -971,14 +843,7 @@ _pluck_screen_not_empty:
 
 pluck_check_empty_slots:
 
-	lda	cache_slots_being_used
-	bne	_slots_used
 	bsr	pluck_check_empty_slots_2	; Return what this returns
-	sta	cache_slots_being_used
-	rts
-
-_slots_used:
-	clra
 	rts
 
 **********************************************************
@@ -1611,8 +1476,6 @@ pluck_phase_3_ended:		; Character has gone off the right side
 
 	lda	#PLUCK_PHASE_NOTHING
 	sta	,u		; This slot is now empty
-
-	clr	cache_slots_being_used	; We must count the slots again
 
 	rts
 

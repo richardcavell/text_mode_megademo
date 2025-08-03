@@ -210,9 +210,12 @@ set_irq_handler:
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400	; We're not double-buffering in this part
-TEXTBUFSIZE	EQU	$200	; so there's only one text screen
+TEXTBUF		EQU	$400	; We're not double-buffering in the second
+TEXTBUFSIZE	EQU	$200	; part, so there's only one text screen
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
+
+BACKBUF		EQU	back_buffer	; In the first part, we're double-
+BACKBUF_END	EQU	(BACKBUF+TEXTBUFSIZE)	; buffering
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
@@ -355,6 +358,7 @@ _no_dropped_frames:
 	bsr	signal_demo		; VBlank has happened
 
 _dropped_frame:
+	bsr	copy_buffer
 	bsr	print_dropped_frames
 	bsr	print_simultaneous_plucks
 	bsr	cycle_corner_character
@@ -378,6 +382,18 @@ service_vblank:
 	clr	waiting_for_vblank	; No longer waiting
 	lda	#1			; If waiting for VBlank,
 	sta	vblank_happened		; here's the signal
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_copy_loop:	; Copy the backbuffer to the text screen
+
+	ldd	,x++
+	std	,u++
+        ldd     ,x++
+        std     ,u++
+	cmpx	#TEXTBUF_END
+	blo	_copy_loop
 
 _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
@@ -421,6 +437,30 @@ signal_demo:
 	sta	vblank_happened		; here's the signal
 
 	clr	dropped_frames
+
+	rts
+
+***************
+* Copy buffer
+*
+* Inputs: None
+* Outputs: None
+***************
+
+copy_buffer:
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_copy_buffer_loop:     ; Copy the backbuffer to the text screen
+
+        ldd     ,x++
+        std     ,u++
+        ldd     ,x++
+        std     ,u++
+
+        cmpx    #TEXTBUF_END
+        blo     _copy_buffer_loop
 
 	rts
 
@@ -2542,3 +2582,13 @@ type_sound:
 	INCLUDEBIN "Sounds/Type/Type.raw"
 
 type_sound_end:
+
+**************************
+* Our backbuffer goes here
+**************************
+
+back_buffer:
+
+	RZB	512
+
+back_buffer_end:

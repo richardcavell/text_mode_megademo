@@ -2495,6 +2495,8 @@ print_loading_text:
 	lda	#15
 	ldx	#loading_text
 	jsr	display_message
+	lda	#1
+	jsr	wait_frames
 
 	rts
 

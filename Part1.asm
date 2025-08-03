@@ -234,12 +234,12 @@ set_irq_handler:
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400	; We're not double-buffering in the second
-TEXTBUFSIZE	EQU	$200	; part, so there's only one text screen
+TEXTBUF		EQU	$400	; There's only one text screen
+TEXTBUFSIZE	EQU	$200
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
-BACKBUF		EQU	back_buffer	; In the first part, we're double-
-BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)	; buffering
+BACKBUF		EQU	back_buffer	; We're double-buffering
+BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
@@ -384,9 +384,8 @@ _no_dropped_frames:
 _dropped_frame:
 	bsr	copy_buffer
 	bsr	print_dropped_frames
-	bsr	print_simultaneous_plucks
-	bsr	cycle_corner_character
-	bra	exit_irq_handler
+	jsr	cycle_corner_character
+	jmp	exit_irq_handler
 
 	ENDIF
 
@@ -412,12 +411,40 @@ service_vblank:
 
 _copy_loop:	; Copy the backbuffer to the text screen
 
-	ldd	,u++
-	std	,x++
-        ldd     ,u++
-        std     ,x++
-	cmpx	#TEXTBUFEND
-	blo	_copy_loop
+; This code was contributed by Simon Jonassen
+
+        pulu    d,y
+        std     ,x
+        sty     2,x
+        pulu    d,y
+        std     4,x
+        sty     6,x
+        pulu    d,y
+        std     8,x
+        sty     10,x
+
+        pulu    d,y
+        std     12,x
+        sty     14,x
+        pulu    d,y
+        std     16,x
+        sty     18,x
+        pulu    d,y
+        std     20,x
+        sty     22,x
+
+        pulu    d,y
+        std     24,x
+        sty     26,x
+        pulu    d,y
+        std     28,x
+        sty     30,x
+
+; End of code contributed by Simon Jonassen
+
+        leax    COLS_PER_LINE,x
+        cmpx    #TEXTBUFEND
+        blo     _copy_loop
 
 _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
@@ -478,15 +505,42 @@ copy_buffer:
 
 _copy_buffer_loop:     ; Copy the backbuffer to the text screen
 
-        ldd     ,u++
-        std     ,x++
-        ldd     ,u++
-        std     ,x++
+;	This code was contributed by Simon Jonassen
 
+        pulu    d,y
+        std     ,x
+        sty     2,x
+        pulu    d,y
+        std     4,x
+        sty     6,x
+        pulu    d,y
+        std     8,x
+        sty     10,x
+
+        pulu    d,y
+        std     12,x
+        sty     14,x
+        pulu    d,y
+        std     16,x
+        sty     18,x
+        pulu    d,y
+        std     20,x
+        sty     22,x
+
+        pulu    d,y
+        std     24,x
+        sty     26,x
+        pulu    d,y
+        std     28,x
+        sty     30,x
+
+; End of code contributed by Simon Jonassen
+
+        leax    COLS_PER_LINE,x
         cmpx    #TEXTBUFEND
         blo     _copy_buffer_loop
 
-	rts
+        rts
 
 **********************
 * Print dropped frames
@@ -515,43 +569,6 @@ _store_a:
 
 _do_not_print_frame_counter:
 	rts
-
-***************************
-* Print simultaneous plucks
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-print_simultaneous_plucks:
-
-	clra
-	ldx	#plucks_data
-
-_simul_loop:
-	tst	,x
-	beq	_skip_count_simul
-
-	inca
-
-_skip_count_simul:
-	leax	4,x
-	cmpx	#plucks_data_end
-	blo	_simul_loop
-
-        cmpa    #10
-        blo     _adjust_sp_counter
-
-        lda     #94                     ; This is the up arrow
-        bra     _store_sp_counter
-
-_adjust_sp_counter:
-        adda    #'0'+64
-
-_store_sp_counter:
-        sta     LOWER_LEFT_CORNER+1       ; Put it in the lower-left corner + 1
-
-        rts
 
 ************************
 * Cycle corner character
@@ -816,10 +833,6 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 GREEN_BOX	EQU	$60		; These are MC6847 codes
 WHITE_BOX	EQU	$CF
 
-simultaneous_plucks:
-
-	RZB	1
-
 pluck_line_counts:
 
 	RZB PLUCK_LINES			; 15 zeroes
@@ -857,12 +870,7 @@ PLUCK_PHASE_PULLING	EQU	3
 
 pluck_the_screen:
 
-; First, start with just one pluck at a time
-
-	lda	#1
-	sta	simultaneous_plucks
-
-; Second, count the number of characters on each line of the screen
+; Count the number of characters on each line of the screen
 
 	jsr	pluck_count_chars_per_line
 
@@ -1131,7 +1139,6 @@ toggle_cycle:
 
 	com	cycle_lower_right
 	bne	_skip_redraw_cycle
-
 					; If it's being turned off
 	lda	#GREEN_BOX		; then draw over the lower-right
 	sta	LOWER_RIGHT_CORNER	; corner
@@ -1218,11 +1225,6 @@ _pluck_screen_not_empty:
 * A = (Non-zero) All slots are empty
 **********************************************************
 
-cache_slots_being_used:
-
-	RZB	1		; Non-zero means at least 1 is being used
-				; Zero means we must check
-
 pluck_check_empty_slots:
 
 	lda	cache_slots_being_used
@@ -1247,7 +1249,7 @@ _slots_used:
 
 pluck_check_empty_slots_2:
 
-	bsr	get_pluck_data_end
+	ldx	#plucks_data_end
 
 	stx	oldx+1		; Simon Jonassen contributed this line
 
@@ -1265,59 +1267,6 @@ oldx	cmpx	#$0000		; and this one
 
 _pluck_check_data_not_empty:
 	clra				; There are plucks happening
-	rts
-
-********************
-* Get pluck data end
-*
-* Inputs: None
-*
-* Outputs:
-* X = Address
-********************
-
-cached_pluck_data_end:
-
-	RZB	2
-
-cached_pluck_data_end_is_good:
-
-	RZB	1
-
-get_pluck_data_end:
-
-	lda	cached_pluck_data_end_is_good
-	beq	calculate_pluck_data_end
-
-	ldx	cached_pluck_data_end
-	rts
-
-**************************
-* Calculate pluck data end
-*
-* Inputs: None
-*
-* Outputs:
-* X = Address
-**************************
-
-calculate_pluck_data_end:
-
-; X = #plucks_data + 4 * simultaneous_plucks
-
-	ldx	#plucks_data
-
-; Simon Jonassen contributed to this code
-	ldb	simultaneous_plucks	; Multiply this by 4
-	lslb
-	lslb
-	abx
-; End of code that Simon Jonassen contributed to
-
-	stx	cached_pluck_data_end	; Cache the result
-	lda	#1
-	sta	cached_pluck_data_end_is_good
-
 	rts
 
 ************************************
@@ -1425,7 +1374,7 @@ _process_pluck_2:
 
 pluck_find_a_spare_slot:
 
-	bsr	get_pluck_data_end
+	ldx	#plucks_data_end
 	pshs	x			; ,S = End of pluck lines
 	ldx	#plucks_data		;  X = Our pointer to pluck data
 
@@ -1624,7 +1573,7 @@ _skip_cache_dirtying:
 pluck_get_char:
 
 	sta	olda2+1		; Simon Jonassen contributed this line
-	jsr	get_pluck_data_end
+	ldx	#plucks_data_end
 olda2:	lda	#$00		; and this one
 	pshs	x		;,S = End of pluck data
 
@@ -1771,7 +1720,7 @@ pluck_play_sound:
 process_pluck_2:
 
 	ldu	#plucks_data
-	jsr	get_pluck_data_end
+	ldx	#plucks_data_end
 	pshs	x		; ,S = End of pluck data
 
 _pluck_do_each_pluck:
@@ -1914,10 +1863,6 @@ pluck_phase_3:
 * Outputs: None
 *********************
 
-number_of_plucked_chars:
-
-	RZB	1
-
 pluck_phase_3_ended:		; Character has gone off the right side
 
 	lda	#PLUCK_PHASE_NOTHING
@@ -1925,25 +1870,6 @@ pluck_phase_3_ended:		; Character has gone off the right side
 
 	clr	cache_slots_being_used	; We must count the slots again
 
-	lda	number_of_plucked_chars
-	inca
-	sta	number_of_plucked_chars
-
-	cmpa	simultaneous_plucks
-	beq	_increase_plucks
-
-	rts
-
-_increase_plucks:
-
-	cmpa	#MAX_SIMULTANEOUS_PLUCKS
-	beq	_no_increase
-
-	inc	simultaneous_plucks
-	clr	cached_pluck_data_end_is_good	; Trash this cache
-	clr	number_of_plucked_chars
-
-_no_increase:
 	rts
 
 ***********************************

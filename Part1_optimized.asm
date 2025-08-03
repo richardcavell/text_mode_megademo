@@ -6,7 +6,7 @@
 * written by Ciaran Anscomb
 *
 * This demo part is intended to run on a TRS-80 Color Computer 1,2 or 3
-* with at least 32K of RAM
+* with at least 16K of RAM
 *
 * Parts of this code were written by Simon Jonassen (The Invisible Man)
 * Part of this code was written by Trey Tomes. You can see it here:

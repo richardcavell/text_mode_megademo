@@ -1521,9 +1521,9 @@ display_messages_next_line:
 
 ;	pshs	x
 	stx	oldx2+1		; Simon Jonassen contributed this line
-	tfr	u,x
+	leax	,u		; and this one
 	bsr	move_to_next_line
-	tfr	x,u
+	leau	,x		; and this one
 oldx2:	ldx	#$0000		; and this one
 ;	puls	x
 

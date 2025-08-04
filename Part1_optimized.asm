@@ -440,33 +440,6 @@ skip_message:
 	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
 
-*********************
-* Get screen position
-*
-* Inputs:
-* A = Row (0-15)
-* B = Column (0-31)
-*
-* Output:
-* X = Screen position
-*********************
-
-get_screen_position:
-
-;   X = BACKBUF + A * COLS_PER_LINE + B
-
-	stb	dval+1		; This was added by Simon Jonassen
-				; and refined by me
-	ldx	#BACKBUF
-	ldb	#COLS_PER_LINE
-	mul
-	leax	d,x
-
-dval:	ldb	#$00		; And this
-	abx
-
-	rts
-
 *****************
 * Pluck variables
 *****************
@@ -1867,9 +1840,19 @@ TEXT_GRAPHIC_END	EQU	255
 
 display_text_graphic:
 
-	pshs	b,x
-	jsr	get_screen_position
-	puls	b,u			; U = graphics data
+	pshs	x
+
+        stb     dval2+1          ; This was added by Simon Jonassen
+                                ; and refined by me
+        ldx     #BACKBUF
+        ldb     #COLS_PER_LINE
+        mul
+        leax    d,x
+
+dval2:  ldb     #$00            ; And this
+        abx
+
+	puls	u			; U = graphics data
 
 _display_text_graphic_loop:
         lda     ,u+
@@ -1943,9 +1926,9 @@ print_loading_text:
 	std	2,x
 	ldd	#"IN"
 	std	4,x
-	ldd	#"G."
+	ldd	#'G'*256+'.'+64
 	std	6,x
-	ldd	#".."
+	ldd	#(('.'+64)*256)+'.'+64
 	std	8,x
 
 	lda	#1

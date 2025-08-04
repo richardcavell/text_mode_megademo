@@ -9,3 +9,5 @@ July 2025
    bug free
 
 3. The maximum length of a procedure is 25 lines.
+
+These coding standards do not apply to the optimized version.

@@ -106,7 +106,7 @@ IRQ_HANDLER	EQU	$10D
 						; of our own handler
 
 	lda	#$0e			; DP JMP
-	sta	IRQ_INSTRUCTION		; Shaves off 1 byte
+	sta	IRQ_INSTRUCTION		; Shaves off 1 byte and cycle !!
 
 	lda	#irq_service_routine&255
 	sta	IRQ_HANDLER
@@ -201,7 +201,7 @@ set_ddra_bits_to_input:
 * and then modified by me
 
 	lda	PIA0BC		; Enable VSync interrupt
-	ora	#3
+	ora	#3	
 	sta	PIA0BC
 	lda	PIA0BD		; Acknowledge any outstanding VSync interrupt
 
@@ -278,11 +278,8 @@ set_ddra_bits_to_input:
 ******************************************************
 
 waiting_for_vblank:
-
 	RZB	1		; The interrupt handler reads this
-
 vblank_happened:
-
 	RZB	1		; and sets this
 
 **********************************************
@@ -384,9 +381,13 @@ service_vblank:
 
 	lda	waiting_for_vblank	; The demo is waiting for the signal
 	beq	_dropped_frame
-	clr	waiting_for_vblank	; No longer waiting
-	lda	#1			; If waiting for VBlank,
-	sta	vblank_happened		; here's the signal
+
+;	clr	waiting_for_vblank	; No longer waiting
+;	lda	#1			; If waiting for VBlank,
+;	sta	vblank_happened		; here's the signal
+
+	ldd	#1
+	std	waiting_for_vblank	; simon - back to back vars
 
 	ldx	#TEXTBUF
 	ldu	#BACKBUF
@@ -584,9 +585,12 @@ _pluck_finished:
 
 wait_for_vblank_and_check_for_skip:
 
-	clr	vblank_happened		; See "Variables that are relevant to
-	lda	#1			; vertical blank timing" above
-	sta	waiting_for_vblank
+;	clr	vblank_happened		; See "Variables that are relevant to
+;	lda	#1			; vertical blank timing" above
+;	sta	waiting_for_vblank
+
+	ldd	#$100			;back to back vars (simon)
+	std	waiting_for_vblank
 
 _wait_for_vblank_and_check_for_skip_loop:
 	bsr	poll_keyboard
@@ -1519,19 +1523,20 @@ _display_messages_end:
 
 display_messages_next_line:
 
-;	pshs	x
 	stx	oldx2+1		; Simon Jonassen contributed this line
-	leax	,u		; and this one
+;	tfr	u,x
+	leax	,u		; mod simon
 	bsr	move_to_next_line
-	leau	,x		; and this one
-oldx2:	ldx	#$0000		; and this one
-;	puls	x
+	leau	,x		; mod simon
+;	tfr	x,u
 
-	pshs	x,u
+oldx2:	ldx	#$0000		; and this one
+
+;	pshs	x,u
 	lda	#5
 	jsr	wait_frames
 	tsta
-	puls	x,u
+;	puls	x,u
 	bne	_display_messages_skip
 	bra	_display_messages_loop
 
@@ -1548,10 +1553,11 @@ oldx2:	ldx	#$0000		; and this one
 move_to_next_line:
 
 	tfr	x,d
-	addd	#COLS_PER_LINE
-	andb	#0b11100000
+	addd	#32
+	andb	#%11100000
 	tfr	d,x
 
+	
 	rts
 
 ***************************************
@@ -1567,11 +1573,11 @@ move_to_next_line:
 
 display_messages_big_pause:
 
-	pshs	x,u
+;	pshs	x,u
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
 	tsta
-	puls	x,u
+;	puls	x,u
 	beq	_display_messages_loop
 
 	lda	#1		; User wants to skip
@@ -1590,10 +1596,10 @@ display_messages_big_pause:
 
 display_messages_pause:
 
-	pshs	x,u
+;	pshs	x,u
 	lda	#5
 	jsr	wait_frames
-	puls	x,u
+;	puls	x,u
 	rts
 
 ***************************************

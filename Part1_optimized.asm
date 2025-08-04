@@ -217,10 +217,47 @@ set_ddra_bits_to_input:
 
 	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 
+**************************************************
+* Display skip message at the bottom of the screen
+*
+* Inputs: None
+* Outputs: None
+**************************************************
 
+	ldu	#skip_message
+	ldx	#BACKBUF+PLUCK_LINES*COLS_PER_LINE
 
+; This code was contributed by Simon Jonassen
 
-	jsr	display_skip_message
+        pulu    d,y
+        std     ,x
+        sty     2,x
+        pulu    d,y
+        std     4,x
+        sty     6,x
+        pulu    d,y
+        std     8,x
+        sty     10,x
+
+        pulu    d,y
+        std     12,x
+        sty     14,x
+        pulu    d,y
+        std     16,x
+        sty     18,x
+        pulu    d,y
+        std     20,x
+        sty     22,x
+
+        pulu    d,y
+        std     24,x
+        sty     26,x
+        pulu    d,y
+        std     28,x
+        sty     30,x
+
+; End of code contributed by Simon Jonassen
+
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
 	jsr	loading_screen
@@ -398,53 +435,10 @@ _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
 	rti
 
-**************************************************
-* Display skip message at the bottom of the screen
-*
-* Inputs: None
-* Outputs: None
-**************************************************
-
-display_skip_message:
-
-	lda	#BOTTOM_LINE		; Bottom line of the screen
-	ldx	#skip_message
-	bsr	display_message
-
-	rts
-
 skip_message:
 
 	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
-
-*****************************************************
-* Display a message on the screen
-*
-* Inputs:
-* A = Line to put it on (0 to 15)
-* X = String containing the message (ended by a zero)
-*
-* Outputs: None
-*****************************************************
-
-display_message:
-
-	leau	,x		; Credit to Simon Jonassen for this line
-
-	clrb
-	bsr	get_screen_position		; X = Screen position
-
-_display_message_loop:
-	cmpx	#BACKBUFEND
-	bhs	_display_message_finished	; End of text buffer
-	lda	,u+
-	beq	_display_message_finished	; Terminating zero was found
-	sta	,x+
-	bra	_display_message_loop
-
-_display_message_finished:
-	rts
 
 *********************
 * Get screen position
@@ -1142,12 +1136,11 @@ _pluck_a_char_check:
 
 get_end_of_line:
 
-	clrb
-	jsr	get_screen_position
-
-	; Make X point to the right end of the line
-
-	leax	COLS_PER_LINE,x
+	ldx	#BACKBUF
+	inca	; Make X point to the right end of the line
+	ldb	#COLS_PER_LINE
+	mul
+	leax	d,x
 
 	rts
 
@@ -1942,17 +1935,23 @@ loading_screen:
 
 print_loading_text:
 
-	lda	#15
-	ldx	#loading_text
-	jsr	display_message
+	ldx	#BACKBUF+15*COLS_PER_LINE+11
+
+	ldd	#"LO"
+	std	,x
+	ldd	#"AD"
+	std	2,x
+	ldd	#"IN"
+	std	4,x
+	ldd	#"G."
+	std	6,x
+	ldd	#".."
+	std	8,x
+
 	lda	#1
 	jsr	wait_frames
 
 	rts
-
-loading_text:
-
-	FCV	"           LOADING...",0
 
 ***************************
 * ASCII art - Baby elephant

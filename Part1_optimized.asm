@@ -32,166 +32,7 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-*****************
-* Part 1 Sequence
-*
-* Inputs: None
-*
-* Output:
-* D = 0 Success
-*****************
-
-	jsr	setup_backbuffer		; Ready for double buffering
-	jsr	set_dp_register_for_hsync	; For sound playback
-	jsr	install_irq_service_routine	; Install our IRQ handler
-	jsr	turn_off_disk_motor		; Silence the disk drive
-	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
-	jsr	turn_on_interrupts		; Turn on interrupts
-
-	jsr	display_skip_message
-	jsr	pluck_the_screen		; First section
-	jsr	joke_startup_screen		; Second section
-	jsr	loading_screen
-	jsr	print_loading_text
-	jsr	turn_off_interrupts		; Go back to what BASIC uses
-
-	jsr	restore_basic_irq_service_routine
-	jsr	zero_dp_register		; Zero the DP register
-
-	ldd	#0
-	rts		; Return to Disk Extended Color BASIC
-
-*****************************************************************************
-*	Subroutines
-*****************************************************************************
-
-* Assume that no registers are preserved
-
-******************
-* Setup backbuffer
-*
-* Inputs: None
-* Outputs: None
-******************
-
-setup_backbuffer:
-
-	ldx	#TEXTBUF
-	ldu	#BACKBUF
-
-_setup_loop:
-	ldd	,x++
-	std	,u++
-	ldd	,x++
-	std	,u++
-
-	cmpx	#TEXTBUFEND
-	blo	_setup_loop
-
-	rts
-
-***************************
-* Set DP register for HSYNC
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-* This code was written by Simon Jonassen and modified by me
-
-set_dp_register_for_hsync:
-
-	jsr	switch_off_irq_and_firq
-	lda	#irq_service_routine/256
-	tfr	a,dp
-	SETDP	irq_service_routine/256
-	jsr	switch_on_irq_and_firq
-	rts
-
-* End of code written by Simon Jonassen and modified by me
-
-*********************************
-* Install our IRQ service routine
-*
-* Inputs: None
-* Outputs: None
-*********************************
-
-install_irq_service_routine:
-
-	bsr	switch_off_irq		; Switch off IRQ interrupts for now
-
-	bsr	get_irq_handler
-	bsr	set_irq_handler
-
-	bsr	switch_on_irq		; Switch IRQ interrupts back on
-
-	rts
-
-***************************
-* Switch IRQ interrupts off
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-switch_off_irq:
-
-	orcc	#0b00010000		; Switch off IRQ interrupts
-
-	rts
-
-**************************
-* Switch IRQ interrupts on
-*
-* Inputs: None
-* Outputs: None
-**************************
-
-switch_on_irq:
-
-	andcc	#0b11101111		; Switch IRQ interrupts back on
-
-	rts
-
-*****************
-* Get IRQ handler
-*
-* Inputs: None
-* Outputs: None
-*****************
-
-IRQ_INSTRUCTION	EQU	$10C
-IRQ_HANDLER	EQU	$10D
-
-get_irq_handler:
-
-	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
-	sta	decb_irq_service_instruction
-
-	ldx	IRQ_HANDLER			; Load the current vector
-	stx	decb_irq_service_routine	; We could call it at the end
-						; of our own handler
-	rts
-
-*****************
-* Set IRQ handler
-*
-* Inputs: None
-* Outputs: None
-*****************
-
-set_irq_handler:
-
-	lda	#$0e			; DP JMP
-	sta	IRQ_INSTRUCTION		; Shaves off 1 byte
-
-	lda	#irq_service_routine&255
-	sta	IRQ_HANDLER
-
-; The last byte stays the same
-
-	rts
+start:
 
 *************************
 * Text buffer information
@@ -211,6 +52,192 @@ LOWER_LEFT_CORNER	EQU	$5E0
 LOWER_RIGHT_CORNER	EQU	$5FF
 
 BOTTOM_LINE	EQU	(TEXT_LINES-1)
+
+******************
+* Setup backbuffer
+*
+* Inputs: None
+* Outputs: None
+******************
+
+	ldx	#TEXTBUF
+	ldu	#BACKBUF
+
+_setup_loop:
+	ldd	,x++
+	std	,u++
+	ldd	,x++
+	std	,u++
+
+	cmpx	#TEXTBUFEND
+	blo	_setup_loop
+
+***************************
+* Set DP register for HSYNC
+*
+* Inputs: None
+* Outputs: None
+***************************
+
+* This code was written by Simon Jonassen and modified by me
+
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+	lda	#irq_service_routine/256
+	tfr	a,dp
+	SETDP	irq_service_routine/256
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
+
+* End of code written by Simon Jonassen and modified by me
+
+*********************************
+* Install our IRQ service routine
+*
+* Inputs: None
+* Outputs: None
+*********************************
+
+IRQ_INSTRUCTION	EQU	$10C
+IRQ_HANDLER	EQU	$10D
+
+	orcc	#0b00010000		; Switch off IRQ interrupts
+
+	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
+	sta	decb_irq_service_instruction
+
+	ldx	IRQ_HANDLER			; Load the current vector
+	stx	decb_irq_service_routine	; We could call it at the end
+						; of our own handler
+
+	lda	#$0e			; DP JMP
+	sta	IRQ_INSTRUCTION		; Shaves off 1 byte
+
+	lda	#irq_service_routine&255
+	sta	IRQ_HANDLER
+
+; The last byte stays the same
+
+	andcc	#0b11101111		; Switch IRQ interrupts back on
+
+*********************
+* Turn off disk motor
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+DSKREG	EQU	$FF40
+
+	clra
+	sta	DSKREG		; Turn off disk motor
+
+*********************
+* Turn 6-bit audio on
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
+DDRA		EQU	$FF20
+PIA2_CRA	EQU	$FF21
+AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
+
+*******************
+* Set audio port on
+*
+* Inputs: None
+* Outputs: None
+*******************
+
+* This is modified by me from code written by Simon Jonassen
+
+	lda	PIA0BC
+	anda	#0b11110111
+	sta	PIA0BC
+
+	lda	PIA0AC
+	anda	#0b11110111
+	sta	PIA0AC
+
+* End code modified from code written by Simon Jonassen
+
+* This code was modified from code written by Trey Tomes
+
+	lda	AUDIO_PORT_ON
+	ora	#0b00001000
+	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
+
+* End code modified from code written by Trey Tomes
+
+************************
+* Set DDRA bits to input
+*
+* Inputs: None
+* Outputs: None
+************************
+
+set_ddra_bits_to_input:
+
+* This code was written by other people, taken from
+* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
+* and then modified by me
+
+	ldb	PIA2_CRA
+	andb	#0b11111011
+	stb	PIA2_CRA
+
+	lda	#0b11111100
+	sta	DDRA
+
+	orb	#0b00000100
+	stb	PIA2_CRA
+
+* End of code modified by me from code written by other people
+
+********************
+* Turn on interrupts
+********************
+
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+
+* This code was originally written by Simon Jonassen (The Invisible Man)
+* and then modified by me
+
+	lda	PIA0BC		; Enable VSync interrupt
+	ora	#3
+	sta	PIA0BC
+	lda	PIA0BD		; Acknowledge any outstanding VSync interrupt
+
+	lda	PIA0AC		; Enable HSync interrupt
+	ora	#3
+	sta	PIA0AC
+	lda	PIA0AD		; Acknowledge any outstanding HSync interrupt
+
+* End code modified by me from code written by Simon Jonassen
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
+
+
+
+
+	jsr	display_skip_message
+	jsr	pluck_the_screen		; First section
+	jsr	joke_startup_screen		; Second section
+	jsr	loading_screen
+	jsr	print_loading_text
+	jsr	turn_off_interrupts		; Go back to what BASIC uses
+
+	jsr	restore_basic_irq_service_routine
+	jsr	zero_dp_register		; Zero the DP register
+
+	ldd	#0
+	rts		; Return to Disk Extended Color BASIC
+
+*****************************************************************************
+*	Subroutines
+*****************************************************************************
+
+* Assume that no registers are preserved
 
 ******************************************************
 * Variables that are relevant to vertical blank timing
@@ -370,126 +397,6 @@ _copy_loop:	; Copy the backbuffer to the text screen
 _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
 	rti
-
-*********************
-* Turn off disk motor
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-DSKREG	EQU	$FF40
-
-turn_off_disk_motor:
-
-	clra
-	sta	DSKREG		; Turn off disk motor
-
-	rts
-
-*********************
-* Turn 6-bit audio on
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
-DDRA		EQU	$FF20
-PIA2_CRA	EQU	$FF21
-AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
-
-turn_6bit_audio_on:
-
-	bsr	set_audio_port_on
-	bsr	set_ddra_bits_to_input
-
-	rts
-
-*******************
-* Set audio port on
-*
-* Inputs: None
-* Outputs: None
-*******************
-
-set_audio_port_on:
-
-* This is modified by me from code written by Simon Jonassen
-
-	lda	PIA0BC
-	anda	#0b11110111
-	sta	PIA0BC
-
-	lda	PIA0AC
-	anda	#0b11110111
-	sta	PIA0AC
-
-* End code modified from code written by Simon Jonassen
-
-* This code was modified from code written by Trey Tomes
-
-	lda	AUDIO_PORT_ON
-	ora	#0b00001000
-	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
-
-* End code modified from code written by Trey Tomes
-
-	rts
-
-************************
-* Set DDRA bits to input
-*
-* Inputs: None
-* Outputs: None
-************************
-
-set_ddra_bits_to_input:
-
-* This code was written by other people, taken from
-* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
-* and then modified by me
-
-	ldb	PIA2_CRA
-	andb	#0b11111011
-	stb	PIA2_CRA
-
-	lda	#0b11111100
-	sta	DDRA
-
-	orb	#0b00000100
-	stb	PIA2_CRA
-
-* End of code modified by me from code written by other people
-
-	rts
-
-********************
-* Turn on interrupts
-********************
-
-turn_on_interrupts:
-
-	jsr	switch_off_irq_and_firq
-
-* This code was originally written by Simon Jonassen (The Invisible Man)
-* and then modified by me
-
-	lda	PIA0BC		; Enable VSync interrupt
-	ora	#3
-	sta	PIA0BC
-	lda	PIA0BD		; Acknowledge any outstanding VSync interrupt
-
-	lda	PIA0AC		; Enable HSync interrupt
-	ora	#3
-	sta	PIA0AC
-	lda	PIA0AD		; Acknowledge any outstanding HSync interrupt
-
-* End code modified by me from code written by Simon Jonassen
-
-	jsr	switch_on_irq_and_firq
-
-	rts
 
 **************************************************
 * Display skip message at the bottom of the screen
@@ -2080,7 +1987,7 @@ baby_elephant_end:
 
 turn_off_interrupts:
 
-	jsr     switch_off_irq
+	orcc	#0b00010000		; Switch off IRQ interrupts
 
 * This code is modified from code written by Simon Jonassen
 
@@ -2093,7 +2000,7 @@ turn_off_interrupts:
 
 * End of code modified from code written by Simon Jonassen
 
-	jsr     switch_on_irq
+	andcc	#0b11101111		; Switch IRQ interrupts back on
 
 	rts
 
@@ -2106,9 +2013,9 @@ turn_off_interrupts:
 
 restore_basic_irq_service_routine:
 
-	jsr	switch_off_irq
+	orcc	#0b00010000		; Switch off IRQ interrupts
 	bsr	restore_irq_handler
-	jsr	switch_on_irq
+	andcc	#0b11101111		; Switch IRQ interrupts back on
 
 	rts
 

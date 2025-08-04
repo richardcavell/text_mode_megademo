@@ -85,7 +85,6 @@ _setup_loop:
 	lda	#irq_service_routine/256
 	tfr	a,dp
 	SETDP	irq_service_routine/256
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 
 * End of code written by Simon Jonassen and modified by me
 
@@ -98,8 +97,6 @@ _setup_loop:
 
 IRQ_INSTRUCTION	EQU	$10C
 IRQ_HANDLER	EQU	$10D
-
-	orcc	#0b00010000		; Switch off IRQ interrupts
 
 	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
 	sta	decb_irq_service_instruction
@@ -116,7 +113,7 @@ IRQ_HANDLER	EQU	$10D
 
 ; The last byte stays the same
 
-	andcc	#0b11101111		; Switch IRQ interrupts back on
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 
 *********************
 * Turn off disk motor

@@ -510,28 +510,6 @@ pluck_count_chars_per_line:
 	ldu	#pluck_line_counts
 
 _pluck_count_loop:
-	bsr	count_char
-	bsr	increment_u
-
-	cmpu	#pluck_line_counts_end
-	blo	_pluck_count_loop
-
-	rts
-
-************************************************
-* Count char
-*
-* Inputs:
-* X = Current text buffer position
-* U = Pointer to current line count
-*
-* Outputs:
-* X = (Updated) Text buffer position
-* U = (Unmodified) Pointer to current line count
-************************************************
-
-count_char:
-
 	lda	#GREEN_BOX
 	cmpa	,x+
 	beq	_skip_count
@@ -539,34 +517,16 @@ count_char:
 	inc	,u		; Count non-spaces only
 
 _skip_count:
-	rts
-
-*******************************************************
-* Increment U
-*
-* Inputs:
-*
-* X = Current text buffer position
-* U = Pointer to current line count
-*
-* Outputs:
-* X = (Unmodified) Current text buffer position
-* U = (Possibly modified) Pointer to current line count
-*******************************************************
-
-increment_u:
-
-;	pshs	x,u		; Simon Jonassen contributed the semicolons
 	tfr	x,d
 	bsr	is_d_divisible_by_32
 	tsta
-;	puls	x,u		; Does not affect Condition Codes
-	bne	_increment
+	beq	_no_increment
 
-	rts
-
-_increment:
 	leau	1,u
+
+_no_increment:
+	cmpu	#pluck_line_counts_end
+	blo	_pluck_count_loop
 
 	rts
 

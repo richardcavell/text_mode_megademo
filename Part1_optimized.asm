@@ -52,9 +52,6 @@ BOTTOM_LINE	EQU	(TEXT_LINES-1)
 
 ******************
 * Setup backbuffer
-*
-* Inputs: None
-* Outputs: None
 ******************
 
 	ldx	#TEXTBUF
@@ -69,16 +66,18 @@ _setup_loop:
 	cmpx	#TEXTBUFEND
 	blo	_setup_loop
 
+************************************
+* Switch off IRQ and FIRQ interrupts
+************************************
+
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+
 ***************************
 * Set DP register for HSYNC
-*
-* Inputs: None
-* Outputs: None
 ***************************
 
 * This code was written by Simon Jonassen and modified by me
 
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
 	lda	#irq_service_routine/256
 	tfr	a,dp
 	SETDP	irq_service_routine/256
@@ -110,8 +109,6 @@ IRQ_HANDLER	EQU	$10D
 
 ; The last byte stays the same
 
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-
 *********************
 * Turn off disk motor
 *
@@ -123,6 +120,15 @@ DSKREG	EQU	$FF40
 
 	clra
 	sta	DSKREG		; Turn off disk motor
+
+*****************************
+* PIA memory-mapped registers
+*****************************
+
+PIA0AD	EQU	$FF00
+PIA0AC	EQU	$FF01
+PIA0BD	EQU	$FF02
+PIA0BC	EQU	$FF03
 
 *********************
 * Turn 6-bit audio on
@@ -192,13 +198,11 @@ set_ddra_bits_to_input:
 * Turn on interrupts
 ********************
 
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-
 * This code was originally written by Simon Jonassen (The Invisible Man)
 * and then modified by me
 
 	lda	PIA0BC		; Enable VSync interrupt
-	ora	#3	
+	ora	#3
 	sta	PIA0BC
 	lda	PIA0BD		; Acknowledge any outstanding VSync interrupt
 
@@ -208,6 +212,10 @@ set_ddra_bits_to_input:
 	lda	PIA0AD		; Acknowledge any outstanding HSync interrupt
 
 * End code modified by me from code written by Simon Jonassen
+
+**************************************
+* Turn IRQ and FIRQ interrupts back on
+**************************************
 
 	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 
@@ -275,8 +283,11 @@ set_ddra_bits_to_input:
 ******************************************************
 
 waiting_for_vblank:
+
 	RZB	1		; The interrupt handler reads this
+
 vblank_happened:
+
 	RZB	1		; and sets this
 
 **********************************************
@@ -290,15 +301,6 @@ decb_irq_service_instruction:
 decb_irq_service_routine:
 
 	RZB	2
-
-*****************************
-* PIA memory-mapped registers
-*****************************
-
-PIA0AD	EQU	$FF00
-PIA0AC	EQU	$FF01
-PIA0BD	EQU	$FF02
-PIA0BC	EQU	$FF03
 
 *************************
 * Our IRQ handler
@@ -1956,18 +1958,17 @@ turn_off_interrupts:
 restore_basic_irq_service_routine:
 
 	orcc	#0b00010000		; Switch off IRQ interrupts
-	bsr	restore_irq_handler
+	lda	decb_irq_service_instruction
+	sta	IRQ_INSTRUCTION
+
+	ldx	decb_irq_service_routine
+	stx	IRQ_HANDLER
 	andcc	#0b11101111		; Switch IRQ interrupts back on
 
 	rts
 
 restore_irq_handler:
 
-	lda	decb_irq_service_instruction
-	sta	IRQ_INSTRUCTION
-
-	ldx	decb_irq_service_routine
-	stx	IRQ_HANDLER
 
 	rts
 

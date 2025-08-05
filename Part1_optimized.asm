@@ -32,8 +32,6 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-start:
-
 *************************
 * Text buffer information
 *************************
@@ -1415,45 +1413,7 @@ _wait_frames_skip:
 * D = The random number
 ********************************************
 
-USE_DEEKS_CODE	EQU	1
-
 get_random:
-
-	lda	#USE_DEEKS_CODE
-	beq	get_random_cavell
-	bra	get_random_conner
-
-********************************
-* Pseudo-random number generator
-*
-* Inputs: None
-* Output:
-* D = Random(ish) number
-********************************
-
-* I found these values through simple experimentation.
-* This RNG could be improved on.
-
-cavell_seed:
-
-	FCB	0xBE
-	FCB	0xEF
-
-get_random_cavell:
-
-	ldd	cavell_seed
-	mul
-	addd	#3037
-	std	cavell_seed
-	rts
-
-********************************
-* Pseudo-random number generator
-*
-* Inputs: None
-* Output:
-* D = Random(ish) number
-********************************
 
 ; This code was written by Sean Conner (Deek) in June 2025 during a
 ; discussion on Discord, and then modified by me
@@ -1474,6 +1434,8 @@ get_random_conner:
 get_random_no_feedback:
 	std	conner_seed
 	rts
+
+* End of code written by Sean Conner (Deek)
 
 *********************
 * Joke startup screen

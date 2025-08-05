@@ -38,7 +38,7 @@ start:
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400	; There's only one text screen
+TEXTBUF		EQU	$400	; This is the output text screen
 TEXTBUFSIZE	EQU	$200
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
@@ -47,9 +47,6 @@ BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
-
-LOWER_LEFT_CORNER	EQU	$5E0
-LOWER_RIGHT_CORNER	EQU	$5FF
 
 BOTTOM_LINE	EQU	(TEXT_LINES-1)
 

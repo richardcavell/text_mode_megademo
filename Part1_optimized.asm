@@ -263,11 +263,76 @@ set_ddra_bits_to_input:
 	jsr	pluck_the_screen		; First section
 	jsr	joke_startup_screen		; Second section
 	jsr	loading_screen
-	jsr	print_loading_text
-	jsr	turn_off_interrupts		; Go back to what BASIC uses
 
-	jsr	restore_basic_irq_service_routine
-	jsr	zero_dp_register		; Zero the DP register
+********************
+* Print loading text
+*
+* Inputs: None
+* Outputs: None
+********************
+
+	ldx	#BACKBUF+15*COLS_PER_LINE+11
+
+	ldd	#"LO"
+	std	,x
+	ldd	#"AD"
+	std	2,x
+	ldd	#"IN"
+	std	4,x
+	ldd	#'G'*256+'.'+64
+	std	6,x
+	ldd	#(('.'+64)*256)+'.'+64
+	std	8,x
+
+	lda	#1
+	jsr	wait_frames
+
+*********************
+* Turn off interrupts
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+	orcc	#0b00010000		; Switch off IRQ interrupts
+
+* This code is modified from code written by Simon Jonassen
+
+	lda	PIA0AC		; Turn off HSYNC interrupt
+	anda	#0b11111110
+	sta	PIA0AC
+
+	lda	PIA0AD		; Acknowledge any outstanding
+				; interrupt request
+
+* End of code modified from code written by Simon Jonassen
+
+	andcc	#0b11101111		; Switch IRQ interrupts back on
+
+*************************************
+* Restore BASIC's IRQ service routine
+*
+* Inputs: None
+* Outputs: None
+*************************************
+
+	orcc	#0b00010000		; Switch off IRQ interrupts
+	lda	decb_irq_service_instruction
+	sta	IRQ_INSTRUCTION
+
+	ldx	decb_irq_service_routine
+	stx	IRQ_HANDLER
+	andcc	#0b11101111		; Switch IRQ interrupts back on
+
+**********************
+* Zero the DP register
+*
+* Inputs: None
+* Outputs: None
+**********************
+
+	clra
+	tfr	a, dp
 
 	ldd	#0
 	rts		; Return to Disk Extended Color BASIC
@@ -381,12 +446,8 @@ service_vblank:
 	lda	waiting_for_vblank	; The demo is waiting for the signal
 	beq	_dropped_frame
 
-;	clr	waiting_for_vblank	; No longer waiting
-;	lda	#1			; If waiting for VBlank,
-;	sta	vblank_happened		; here's the signal
-
-	ldd	#1
-	std	waiting_for_vblank	; simon - back to back vars
+	ldd	#$0001			; This code written by Simon
+	std	waiting_for_vblank	;    (back to back vars)
 
 	ldx	#TEXTBUF
 	ldu	#BACKBUF
@@ -1871,33 +1932,6 @@ loading_screen:
 
 	rts
 
-***************
-* Loading text
-*
-* Inputs: None
-* Outputs: None
-***************
-
-print_loading_text:
-
-	ldx	#BACKBUF+15*COLS_PER_LINE+11
-
-	ldd	#"LO"
-	std	,x
-	ldd	#"AD"
-	std	2,x
-	ldd	#"IN"
-	std	4,x
-	ldd	#'G'*256+'.'+64
-	std	6,x
-	ldd	#(('.'+64)*256)+'.'+64
-	std	8,x
-
-	lda	#1
-	jsr	wait_frames
-
-	rts
-
 ***************************
 * ASCII art - Baby elephant
 ***************************
@@ -1921,70 +1955,6 @@ baby_elephant:
 	FCB	TEXT_GRAPHIC_END
 
 baby_elephant_end:
-
-*********************
-* Turn off interrupts
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-turn_off_interrupts:
-
-	orcc	#0b00010000		; Switch off IRQ interrupts
-
-* This code is modified from code written by Simon Jonassen
-
-	lda	PIA0AC		; Turn off HSYNC interrupt
-	anda	#0b11111110
-	sta	PIA0AC
-
-	lda	PIA0AD		; Acknowledge any outstanding
-				; interrupt request
-
-* End of code modified from code written by Simon Jonassen
-
-	andcc	#0b11101111		; Switch IRQ interrupts back on
-
-	rts
-
-*************************************
-* Restore BASIC's IRQ service routine
-*
-* Inputs: None
-* Outputs: None
-*************************************
-
-restore_basic_irq_service_routine:
-
-	orcc	#0b00010000		; Switch off IRQ interrupts
-	lda	decb_irq_service_instruction
-	sta	IRQ_INSTRUCTION
-
-	ldx	decb_irq_service_routine
-	stx	IRQ_HANDLER
-	andcc	#0b11101111		; Switch IRQ interrupts back on
-
-	rts
-
-restore_irq_handler:
-
-
-	rts
-
-**********************
-* Zero the DP register
-*
-* Inputs: None
-* Outputs: None
-**********************
-
-zero_dp_register:
-
-	clra
-	tfr	a, dp
-
-	rts
 
 *************************************
 * Here is our raw data for our sounds

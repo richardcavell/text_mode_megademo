@@ -548,12 +548,12 @@ pluck_the_screen:
 
 ; Count the number of characters on each line of the screen
 
-	jsr	pluck_count_chars_per_line
+;	jsr	pluck_count_chars_per_line
 
 ; Now do it
 
-	bsr	pluck_loop
-	rts
+;	bsr	pluck_loop
+;	rts
 
 ***********************************
 * Pluck - Count characters per line
@@ -586,7 +586,30 @@ _no_increment:
 	cmpu	#pluck_line_counts_end
 	blo	_pluck_count_loop
 
+;	bsr	pluck_loop
+
+***************
+* Pluck loop
+*
+* Inputs: None
+* Outputs: None
+***************
+
+pluck_loop:
+
+	jsr	process_pluck_1
+
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta				; If the user wants to skip, we finish
+	bne	_pluck_finished
+
+	jsr	pluck_is_screen_empty
+	tsta				; If the screen is empty, we finish
+	beq	pluck_loop
+
+_pluck_finished:
 	rts
+
 
 ************************************
 * Is D divisible by 32
@@ -609,28 +632,6 @@ is_d_divisible_by_32:
 
 _divisible:
 	lda	#1
-	rts
-
-***************
-* Pluck loop
-*
-* Inputs: None
-* Outputs: None
-***************
-
-pluck_loop:
-
-	jsr	process_pluck_1
-
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta				; If the user wants to skip, we finish
-	bne	_pluck_finished
-
-	jsr	pluck_is_screen_empty
-	tsta				; If the screen is empty, we finish
-	beq	pluck_loop
-
-_pluck_finished:
 	rts
 
 ******************************************
@@ -931,7 +932,22 @@ pluck_a_char:
 	bne	_no_chars_left
 	bsr	pluck_char_choose_line
 	bsr	pluck_get_char
-	jsr	pluck_char
+;	jsr	pluck_char
+
+************************************************
+* Pluck - Pluck character
+*
+* Input:
+* X = Screen position of character to be plucked
+*
+* Outputs:None
+************************************************
+
+pluck_char:
+
+	jsr	pluck_register
+	jsr	place_white_box
+	jsr	pluck_play_sound
 
 _no_chars_left:
 	rts		; No more unplucked characters left on the screen
@@ -1135,23 +1151,6 @@ get_end_of_line:
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x
-
-	rts
-
-************************************************
-* Pluck - Pluck character
-*
-* Input:
-* X = Screen position of character to be plucked
-*
-* Outputs:None
-************************************************
-
-pluck_char:
-
-	bsr	pluck_register
-	bsr	place_white_box
-	bsr	pluck_play_sound
 
 	rts
 

@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	{
 		c &= 0xfc;	/* the lowest 2 bits = 0 */
 
-		c >>= 2;	/* appear in the lowest 6 bits */
+		c >>= 2;	/* the sound appears in the lowest 6 bits */
 
 		if (fputc(c, output_fp) == EOF)
 		{

@@ -639,7 +639,6 @@ BREAK_KEY	EQU	3
 * Output:
 * A = 0 No input
 * A = 1 User wants to skip
-* A = 2 Require an F to proceed
 *******************************
 
 poll_keyboard:

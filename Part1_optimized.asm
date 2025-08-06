@@ -560,10 +560,8 @@ _pluck_count_loop:
 
 _skip_count:
 	tfr	x,d
-	bsr	is_d_divisible_by_32
-
-	tsta
-	beq	_no_increment
+	andb	#0b00011111
+	bne	_no_increment
 
 	leau	1,u
 
@@ -592,32 +590,6 @@ pluck_loop:
 
 _pluck_finished:
 	rts
-
-
-************************************
-* Is D divisible by 32
-*
-* Input:
-* D = any unsigned number or pointer
-*
-* Output:
-* A = 0           No it isn't
-* A = (Non-zero)  Yes it is
-************************************
-
-is_d_divisible_by_32:
-
-	andb	#0b00011111
-	beq	_divisible
-
-	clra
-	rts
-
-_divisible:
-	lda	#1
-	rts
-
-
 
 ******************************************
 * Wait for VBlank and check for skip
@@ -1282,10 +1254,9 @@ pluck_phase_3:
 
 	pshs	b,x,u
 	tfr	x,d
-	jsr	is_d_divisible_by_32
-	tsta
+	andb	#0b00011111	; Is it divisible by 32?
 	puls	b,x,u		; Does not affect condition codes
-	bne	pluck_phase_3_ended
+	beq	pluck_phase_3_ended
 
 	stb	,x		; Draw it in the next column to the right
 	stx	2,u		; Update position in plucks_data

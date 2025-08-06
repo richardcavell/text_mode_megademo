@@ -1124,8 +1124,6 @@ _pluck_a_char_check:
 
 	rts
 
-
-
 *****************
 * Process pluck 2
 *
@@ -1172,7 +1170,6 @@ _no_pluck_happening:
 
 pluck_do_one_pluck:
 
-
 	cmpa	#PLUCK_PHASE_TURN_WHITE
 	beq	pluck_phase_1	; We are white
 
@@ -1180,21 +1177,6 @@ pluck_do_one_pluck:
 	beq	pluck_phase_2	; We are plain
 
 	bra	pluck_phase_3	; We are pulling
-
-*********************
-* Pluck phase 0
-* Inputs:
-* A = Phase
-* B = Character
-* X = Screen position
-* U = Pluck data
-*
-* Outputs: None
-*********************
-
-pluck_phase_0:
-
-	rts			; Phase nothing, do nothing
 
 *********************
 * Pluck phase 1
@@ -1252,10 +1234,10 @@ pluck_phase_3:
 	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
 
-	pshs	b,x,u
+	pshs	b
 	tfr	x,d
 	andb	#0b00011111	; Is it divisible by 32?
-	puls	b,x,u		; Does not affect condition codes
+	puls	b		; Does not affect condition codes
 	beq	pluck_phase_3_ended
 
 	stb	,x		; Draw it in the next column to the right

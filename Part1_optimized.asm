@@ -1586,32 +1586,6 @@ display_messages_play_sound:
 _display_messages_skip_sound:
 	rts
 
-************************************
-* Switch IRQ and FIRQ interrupts off
-*
-* Inputs: None
-* Outputs: None
-************************************
-
-switch_off_irq_and_firq:
-
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-
-	rts
-
-***********************************
-* Switch IRQ and FIRQ interrupts on
-*
-* Inputs: None
-* Outputs: None
-***********************************
-
-switch_on_irq_and_firq:
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-
-	rts
-
 *****************************
 * Is there a spare sound slot
 *

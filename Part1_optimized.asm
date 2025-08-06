@@ -32,8 +32,6 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-start:
-
 *************************
 * Text buffer information
 *************************
@@ -289,9 +287,6 @@ set_ddra_bits_to_input:
 
 *********************
 * Turn off interrupts
-*
-* Inputs: None
-* Outputs: None
 *********************
 
 	orcc	#0b00010000		; Switch off IRQ interrupts
@@ -307,8 +302,6 @@ set_ddra_bits_to_input:
 
 * End of code modified from code written by Simon Jonassen
 
-	andcc	#0b11101111		; Switch IRQ interrupts back on
-
 *************************************
 * Restore BASIC's IRQ service routine
 *
@@ -316,12 +309,12 @@ set_ddra_bits_to_input:
 * Outputs: None
 *************************************
 
-	orcc	#0b00010000		; Switch off IRQ interrupts
 	lda	decb_irq_service_instruction
 	sta	IRQ_INSTRUCTION
 
 	ldx	decb_irq_service_routine
 	stx	IRQ_HANDLER
+
 	andcc	#0b11101111		; Switch IRQ interrupts back on
 
 **********************
@@ -546,15 +539,6 @@ PLUCK_PHASE_PULLING	EQU	3
 
 pluck_the_screen:
 
-; Count the number of characters on each line of the screen
-
-;	jsr	pluck_count_chars_per_line
-
-; Now do it
-
-;	bsr	pluck_loop
-;	rts
-
 ***********************************
 * Pluck - Count characters per line
 *
@@ -577,6 +561,7 @@ _pluck_count_loop:
 _skip_count:
 	tfr	x,d
 	bsr	is_d_divisible_by_32
+
 	tsta
 	beq	_no_increment
 
@@ -585,8 +570,6 @@ _skip_count:
 _no_increment:
 	cmpu	#pluck_line_counts_end
 	blo	_pluck_count_loop
-
-;	bsr	pluck_loop
 
 ***************
 * Pluck loop
@@ -634,6 +617,8 @@ _divisible:
 	lda	#1
 	rts
 
+
+
 ******************************************
 * Wait for VBlank and check for skip
 *
@@ -645,10 +630,6 @@ _divisible:
 ******************************************
 
 wait_for_vblank_and_check_for_skip:
-
-;	clr	vblank_happened		; See "Variables that are relevant to
-;	lda	#1			; vertical blank timing" above
-;	sta	waiting_for_vblank
 
 	ldd	#$100			;back to back vars (simon)
 	std	waiting_for_vblank
@@ -716,7 +697,7 @@ _wait_for_vblank_skip:
 
 pluck_is_screen_empty:
 
-	bsr	pluck_check_empty_slots
+	bsr	pluck_check_empty_slots_2
 	tsta
 	beq	_pluck_screen_not_empty
 
@@ -725,21 +706,6 @@ pluck_is_screen_empty:
 
 _pluck_screen_not_empty:
 	clra				; Screen is not clear
-	rts
-
-**********************************************************
-* Pluck - Check empty slots
-*
-* Inputs: None
-*
-* Output:
-* A = 0 At least 1 slot is being used, screen is not clear
-* A = (Non-zero) All slots are empty
-**********************************************************
-
-pluck_check_empty_slots:
-
-	bsr	pluck_check_empty_slots_2	; Return what this returns
 	rts
 
 **********************************************************
@@ -930,28 +896,6 @@ pluck_a_char:
 	bsr	pluck_are_lines_empty
 	tsta
 	bne	_no_chars_left
-	bsr	pluck_char_choose_line
-	bsr	pluck_get_char
-;	jsr	pluck_char
-
-************************************************
-* Pluck - Pluck character
-*
-* Input:
-* X = Screen position of character to be plucked
-*
-* Outputs:None
-************************************************
-
-pluck_char:
-
-	jsr	pluck_register
-	jsr	place_white_box
-	jsr	pluck_play_sound
-
-_no_chars_left:
-	rts		; No more unplucked characters left on the screen
-
 *********************************
 * Pluck a character - Choose line
 *
@@ -965,7 +909,69 @@ pluck_char_choose_line:
 
 	bsr	pluck_collate_non_zero_lines
 	bsr	pluck_char_choose_a_line
-	rts
+	bsr	pluck_get_char
+
+************************************************
+* Pluck - Pluck character
+*
+* Input:
+* X = Screen position of character to be plucked
+*
+* Outputs:None
+************************************************
+
+pluck_char:
+
+************************************************************
+* Pluck - Register
+*
+* Input:
+* X = Screen position of character being plucked
+*
+* Outputs:
+* X = (Unchanged) Screen position of character being plucked
+************************************************************
+
+pluck_register:
+
+	leau	,x		; Contributed by Simon Jonassen
+	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
+	ldb	,u		; B = the character being plucked
+				; X is the slot
+				; U is the screen position
+	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
+	std	,x++		; SJ contributed this line as well
+	stu	,x		; And where it is
+	leax	,u		; SJ contributed this line
+
+*********************
+* Place white box
+*
+* Input:
+* X = Screen position
+*
+* Outputs: None
+*********************
+
+place_white_box:
+
+	lda	#WHITE_BOX
+	sta	,x
+********************
+* Pluck - Play sound
+*
+* Inputs: None
+* Outputs: None
+********************
+
+pluck_play_sound:
+
+	ldx	#pop_sound
+	ldu	#pop_sound_end
+	jsr	play_sound	; Play the pluck noise
+_no_chars_left:
+	rts		; No more unplucked characters left on the screen
+
 
 *********************************
 * Pluck - Collated non-zero lines
@@ -1027,8 +1033,7 @@ pluck_collate_non_zero_lines_2:
 
 	ldx	#pluck_line_counts
 	ldu	#pluck_collated_lines
-;	clra
-;	clrb
+
 	ldd	#$0000	; Simon Jonassen contributed this line
 
 _pluck_collate_loop:
@@ -1097,12 +1102,25 @@ pluck_get_char:
 olda2:	lda	#$00		; and this one
 	pshs	x		;,S = End of pluck data
 
-	jsr	get_end_of_line	; X = Screen position (going backwards)
+********************************************
+* Get end of line
+*
+* Input:
+* A = Line to pluck from
+*
+* Output:
+* X = Screen position of the end of the line
+********************************************
+
+get_end_of_line:
+
+	ldx	#BACKBUF
+	inca	; Make X point to the right end of the line
+	ldb	#COLS_PER_LINE
+	mul
+	leax	d,x
 
 	lda	#GREEN_BOX	; A = Green box (space)
-
-	bra	pluck_get_char_2
-
 *******************************************************
 * Pluck - Get char 2
 *
@@ -1134,83 +1152,7 @@ _pluck_a_char_check:
 
 	rts
 
-********************************************
-* Get end of line
-*
-* Input:
-* A = Line to pluck from
-*
-* Output:
-* X = Screen position of the end of the line
-********************************************
 
-get_end_of_line:
-
-	ldx	#BACKBUF
-	inca	; Make X point to the right end of the line
-	ldb	#COLS_PER_LINE
-	mul
-	leax	d,x
-
-	rts
-
-************************************************************
-* Pluck - Register
-*
-* Input:
-* X = Screen position of character being plucked
-*
-* Outputs:
-* X = (Unchanged) Screen position of character being plucked
-************************************************************
-
-pluck_register:
-
-;	tfr	x,u
-	leau	,x		; Contributed by Simon Jonassen
-	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
-	ldb	,u		; B = the character being plucked
-				; X is the slot
-				; U is the screen position
-	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
-;	sta	,x+		; Store our new phase
-;	stb	,x+		; the character
-	std	,x++		; SJ contributed this line as well
-	stu	,x		; And where it is
-
-;	tfr	u,x		; Return X
-	leax	,u		; SJ contributed this line
-	rts
-
-*********************
-* Place white box
-*
-* Input:
-* X = Screen position
-*
-* Outputs: None
-*********************
-
-place_white_box:
-
-	lda	#WHITE_BOX
-	sta	,x
-	rts
-
-********************
-* Pluck - Play sound
-*
-* Inputs: None
-* Outputs: None
-********************
-
-pluck_play_sound:
-
-	ldx	#pop_sound
-	ldu	#pop_sound_end
-	jsr	play_sound	; Play the pluck noise
-
-	rts
 
 *****************
 * Process pluck 2
@@ -1231,10 +1173,9 @@ _pluck_do_each_pluck:
 	ldb	1,u
 	ldx	2,u
 
-;	pshs	u		; Simon Jonassen contributed this
 	stu	oldu+1
 	bsr	pluck_do_one_pluck
-;	puls	u
+
 oldu:	ldu	#$0000		; and this
 
 _no_pluck_happening:
@@ -1259,8 +1200,6 @@ _no_pluck_happening:
 
 pluck_do_one_pluck:
 
-;	cmpa	#PLUCK_PHASE_NOTHING	; tsta
-;	beq	pluck_phase_0	; Nothing happening
 
 	cmpa	#PLUCK_PHASE_TURN_WHITE
 	beq	pluck_phase_1	; We are white
@@ -1583,19 +1522,15 @@ _display_messages_end:
 display_messages_next_line:
 
 	stx	oldx2+1		; Simon Jonassen contributed this line
-;	tfr	u,x
 	leax	,u		; mod simon
 	bsr	move_to_next_line
 	leau	,x		; mod simon
-;	tfr	x,u
 
 oldx2:	ldx	#$0000		; and this one
 
-;	pshs	x,u
 	lda	#5
 	jsr	wait_frames
 	tsta
-;	puls	x,u
 	bne	_display_messages_skip
 	bra	_display_messages_loop
 
@@ -1615,8 +1550,6 @@ move_to_next_line:
 	addd	#32
 	andb	#%11100000
 	tfr	d,x
-
-	
 	rts
 
 ***************************************
@@ -1632,13 +1565,10 @@ move_to_next_line:
 
 display_messages_big_pause:
 
-;	pshs	x,u
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
 	tsta
-;	puls	x,u
 	beq	_display_messages_loop
-
 	lda	#1		; User wants to skip
 	rts
 
@@ -1654,11 +1584,8 @@ display_messages_big_pause:
 ***************************************
 
 display_messages_pause:
-
-;	pshs	x,u
 	lda	#5
 	jsr	wait_frames
-;	puls	x,u
 	rts
 
 ***************************************
@@ -1924,8 +1851,7 @@ loading_screen:
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
 
-	lda	#1
-	clrb
+	ldd	#$0100
 	ldx	#baby_elephant
 	jsr	display_text_graphic
 
@@ -1978,7 +1904,3 @@ type_sound_end:
 	align	COLS_PER_LINE
 
 back_buffer:
-
-	RZB	512,GREEN_BOX
-
-back_buffer_end:

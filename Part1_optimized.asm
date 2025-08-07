@@ -262,9 +262,6 @@ set_ddra_bits_to_input:
 
 *********************
 * Joke startup screen
-*
-* Inputs: None
-* Outputs: None
 *********************
 
 	ldx	#BACKBUF
@@ -294,9 +291,6 @@ _skip_joke_startup:
 
 ****************
 * Loading screen
-*
-* Inputs: None
-* Outputs: None
 ****************
 
 	ldx	#BACKBUF
@@ -320,9 +314,6 @@ _clear_screen_loop2:
 
 ********************
 * Print loading text
-*
-* Inputs: None
-* Outputs: None
 ********************
 
 	ldx	#BACKBUF+15*COLS_PER_LINE+11

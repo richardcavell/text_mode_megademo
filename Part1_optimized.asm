@@ -571,23 +571,11 @@ PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 GREEN_BOX	EQU	$60		; These are MC6847 codes
 WHITE_BOX	EQU	$CF
 
-pluck_line_counts:
-
-	RZB PLUCK_LINES			; 15 zeroes
-
-pluck_line_counts_end:
-
 *************
 * Plucks data
 *************
 
 MAX_SIMULTANEOUS_PLUCKS	EQU	2
-
-plucks_data:
-
-	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
-
-plucks_data_end:
 
 ; The structure of an entry in plucks_data is:
 ; phase     (1 byte),
@@ -1518,6 +1506,7 @@ display_messages_big_pause:
 ***************************************
 
 display_messages_pause:
+
 	lda	#5
 	jsr	wait_frames
 	rts
@@ -1557,6 +1546,7 @@ _display_messages_skip_sound:
 * A = (Non-zero) Yes
 * A = 0 No
 *****************************
+
 is_there_a_spare_sound_slot:
 
 	ldx	smp_1+1
@@ -1660,6 +1650,22 @@ _slot_4:
 	stx	smp_4+1		; This is self-modifying code
 	stu	end_4+1
 	rts
+
+************
+* Pluck data
+************
+
+pluck_line_counts:
+
+	RZB PLUCK_LINES			; 15 zeroes
+
+pluck_line_counts_end:
+
+plucks_data:
+
+	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
+
+plucks_data_end:
 
 ***********************
 * Joke startup messages

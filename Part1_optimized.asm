@@ -15,7 +15,7 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner (Deek)
-*
+
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
 * The sound Type.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
@@ -1091,7 +1091,23 @@ pluck_use_collation:
 pluck_char_choose_a_line:
 
 	sta	olda1+1
-	jsr	get_random	; Random number in B
+
+; This code was written by Sean Conner (Deek) in June 2025 during a
+; discussion on Discord, and then modified by me
+
+get_random:
+
+	ldd	conner_seed
+	lsra
+	rorb
+	bcc	get_random_no_feedback
+	eora	#$B4
+
+get_random_no_feedback:
+	std	conner_seed
+
+; End of code written by Sean Conner
+
 olda1:	lda	#$00
 
 	mul			; A is a random number from 0 to no. lines
@@ -1358,27 +1374,6 @@ _wait_frames_skip:
 * D = The random number
 ********************************************
 
-; This code was written by Sean Conner (Deek) in June 2025 during a
-; discussion on Discord, and then modified by me
-
-conner_seed:
-
-	FCB	0xBE
-	FCB	0xEF
-
-get_random:
-
-	ldd	conner_seed
-	lsra
-	rorb
-	bcc	get_random_no_feedback
-	eora	#$B4
-
-get_random_no_feedback:
-	std	conner_seed
-	rts
-
-; End of code written by Sean Conner
 
 *********************************
 * Display messages
@@ -1650,6 +1645,15 @@ _slot_4:
 	stx	smp_4+1		; This is self-modifying code
 	stu	end_4+1
 	rts
+
+*************************************
+* Used by our random number generator
+*************************************
+
+conner_seed:
+
+	FCB	0xBE
+	FCB	0xEF
 
 ************
 * Pluck data

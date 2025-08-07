@@ -1674,22 +1674,8 @@ TEXT_GRAPHIC_END	EQU	255
 
 display_text_graphic:
 
-;	pshs	x
-	stx	uptr+1		;simon
-
-        stb     dval2+1          ; This was added by Simon Jonassen
-                                ; and refined by me
-        ldx     #BACKBUF
-        ldb     #COLS_PER_LINE
-        mul
-        leax    d,x
-
-dval2:  ldb     #$00            ; And this
-        abx
-
-;	puls	u			; U = graphics data
-
-uptr	ldu	#$0000		;simon
+	tfr	x,u
+	ldx	#BACKBUF+COLS_PER_LINE
 
 _display_text_graphic_loop:
         lda     ,u+

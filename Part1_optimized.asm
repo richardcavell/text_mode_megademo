@@ -1031,18 +1031,6 @@ pluck_collate_non_zero_lines:
 
 	lda	collation_needs_rebuilding
 	beq	pluck_use_collation
-
-	bsr	pluck_collate_non_zero_lines_2
-	clr	collation_needs_rebuilding	; Probably don't need to
-	sta	collation_number_of_lines	; rebuild next time
-
-	rts					; Return A
-
-pluck_use_collation:
-
-	lda	collation_number_of_lines	; Return A
-	rts
-
 ********************************
 * Pluck - Collate non-zero lines
 *
@@ -1074,7 +1062,17 @@ _skip_collation:
 	bra	_pluck_collate_loop
 
 _pluck_collate_finished:
+
+	clr	collation_needs_rebuilding	; Probably don't need to
+	sta	collation_number_of_lines	; rebuild next time
+
+	rts					; Return A
+
+pluck_use_collation:
+
+	lda	collation_number_of_lines	; Return A
 	rts
+
 
 ******************************
 * Pluck - Choose a line
@@ -1186,7 +1184,8 @@ process_pluck_2:
 
 	ldu	#plucks_data
 	ldx	#plucks_data_end
-	pshs	x		; ,S = End of pluck data
+	stx	ucmp+2
+;	pshs	x		; ,S = End of pluck data
 
 _pluck_do_each_pluck:
 	lda	,u
@@ -1201,10 +1200,10 @@ oldu:	ldu	#$0000		; and this
 
 _no_pluck_happening:
 	leau	4,u
-	cmpu	,s
+ucmp	cmpu	#$0000		;cmpu	,s
 	blo	_pluck_do_each_pluck
 
-	leas	2,s
+;	leas	2,s		;not needed with selfmod
 	rts
 
 **********************
@@ -1218,17 +1217,10 @@ _no_pluck_happening:
 *
 * Outputs: None
 **********************
-
 pluck_do_one_pluck:
 
 	cmpa	#PLUCK_PHASE_TURN_WHITE
-	beq	pluck_phase_1	; We are white
-
-	cmpa	#PLUCK_PHASE_PLAIN
-	beq	pluck_phase_2	; We are plain
-
-	bra	pluck_phase_3	; We are pulling
-
+	bne	plp2	; We are white
 *********************
 * Pluck phase 1
 *
@@ -1246,6 +1238,11 @@ pluck_phase_1:
 	lda	#PLUCK_PHASE_PLAIN
 	sta	,u
 	rts
+
+*********************
+plp2	cmpa	#PLUCK_PHASE_PLAIN
+	bne	pluck_phase_3	; We are plain
+
 
 *********************
 * Pluck phase 2
@@ -1268,6 +1265,7 @@ pluck_phase_2:
 
 	rts
 
+
 *********************
 * Pluck phase 3
 *
@@ -1284,13 +1282,13 @@ pluck_phase_3:
 
 	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
+	stb	oldb+1
 
-	pshs	b
 	tfr	x,d
 	andb	#0b00011111	; Is it divisible by 32?
-	puls	b		; Does not affect condition codes
 	beq	pluck_phase_3_ended
 
+oldb	ldb	#$00
 	stb	,x		; Draw it in the next column to the right
 	stx	2,u		; Update position in plucks_data
 
@@ -1314,6 +1312,8 @@ pluck_phase_3_ended:		; Character has gone off the right side
 	sta	,u		; This slot is now empty
 
 	rts
+
+
 
 ***********************************
 * Wait for a number of frames

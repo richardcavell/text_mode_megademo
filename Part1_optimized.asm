@@ -1121,8 +1121,9 @@ pluck_get_char:
 	sta	olda2+1		; Simon Jonassen contributed this line
 	ldx	#plucks_data_end
 olda2:	lda	#$00		; and this one
-	pshs	x		;,S = End of pluck data
+;	pshs	x		;,S = End of pluck data
 
+	stx	ucmp2+2
 ********************************************
 * Get end of line
 *
@@ -1166,10 +1167,11 @@ _pluck_a_char_check:
 	beq	pluck_get_char_2
 
 	leau	4,u
-	cmpu	,s
+;	cmpu	,s
+ucmp2	cmpu	#$0000
 	blo	_pluck_a_char_check
 
-	leas	2,s		; Return X
+;	leas	2,s		; Return X
 
 	rts
 
@@ -1564,7 +1566,6 @@ _display_messages_skip_sound:
 * A = (Non-zero) Yes
 * A = 0 No
 *****************************
-
 is_there_a_spare_sound_slot:
 
 	ldx	smp_1+1
@@ -1682,7 +1683,8 @@ TEXT_GRAPHIC_END	EQU	255
 
 display_text_graphic:
 
-	pshs	x
+;	pshs	x
+	stx	uptr+1		;simon
 
         stb     dval2+1          ; This was added by Simon Jonassen
                                 ; and refined by me
@@ -1694,7 +1696,9 @@ display_text_graphic:
 dval2:  ldb     #$00            ; And this
         abx
 
-	puls	u			; U = graphics data
+;	puls	u			; U = graphics data
+
+uptr	ldu	#$0000		;simon
 
 _display_text_graphic_loop:
         lda     ,u+

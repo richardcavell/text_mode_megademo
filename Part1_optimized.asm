@@ -211,12 +211,6 @@ set_ddra_bits_to_input:
 
 * End code modified by me from code written by Simon Jonassen
 
-**************************************
-* Turn IRQ and FIRQ interrupts back on
-**************************************
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-
 **************************************************
 * Display skip message at the bottom of the screen
 *
@@ -257,6 +251,12 @@ set_ddra_bits_to_input:
         sty     30,x
 
 ; End of code contributed by Simon Jonassen
+
+**************************************
+* Turn IRQ and FIRQ interrupts back on
+**************************************
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 
 	jsr	pluck_the_screen		; First section
 

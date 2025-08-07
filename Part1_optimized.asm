@@ -1372,26 +1372,6 @@ get_random_no_feedback:
 
 ; End of code written by Sean Conner
 
-***********************
-* Joke startup messages
-***********************
-
-MESSAGES_END	EQU	255
-
-joke_startup_messages:
-
-	FCV	"INCORPORATING CLEVER IDEAS...",0
-	FCV	"%DONE",0,0
-	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
-	FCV	"SKILL...% DONE",0,0
-	FCV	"INCLUDING EVER SO MANY",0
-	FCV	"AWESOME EFFECTS...% DONE",0,0
-	FCV	"READYING ALL YOUR FAVOURITE",0
-	FCV	"DEMO CLICHES...% DONE",0,0
-	FCV	"STARTING THE SHOW...%%%%%%"
-
-	FCB	MESSAGES_END
-
 *********************************
 * Display messages
 *
@@ -1704,12 +1684,32 @@ _display_text_graphic_finished:
 
 text_graphic_new_line:
 
-	pshs	b,u
-	jsr	move_to_next_line
-	puls	b,u
+	tfr	x,d
+	addd	#32
+	andb	#%11100000
+	tfr	d,x
 
-	leax	b,x
 	bra	_display_text_graphic_loop
+
+***********************
+* Joke startup messages
+***********************
+
+MESSAGES_END	EQU	255
+
+joke_startup_messages:
+
+	FCV	"INCORPORATING CLEVER IDEAS...",0
+	FCV	"%DONE",0,0
+	FCV	"UTILIZING MAXIMUM PROGRAMMING",0
+	FCV	"SKILL...% DONE",0,0
+	FCV	"INCLUDING EVER SO MANY",0
+	FCV	"AWESOME EFFECTS...% DONE",0,0
+	FCV	"READYING ALL YOUR FAVOURITE",0
+	FCV	"DEMO CLICHES...% DONE",0,0
+	FCV	"STARTING THE SHOW...%%%%%%"
+
+	FCB	MESSAGES_END
 
 ***************************
 * ASCII art - Baby elephant

@@ -986,7 +986,6 @@ pluck_play_sound:
 _no_chars_left:
 	rts		; No more unplucked characters left on the screen
 
-
 *********************************
 * Pluck - Collated non-zero lines
 *********************************
@@ -1306,8 +1305,6 @@ pluck_phase_3_ended:		; Character has gone off the right side
 
 	rts
 
-
-
 ***********************************
 * Wait for a number of frames
 *
@@ -1320,9 +1317,6 @@ pluck_phase_3_ended:		; Character has gone off the right side
 ***********************************
 
 wait_frames:
-
-	tsta				; If A = 0, immediately exit
-	beq	_wait_frames_success
 
 	pshs	a
 	jsr	wait_for_vblank_and_check_for_skip

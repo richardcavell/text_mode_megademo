@@ -259,8 +259,64 @@ set_ddra_bits_to_input:
 ; End of code contributed by Simon Jonassen
 
 	jsr	pluck_the_screen		; First section
-	jsr	joke_startup_screen		; Second section
-	jsr	loading_screen
+
+*********************
+* Joke startup screen
+*
+* Inputs: None
+* Outputs: None
+*********************
+
+	ldx	#BACKBUF
+	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
+
+_clear_screen_loop:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+
+	cmpx	#BACKBUFEND		; Finish in the lower-right corner
+	blo	_clear_screen_loop
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+
+	ldx	#joke_startup_messages
+	jsr	display_messages
+	tsta
+	bne	_skip_joke_startup
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames			; Wait a certain no of frames
+
+_skip_joke_startup:
+
+****************
+* Loading screen
+*
+* Inputs: None
+* Outputs: None
+****************
+
+	ldx	#BACKBUF
+	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
+
+_clear_screen_loop2:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+
+	cmpx	#BACKBUFEND		; Finish in the lower-right corner
+	blo	_clear_screen_loop2
+
+	lda	#WAIT_PERIOD
+	jsr	wait_frames
+
+	ldd	#$0100
+	ldx	#baby_elephant
+	jsr	display_text_graphic
 
 ********************
 * Print loading text
@@ -1327,31 +1383,6 @@ get_random_no_feedback:
 
 ; End of code written by Sean Conner
 
-*********************
-* Joke startup screen
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-joke_startup_screen:
-
-	jsr	clear_screen			; Just clear the screen
-
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
-
-	ldx	#joke_startup_messages
-	jsr	display_messages
-	tsta
-	bne	_skip_joke_startup
-
-	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Wait a certain no of frames
-
-_skip_joke_startup:
-	rts
-
 ***********************
 * Joke startup messages
 ***********************
@@ -1642,28 +1673,6 @@ _slot_4:
 	stu	end_4+1
 	rts
 
-******************
-* Clear the screen
-*
-* Inputs: None
-* Outputs: None
-******************
-
-clear_screen:
-
-	ldx	#BACKBUF
-	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
-
-_clear_screen_loop:
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-
-	cmpx	#BACKBUFEND		; Finish in the lower-right corner
-	blo	_clear_screen_loop
-	rts
-
 ************************
 * Display a text graphic
 *
@@ -1724,26 +1733,6 @@ text_graphic_new_line:
 
 	leax	b,x
 	bra	_display_text_graphic_loop
-
-****************
-* Loading screen
-*
-* Inputs: None
-* Outputs: None
-****************
-
-loading_screen:
-
-	jsr	clear_screen
-
-	lda	#WAIT_PERIOD
-	jsr	wait_frames
-
-	ldd	#$0100
-	ldx	#baby_elephant
-	jsr	display_text_graphic
-
-	rts
 
 ***************************
 * ASCII art - Baby elephant

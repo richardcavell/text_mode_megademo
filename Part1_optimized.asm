@@ -373,17 +373,13 @@ _clear_screen_loop2:
 
 	andcc	#0b11101111		; Switch IRQ interrupts back on
 
-**********************
-* Zero the DP register
-*
-* Inputs: None
-* Outputs: None
-**********************
-
-	clra
-	tfr	a, dp
+**************************************
+* Zero the DP register and return zero
+**************************************
 
 	ldd	#0
+	tfr	a, dp
+
 	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************

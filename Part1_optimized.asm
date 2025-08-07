@@ -308,9 +308,35 @@ _clear_screen_loop2:
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
 
-	ldd	#$0100
-	ldx	#baby_elephant
-	jsr	display_text_graphic
+***********************************
+* Display the baby elephant graphic
+***********************************
+
+TEXT_GRAPHIC_END	EQU	255
+
+display_text_graphic:
+
+	ldu	#baby_elephant
+	ldx	#BACKBUF+COLS_PER_LINE
+
+_display_text_graphic_loop:
+        lda     ,u+
+        beq     text_graphic_new_line
+        cmpa    #TEXT_GRAPHIC_END
+        beq	_display_text_graphic_finished
+        sta     ,x+
+        bra     _display_text_graphic_loop
+
+text_graphic_new_line:
+
+	tfr	x,d
+	addd	#32
+	andb	#%11100000
+	tfr	d,x
+
+	bra	_display_text_graphic_loop
+
+_display_text_graphic_finished:
 
 ********************
 * Print loading text
@@ -1634,56 +1660,6 @@ _slot_4:
 	stx	smp_4+1		; This is self-modifying code
 	stu	end_4+1
 	rts
-
-************************
-* Display a text graphic
-*
-* Inputs:
-* A = Line number
-* B = Column number
-* X = Graphic data
-************************
-
-TEXT_GRAPHIC_END	EQU	255
-
-display_text_graphic:
-
-	tfr	x,u
-	ldx	#BACKBUF+COLS_PER_LINE
-
-_display_text_graphic_loop:
-        lda     ,u+
-        beq     text_graphic_new_line
-        cmpa    #TEXT_GRAPHIC_END
-        beq	_display_text_graphic_finished
-        sta     ,x+
-        bra     _display_text_graphic_loop
-
-_display_text_graphic_finished:
-	rts
-
-*******************************
-* Text graphic new line
-*
-* Inputs:
-* B = Column number
-* X = Screen position
-* U = Message
-*
-* Outputs:
-* B = (Unchanged) Column number
-* X = (Updated)   Screen position
-* U = (Unchanged) Message
-*******************************
-
-text_graphic_new_line:
-
-	tfr	x,d
-	addd	#32
-	andb	#%11100000
-	tfr	d,x
-
-	bra	_display_text_graphic_loop
 
 ***********************
 * Joke startup messages

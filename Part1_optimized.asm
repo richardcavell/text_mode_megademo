@@ -1365,16 +1365,6 @@ _wait_frames_skip:
 	lda	#1			; User wants to skip
 	rts
 
-********************************************
-* Returns a random-ish number from 0...65535
-*
-* Inputs: None
-*
-* Output:
-* D = The random number
-********************************************
-
-
 *********************************
 * Display messages
 *

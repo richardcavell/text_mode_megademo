@@ -163,17 +163,13 @@ _setup_loop:
 
 *********************
 * Turn off disk motor
-*
-* Inputs: None
-* Outputs: None
 *********************
+
 	clra
 	sta	DSKREG		; Turn off disk motor
+
 *********************
 * Turn 6-bit audio on
-*
-* Inputs: None
-* Outputs: None
 *********************
 
 * This is modified by me from code written by Simon Jonassen
@@ -198,9 +194,6 @@ _setup_loop:
 
 ************************
 * Set DDRA bits to input
-*
-* Inputs: None
-* Outputs: None
 ************************
 
 set_ddra_bits_to_input:

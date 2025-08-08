@@ -723,20 +723,14 @@ _pluck_screen_not_empty:
 
 pluck_check_empty_slots_2:
 
-	ldx	#plucks_data_end
-
-	stx	oldx+1		; Simon Jonassen contributed this line
-
 	ldx	#plucks_data
 
-_pluck_check_data:
-	lda	,x
-	bne	_pluck_check_data_not_empty
-	leax	4,x
-oldx	cmpx	#$0000		; and this one
-	blo	_pluck_check_data
+	tst	,x
+	bne	_pluck_check_data_not_empty	; Only 2 plucks
+	tst	4,x				; can happen
+	bne	_pluck_check_data_not_empty	; at once
 
-	lda	#1			; There are no plucks happening
+	lda	#1
 	rts
 
 _pluck_check_data_not_empty:
@@ -1367,6 +1361,8 @@ _display_messages_loop:
 	tsta
 	beq	_display_messages_loop	; If branch is taken,
 					; user has not skipped
+
+_display_messages_skip:
 	lda	#1		; User wants to skip
 	rts
 

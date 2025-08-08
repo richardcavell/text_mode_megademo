@@ -857,29 +857,15 @@ pluck_register:
 
 *********************
 * Place white box
-*
-* Input:
-* X = Screen position
-*
-* Outputs: None
 *********************
-
-place_white_box:
 
 	lda	#WHITE_BOX
 	sta	,x
-********************
-* Pluck - Play sound
-*
-* Inputs: None
-* Outputs: None
-********************
-
-pluck_play_sound:
 
 	ldx	#pop_sound
 	ldu	#pop_sound_end
 	jsr	play_sound	; Play the pluck noise
+
 _no_chars_left:
 	rts		; No more unplucked characters left on the screen
 

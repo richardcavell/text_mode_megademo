@@ -1313,8 +1313,19 @@ _display_messages_loop:
 	beq	_display_messages_end
 	sta	,u+
 
-	bsr	display_messages_play_sound
-	bsr	display_messages_pause
+	cmpa	#GREEN_BOX
+	beq	_display_messages_skip_sound
+
+	pshs	x,u
+	ldx	#type_sound
+	ldu	#type_sound_end
+	jsr	play_sound		; Play the typing noise
+	puls	x,u
+
+_display_messages_skip_sound:
+
+	lda	#5
+	jsr	wait_frames
 	tsta
 	beq	_display_messages_loop	; If branch is taken,
 					; user has not skipped
@@ -1390,50 +1401,6 @@ display_messages_big_pause:
 	tsta
 	beq	_display_messages_loop
 	lda	#1		; User wants to skip
-	rts
-
-***************************************
-* Display messages - Pause
-*
-* X = Messages position
-* U = Text buffer position
-*
-* Outputs:
-* X = (Unmodified) Messages position
-* U = (Unmodified) Text buffer position
-***************************************
-
-display_messages_pause:
-
-	lda	#5
-	jsr	wait_frames
-	rts
-
-***************************************
-* Display messages - Play sound
-*
-* Inputs:
-* A = Character being displayed
-* X = Messages position
-* U = Text buffer position
-*
-* Outputs:
-* X = (Unmodified) Messages position
-* U = (Unmodified) Text buffer position
-***************************************
-
-display_messages_play_sound:
-
-	cmpa	#GREEN_BOX
-	beq	_display_messages_skip_sound
-
-	pshs	x,u
-	ldx	#type_sound
-	ldu	#type_sound_end
-	jsr	play_sound		; Play the typing noise
-	puls	x,u
-					; fallthrough
-_display_messages_skip_sound:
 	rts
 
 *****************************

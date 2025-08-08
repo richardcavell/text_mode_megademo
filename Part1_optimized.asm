@@ -700,7 +700,6 @@ pluck_are_lines_empty:
 
 	bsr	pluck_are_lines_empty_2
 	ldb	#1
-;	stb	cached_pluck_lines_empty_is_good
 	std	cached_pluck_lines_empty		;back 2 back vars - simon
 	rts
 

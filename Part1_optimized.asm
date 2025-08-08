@@ -969,28 +969,6 @@ pluck_play_sound:
 _no_chars_left:
 	rts		; No more unplucked characters left on the screen
 
-*********************************
-* Pluck - Collated non-zero lines
-*********************************
-
-pluck_collated_lines:
-
-	RZB	PLUCK_LINES
-
-pluck_end_collated_lines:
-
-**********************************
-* Whether to rebuild our collation
-**********************************
-
-collation_needs_rebuilding:
-
-	FCB	255
-
-collation_number_of_lines:
-
-	FCB	0
-
 ********************************
 * Pluck - Collate non-zero lines
 *
@@ -1616,6 +1594,28 @@ plucks_data:
 	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
 
 plucks_data_end:
+
+*********************************
+* Pluck - Collated non-zero lines
+*********************************
+
+pluck_collated_lines:
+
+	RZB	PLUCK_LINES
+
+pluck_end_collated_lines:
+
+**********************************
+* Whether to rebuild our collation
+**********************************
+
+collation_needs_rebuilding:
+
+	FCB	255
+
+collation_number_of_lines:
+
+	FCB	0
 
 ***********************
 * Joke startup messages

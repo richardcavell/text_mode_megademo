@@ -648,6 +648,16 @@ pluck_loop:
 _pluck_finished:
 	rts
 
+*****************************
+* Define POLCAT and BREAK_KEY
+*****************************
+
+; POLCAT is a pointer to a pointer
+
+POLCAT		EQU	$A000
+
+BREAK_KEY	EQU	3
+
 ******************************************
 * Wait for VBlank and check for skip
 *
@@ -660,13 +670,15 @@ _pluck_finished:
 
 wait_for_vblank_and_check_for_skip:
 
-	ldd	#$100			;back to back vars (simon)
+	ldd	#$100			; back to back vars (simon)
 	std	waiting_for_vblank
 
 _wait_for_vblank_and_check_for_skip_loop:
-	bsr	poll_keyboard
-	tsta
-	bne	_skip
+	jsr	[POLCAT]		; POLCAT is a pointer to a pointer
+	cmpa	#' '			; Space bar
+	beq	_wait_for_vblank_skip
+	cmpa	#BREAK_KEY		; Break key
+	beq	_wait_for_vblank_skip
 
 	lda	vblank_happened
 	beq	_wait_for_vblank_and_check_for_skip_loop
@@ -674,43 +686,8 @@ _wait_for_vblank_and_check_for_skip_loop:
 	clra		; A VBlank happened
 	rts
 
-_skip:
-	lda	#1	; User skipped
-	rts
-
-*****************************
-* Define POLCAT and BREAK_KEY
-*****************************
-
-; POLCAT is a pointer to a pointer
-
-POLCAT		EQU	$A000
-
-BREAK_KEY	EQU	3
-
-*******************************
-* Poll keyboard
-*
-* Inputs: None
-*
-* Output:
-* A = 0 No input
-* A = 1 User wants to skip
-*******************************
-
-poll_keyboard:
-
-	jsr	[POLCAT]		; POLCAT is a pointer to a pointer
-	cmpa	#' '			; Space bar
-	beq	_wait_for_vblank_skip
-	cmpa	#BREAK_KEY		; Break key
-	beq	_wait_for_vblank_skip
-
-	clra		; Debug mode is off, so exit normally
-	rts
-
 _wait_for_vblank_skip:
-	lda	#1	; User wants to skip
+	lda	#1	; User skipped
 	rts
 
 *************************************************

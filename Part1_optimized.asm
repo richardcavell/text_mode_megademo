@@ -788,43 +788,19 @@ _process_pluck_2:
 
 pluck_find_a_spare_slot:
 
-	ldx	#plucks_data_end
-	pshs	x			; ,S = End of pluck lines
-	ldx	#plucks_data		;  X = Our pointer to pluck data
+	ldx	#plucks_data
+	lda	,x
+	beq	_found_spare
 
-	bsr	pluck_find_loop
-	leas	2,s
-	rts
+	ldx	#plucks_data+4
+	lda	,x
+	beq	_found_spare
 
-*****************************************
-* Pluck - Find loop
-*
-* Inputs:
-*   X = Pointer to pluck data
-* 2,S = Pointer to end of pluck data
-*
-* Outputs:
-* A = (Non-zero) There is a spare slot
-* A = 0		 There isn't a spare slot
-* X = (If A is non-zero) The slot address
-*****************************************
-
-pluck_find_loop:
-
-	cmpx	2,s
-	bhs	_pluck_find_no_empty_slot
-	lda	,x			; compare to #PLUCK_PHASE_NOTHING
-	beq	_pluck_find_found_empty
-	leax	4,x
-	bra	pluck_find_loop
-
-_pluck_find_no_empty_slot:
-	ldx	#0
 	clra
 	rts
 
-_pluck_find_found_empty:
-	lda	#1		; We return X as well
+_found_spare:
+	lda	#1	; Return X as well
 	rts
 
 ***************************

@@ -1009,9 +1009,7 @@ pluck_get_char:
 	sta	olda2+1		; Simon Jonassen contributed this line
 	ldx	#plucks_data_end
 olda2:	lda	#$00		; and this one
-;	pshs	x		;,S = End of pluck data
 
-	stx	ucmp2+2
 ********************************************
 * Get end of line
 *
@@ -1050,13 +1048,13 @@ pluck_get_char_2:
 
 	ldu	#plucks_data+2	; This checks whether the found char is
 				; already being plucked
-_pluck_a_char_check:
+
 	cmpx	,u
 	beq	pluck_get_char_2
 
-	leau	4,u
-ucmp2	cmpu	#$0000
-	blo	_pluck_a_char_check
+	cmpx	4,u
+	beq	pluck_get_char_2
+
 	rts
 
 *****************

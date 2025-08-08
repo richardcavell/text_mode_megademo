@@ -341,7 +341,6 @@ _clear_screen_loop2:
 * Display the baby elephant graphic
 ***********************************
 
-
 display_text_graphic:
 
 	ldu	#baby_elephant
@@ -588,8 +587,6 @@ skip_message:
 	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
 
-*****************
-
 ******************
 * Pluck the screen
 *
@@ -650,7 +647,6 @@ pluck_loop:
 
 _pluck_finished:
 	rts
-
 
 *************************************************
 * Pluck - Check to see if the screen is empty yet

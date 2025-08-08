@@ -1052,7 +1052,6 @@ pluck_use_collation:
 	lda	collation_number_of_lines	; Return A
 	rts
 
-
 ******************************
 * Pluck - Choose a line
 *
@@ -1261,7 +1260,6 @@ pluck_phase_2:
 	sta	,u
 
 	rts
-
 
 *********************
 * Pluck phase 3

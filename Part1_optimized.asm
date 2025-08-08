@@ -1097,24 +1097,25 @@ ucmp2	cmpu	#$0000
 process_pluck_2:
 
 	ldu	#plucks_data
-	ldx	#plucks_data_end
-	stx	ucmp+2		;End of pluck data
 
-_pluck_do_each_pluck:
 	lda	,u
-	beq	_no_pluck_happening	; This will run faster
+	beq	_no_pluck_happening_1	; This will run faster
 	ldb	1,u
 	ldx	2,u
 
-	stu	oldu+1
 	bsr	pluck_do_one_pluck
 
-oldu:	ldu	#$0000		; and this
+_no_pluck_happening_1:
+	ldu	#plucks_data+4
 
-_no_pluck_happening:
-	leau	4,u
-ucmp	cmpu	#$0000		;cmpu	,s
-	blo	_pluck_do_each_pluck
+	lda	,u
+	beq	_no_pluck_happening_2	; This will run faster
+	ldb	1,u
+	ldx	2,u
+
+	bsr	pluck_do_one_pluck
+
+_no_pluck_happening_2:
 
 	rts
 

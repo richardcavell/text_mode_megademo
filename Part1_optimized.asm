@@ -1038,13 +1038,10 @@ pluck_get_char_2:
 	cmpa	,-x		; Go backwards until we find a non-space
 	beq	pluck_get_char_2
 
-	ldu	#plucks_data+2	; This checks whether the found char is
-				; already being plucked
+	cmpx	plucks_data+2		; This checks whether the found char is
+	beq	pluck_get_char_2	; already being plucked
 
-	cmpx	,u
-	beq	pluck_get_char_2
-
-	cmpx	4,u
+	cmpx	plucks_data+6
 	beq	pluck_get_char_2
 
 	rts

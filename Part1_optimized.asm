@@ -1321,7 +1321,10 @@ display_messages_next_line:
 
 	stx	oldx2+1		; Simon Jonassen contributed this line
 	leax	,u		; mod simon
-	bsr	move_to_next_line
+	tfr	x,d
+	addd	#32
+	andb	#%11100000
+	tfr	d,x
 	leau	,x		; mod simon
 
 oldx2:	ldx	#$0000		; and this one

@@ -677,8 +677,7 @@ pluck_check_empty_slots_2:
 	bne	_pluck_screen_not_empty		; Only 2 plucks
 	tst	4,x				; can happen
 	bne	_pluck_screen_not_empty		; at once
-	bsr	pluck_are_lines_empty	; Return whatever this returns
-	rts
+	bra	pluck_are_lines_empty	; Return whatever this returns
 
 _pluck_screen_not_empty:
 	clra				; Screen is not clear

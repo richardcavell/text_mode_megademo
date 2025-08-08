@@ -1367,19 +1367,6 @@ _display_messages_loop:
 	tsta
 	beq	_display_messages_loop	; If branch is taken,
 					; user has not skipped
-	bra	_display_messages_skip
-
-**********************************
-* Display messages - Exit routines
-*
-* Inputs: None
-*
-* Outputs:
-* A = 0 Normal termination
-* A = 1 User wants to skip
-**********************************
-
-_display_messages_skip:
 	lda	#1		; User wants to skip
 	rts
 

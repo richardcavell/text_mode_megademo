@@ -102,10 +102,8 @@ IRQ_HANDLER	EQU	$10D
 	lda	#$0e			; DP JMP
 	sta	IRQ_INSTRUCTION		; Shaves off 1 byte and cycle !!
 
-	lda	#irq_service_routine&255
-	sta	IRQ_HANDLER
-
-; The last byte stays the same
+	ldd	#(irq_service_routine&255)*256+0
+	std	IRQ_HANDLER
 
 *********************
 * Turn off disk motor

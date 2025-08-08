@@ -23,30 +23,94 @@
 *
 * The ASCII art of the baby elephant is by Shanaka Dias at asciiart.eu
 
+*************************
+* EQUATES
+*************************
 * Between each section, wait this number of frames
-
 WAIT_PERIOD	EQU	25
+*************************
+* Text buffer information
+*************************
+TEXTBUF		EQU	$400	; This is the output text screen
+TEXTBUFSIZE	EQU	$200
+TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
+BACKBUF		EQU	back_buffer	; We're double-buffering
+BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
+COLS_PER_LINE	EQU	32
+TEXT_LINES	EQU	16
+BOTTOM_LINE	EQU	(TEXT_LINES-1)
+
+
+IRQ_INSTRUCTION	EQU	$10C
+IRQ_HANDLER	EQU	$10D
+
+DSKREG	EQU	$FF40
+*****************************
+* PIA memory-mapped registers
+*****************************
+
+PIA0AD	EQU	$FF00
+PIA0AC	EQU	$FF01
+PIA0BD	EQU	$FF02
+PIA0BC	EQU	$FF03
+
+AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
+DDRA		EQU	$FF20
+PIA2_CRA	EQU	$FF21
+AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
+*****************************
+
+TEXT_GRAPHIC_END	EQU	255
+
+* Pluck variables
+*****************
+
+PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
+					; the screen is for
+					; our skip message
+
+GREEN_BOX	EQU	$60		; These are MC6847 codes
+WHITE_BOX	EQU	$CF
+
+*************
+* Plucks data
+*************
+
+MAX_SIMULTANEOUS_PLUCKS	EQU	2
+
+; The structure of an entry in plucks_data is:
+; phase     (1 byte),
+; character (1 byte),
+; position  (2 bytes)
+
+PLUCK_PHASE_NOTHING	EQU	0
+PLUCK_PHASE_TURN_WHITE	EQU	1
+PLUCK_PHASE_PLAIN	EQU	2
+PLUCK_PHASE_PULLING	EQU	3
+
+*****************************
+* Define POLCAT and BREAK_KEY
+*****************************
+
+; POLCAT is a pointer to a pointer
+
+POLCAT		EQU	$A000
+
+BREAK_KEY	EQU	3
+
+MESSAGES_END	EQU	255
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
 		ORG $1800
 
-*************************
-* Text buffer information
-*************************
+************************************
+* Switch off IRQ and FIRQ interrupts
+************************************
 
-TEXTBUF		EQU	$400	; This is the output text screen
-TEXTBUFSIZE	EQU	$200
-TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
-
-BACKBUF		EQU	back_buffer	; We're double-buffering
-BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE	EQU	32
-TEXT_LINES	EQU	16
-
-BOTTOM_LINE	EQU	(TEXT_LINES-1)
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+	dec	$71		;make any reset COLD
 
 ******************
 * Setup backbuffer
@@ -64,11 +128,6 @@ _setup_loop:
 	cmpx	#TEXTBUFEND
 	blo	_setup_loop
 
-************************************
-* Switch off IRQ and FIRQ interrupts
-************************************
-
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
 
 ***************************
 * Set DP register for HSYNC
@@ -89,10 +148,7 @@ _setup_loop:
 * Outputs: None
 *********************************
 
-IRQ_INSTRUCTION	EQU	$10C
-IRQ_HANDLER	EQU	$10D
-
-	lda	IRQ_INSTRUCTION		; Should be JMP (extended)
+	lda	IRQ_INSTRUCTION		; Should be JMP (extended ($7e))
 	sta	decb_irq_service_instruction
 
 	ldx	IRQ_HANDLER			; Load the current vector
@@ -111,39 +167,14 @@ IRQ_HANDLER	EQU	$10D
 * Inputs: None
 * Outputs: None
 *********************
-
-DSKREG	EQU	$FF40
-
 	clra
 	sta	DSKREG		; Turn off disk motor
-
-*****************************
-* PIA memory-mapped registers
-*****************************
-
-PIA0AD	EQU	$FF00
-PIA0AC	EQU	$FF01
-PIA0BD	EQU	$FF02
-PIA0BC	EQU	$FF03
-
 *********************
 * Turn 6-bit audio on
 *
 * Inputs: None
 * Outputs: None
 *********************
-
-AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
-DDRA		EQU	$FF20
-PIA2_CRA	EQU	$FF21
-AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
-
-*******************
-* Set audio port on
-*
-* Inputs: None
-* Outputs: None
-*******************
 
 * This is modified by me from code written by Simon Jonassen
 
@@ -310,7 +341,6 @@ _clear_screen_loop2:
 * Display the baby elephant graphic
 ***********************************
 
-TEXT_GRAPHIC_END	EQU	255
 
 display_text_graphic:
 
@@ -559,31 +589,6 @@ skip_message:
 	FCB	0
 
 *****************
-* Pluck variables
-*****************
-
-PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
-					; the screen is for
-					; our skip message
-
-GREEN_BOX	EQU	$60		; These are MC6847 codes
-WHITE_BOX	EQU	$CF
-
-*************
-* Plucks data
-*************
-
-MAX_SIMULTANEOUS_PLUCKS	EQU	2
-
-; The structure of an entry in plucks_data is:
-; phase     (1 byte),
-; character (1 byte),
-; position  (2 bytes)
-
-PLUCK_PHASE_NOTHING	EQU	0
-PLUCK_PHASE_TURN_WHITE	EQU	1
-PLUCK_PHASE_PLAIN	EQU	2
-PLUCK_PHASE_PULLING	EQU	3
 
 ******************
 * Pluck the screen
@@ -646,47 +651,6 @@ pluck_loop:
 _pluck_finished:
 	rts
 
-*****************************
-* Define POLCAT and BREAK_KEY
-*****************************
-
-; POLCAT is a pointer to a pointer
-
-POLCAT		EQU	$A000
-
-BREAK_KEY	EQU	3
-
-******************************************
-* Wait for VBlank and check for skip
-*
-* Inputs: None
-*
-* Output:
-* A = 0          -> A VBlank happened
-* A = (Non-zero) -> User is trying to skip
-******************************************
-
-wait_for_vblank_and_check_for_skip:
-
-	ldd	#$100			; back to back vars (simon)
-	std	waiting_for_vblank
-
-_wait_for_vblank_and_check_for_skip_loop:
-	jsr	[POLCAT]		; POLCAT is a pointer to a pointer
-	cmpa	#' '			; Space bar
-	beq	_wait_for_vblank_skip
-	cmpa	#BREAK_KEY		; Break key
-	beq	_wait_for_vblank_skip
-
-	lda	vblank_happened
-	beq	_wait_for_vblank_and_check_for_skip_loop
-
-	clra		; A VBlank happened
-	rts
-
-_wait_for_vblank_skip:
-	lda	#1	; User skipped
-	rts
 
 *************************************************
 * Pluck - Check to see if the screen is empty yet
@@ -699,17 +663,6 @@ _wait_for_vblank_skip:
 *************************************************
 
 pluck_is_screen_empty:
-
-	bsr	pluck_check_empty_slots_2
-	tsta
-	beq	_pluck_screen_not_empty
-
-	bsr	pluck_are_lines_empty	; Return whatever this returns
-	rts
-
-_pluck_screen_not_empty:
-	clra				; Screen is not clear
-	rts
 
 **********************************************************
 * Pluck - Check empty slots 2
@@ -724,17 +677,15 @@ _pluck_screen_not_empty:
 pluck_check_empty_slots_2:
 
 	ldx	#plucks_data
-
 	tst	,x
-	bne	_pluck_check_data_not_empty	; Only 2 plucks
+	bne	_pluck_screen_not_empty		; Only 2 plucks
 	tst	4,x				; can happen
-	bne	_pluck_check_data_not_empty	; at once
-
-	lda	#1
+	bne	_pluck_screen_not_empty		; at once
+	bsr	pluck_are_lines_empty	; Return whatever this returns
 	rts
 
-_pluck_check_data_not_empty:
-	clra				; There are plucks happening
+_pluck_screen_not_empty:
+	clra				; Screen is not clear
 	rts
 
 ************************************
@@ -746,12 +697,11 @@ _pluck_check_data_not_empty:
 * A = 0 Lines are not clear
 * A = (Non-zero) All lines are clear
 ************************************
-
-cached_pluck_lines_empty_is_good:
+cached_pluck_lines_empty:
 
 	RZB	1
 
-cached_pluck_lines_empty:
+cached_pluck_lines_empty_is_good:
 
 	RZB	1
 
@@ -762,8 +712,8 @@ pluck_are_lines_empty:
 
 	bsr	pluck_are_lines_empty_2
 	ldb	#1
-	stb	cached_pluck_lines_empty_is_good
-	sta	cached_pluck_lines_empty
+;	stb	cached_pluck_lines_empty_is_good
+	std	cached_pluck_lines_empty		;back 2 back vars - simon
 	rts
 
 _return_cache:
@@ -1133,12 +1083,8 @@ _pluck_a_char_check:
 	beq	pluck_get_char_2
 
 	leau	4,u
-;	cmpu	,s
 ucmp2	cmpu	#$0000
 	blo	_pluck_a_char_check
-
-;	leas	2,s		; Return X
-
 	rts
 
 *****************
@@ -1152,8 +1098,7 @@ process_pluck_2:
 
 	ldu	#plucks_data
 	ldx	#plucks_data_end
-	stx	ucmp+2
-;	pshs	x		; ,S = End of pluck data
+	stx	ucmp+2		;End of pluck data
 
 _pluck_do_each_pluck:
 	lda	,u
@@ -1171,7 +1116,6 @@ _no_pluck_happening:
 ucmp	cmpu	#$0000		;cmpu	,s
 	blo	_pluck_do_each_pluck
 
-;	leas	2,s		;not needed with selfmod
 	rts
 
 **********************
@@ -1278,6 +1222,40 @@ pluck_phase_3_ended:		; Character has gone off the right side
 	lda	#PLUCK_PHASE_NOTHING
 	sta	,u		; This slot is now empty
 
+	rts
+
+
+
+******************************************
+* Wait for VBlank and check for skip
+*
+* Inputs: None
+*
+* Output:
+* A = 0          -> A VBlank happened
+* A = (Non-zero) -> User is trying to skip
+******************************************
+
+wait_for_vblank_and_check_for_skip:
+
+	ldd	#$100			; back to back vars (simon)
+	std	waiting_for_vblank
+
+_wait_for_vblank_and_check_for_skip_loop:
+	jsr	[POLCAT]		; POLCAT is a pointer to a pointer
+	cmpa	#' '			; Space bar
+	beq	_wait_for_vblank_skip
+	cmpa	#BREAK_KEY		; Break key
+	beq	_wait_for_vblank_skip
+
+	lda	vblank_happened
+	beq	_wait_for_vblank_and_check_for_skip_loop
+
+	clra		; A VBlank happened
+	rts
+
+_wait_for_vblank_skip:
+	lda	#1	; User skipped
 	rts
 
 ***********************************
@@ -1621,7 +1599,6 @@ collation_number_of_lines:
 * Joke startup messages
 ***********************
 
-MESSAGES_END	EQU	255
 
 joke_startup_messages:
 

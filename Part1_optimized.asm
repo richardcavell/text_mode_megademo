@@ -1225,8 +1225,6 @@ pluck_phase_3_ended:		; Character has gone off the right side
 
 	rts
 
-
-
 ******************************************
 * Wait for VBlank and check for skip
 *

@@ -1319,39 +1319,16 @@ _display_messages_end:
 
 display_messages_next_line:
 
-	stx	oldx2+1		; Simon Jonassen contributed this line
-	leax	,u		; mod simon
-	tfr	x,d
+	tfr	u,d
 	addd	#32
 	andb	#%11100000
-	tfr	d,x
-	leau	,x		; mod simon
-
-oldx2:	ldx	#$0000		; and this one
+	tfr	d,u
 
 	lda	#5
 	jsr	wait_frames
 	tsta
 	bne	_display_messages_skip
 	bra	_display_messages_loop
-
-***************************************
-* Move to next line
-*
-* Input:
-* X = Screen position pointer
-*
-* Output:
-* X = (Updated) Screen position pointer
-***************************************
-
-move_to_next_line:
-
-	tfr	x,d
-	addd	#32
-	andb	#%11100000
-	tfr	d,x
-	rts
 
 ***************************************
 * Display messages - Big pause

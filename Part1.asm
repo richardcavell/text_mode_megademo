@@ -423,9 +423,6 @@ _display_text_graphic_finished:
 
 *************************************
 * Restore BASIC's IRQ service routine
-*
-* Inputs: None
-* Outputs: None
 *************************************
 
 	lda	decb_irq_service_instruction
@@ -465,9 +462,9 @@ irq_service_routine:
 
 * If HSYNC, fallthrough to HSYNC handler
 
-*************************
+***************
 * Service HSYNC
-*************************
+***************
 
 * This code was written by Simon Jonassen and modified by me
 
@@ -575,12 +572,13 @@ _dropped_frame:
 ;DP VARIABLES (FOR SPEED)
 ******************************************************
 
-******************************************************
-* Variables that are relevant to vertical blank timing
-******************************************************
+***********************
+* Vertical blank timing
+***********************
 
 waiting_for_vblank:
-	RZB	1		; The interrupt handler reads this
+
+	RZB	1	; The interrupt handler reads and clears this
 
 **********************************************
 * Variables relating to DECB's own IRQ handler
@@ -646,10 +644,6 @@ collation_number_of_lines:
 *************************
 
 cached_pluck_lines_empty:
-
-	RZB	1
-
-cached_pluck_lines_empty_is_good:
 
 	RZB	1
 
@@ -762,16 +756,13 @@ _pluck_screen_not_empty:
 ************************************
 pluck_are_lines_empty:
 
-	lda	cached_pluck_lines_empty_is_good
+	lda	cached_pluck_lines_empty
 	bne	_return_cache
 
 	bsr	pluck_are_lines_empty_2
-	ldb	#1
-	std	cached_pluck_lines_empty		;back 2 back vars - simon
-	rts
+	sta	cached_pluck_lines_empty
 
 _return_cache:
-	lda	cached_pluck_lines_empty
 	rts
 
 ************************************
@@ -1025,8 +1016,8 @@ olda1:	lda	#$00
 	dec	a,x		; There'll be one less character after this
 	bne	_skip_cache_dirtying
 
-	clr	cached_pluck_lines_empty_is_good ; Dirty this cache
-	clr	collation_number_of_lines	 ; Rebuild collation next time
+	clr	cached_pluck_lines_empty	; Dirty this cache
+	clr	collation_number_of_lines	; Rebuild collation next time
 
 _skip_cache_dirtying:
 	rts

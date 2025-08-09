@@ -650,9 +650,6 @@ pluck_the_screen:
 
 ***********************************
 * Pluck - Count characters per line
-*
-* Inputs: None
-* Outputs: None
 ***********************************
 
 pluck_count_chars_per_line:

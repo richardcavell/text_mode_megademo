@@ -423,15 +423,14 @@ _display_text_graphic_finished:
 *****************************************************************************
 *	Subroutines
 *****************************************************************************
+
 * Assume that no registers are preserved
 
-	align 256	; All the variables should be accessible in direct mode
+	align 256	; The interrupt service routine and all the variables
+			; should be accessible in direct mode
 
 *************************
 * Our IRQ handler
-*
-* Inputs: Not applicable
-* Outputs: Not applicable
 *************************
 
 irq_service_routine:
@@ -443,9 +442,6 @@ irq_service_routine:
 
 *************************
 * Service HSYNC
-*
-* Inputs: Not applicable
-* Outputs: Not applicable
 *************************
 
 * This code was written by Simon Jonassen and modified by me
@@ -494,12 +490,9 @@ _4_is_silent:
 
 * End of code that was written by Simon Jonassen and modified by me
 
-************************************
-* Service VBlank (non-DEBUG version)
-*
-* Inputs: Not applicable
-* Outputs: Not applicable
-************************************
+****************
+* Service VBlank
+****************
 
 service_vblank:
 
@@ -553,16 +546,19 @@ _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
 	rti
 
-
 ******************************************************
 ;DP VARIABLES (FOR SPEED)
 ******************************************************
+
+******************************************************
 * Variables that are relevant to vertical blank timing
 ******************************************************
+
 waiting_for_vblank:
 	RZB	1		; The interrupt handler reads this
 vblank_happened:
 	RZB	1		; and sets this
+
 **********************************************
 * Variables relating to DECB's own IRQ handler
 **********************************************
@@ -638,14 +634,11 @@ cached_pluck_lines_empty_is_good:
 
 	RZB	1
 
-
 skip_message:
 
 	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
 
-
-	align	$100
 ******************
 * Pluck the screen
 *

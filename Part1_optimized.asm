@@ -425,6 +425,8 @@ _display_text_graphic_finished:
 
 * Assume that no registers are preserved
 
+	align 256	; All the variables should be accessible in direct mode
+
 ******************************************************
 * Variables that are relevant to vertical blank timing
 ******************************************************
@@ -448,6 +450,53 @@ decb_irq_service_instruction:
 decb_irq_service_routine:
 
 	RZB	2
+
+*************************************
+* Used by our random number generator
+*************************************
+
+conner_seed:
+
+	FCB	0xBE
+	FCB	0xEF
+
+************
+* Pluck data
+************
+
+pluck_line_counts:
+
+	RZB PLUCK_LINES			; 15 zeroes
+
+pluck_line_counts_end:
+
+plucks_data:
+
+	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
+
+plucks_data_end:
+
+*********************************
+* Pluck - Collated non-zero lines
+*********************************
+
+pluck_collated_lines:
+
+	RZB	PLUCK_LINES
+
+pluck_end_collated_lines:
+
+**********************************
+* Whether to rebuild our collation
+**********************************
+
+collation_needs_rebuilding:
+
+	FCB	255
+
+collation_number_of_lines:
+
+	FCB	0
 
 *************************
 * Our IRQ handler
@@ -1437,53 +1486,6 @@ _slot_4:
 	stx	smp_4+1		; This is self-modifying code
 	stu	end_4+1
 	rts
-
-*************************************
-* Used by our random number generator
-*************************************
-
-conner_seed:
-
-	FCB	0xBE
-	FCB	0xEF
-
-************
-* Pluck data
-************
-
-pluck_line_counts:
-
-	RZB PLUCK_LINES			; 15 zeroes
-
-pluck_line_counts_end:
-
-plucks_data:
-
-	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
-
-plucks_data_end:
-
-*********************************
-* Pluck - Collated non-zero lines
-*********************************
-
-pluck_collated_lines:
-
-	RZB	PLUCK_LINES
-
-pluck_end_collated_lines:
-
-**********************************
-* Whether to rebuild our collation
-**********************************
-
-collation_needs_rebuilding:
-
-	FCB	255
-
-collation_number_of_lines:
-
-	FCB	0
 
 ***********************
 * Joke startup messages

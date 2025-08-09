@@ -625,6 +625,7 @@ collation_number_of_lines:
 **********************************
 * cache vars
 **********************************
+
 cached_pluck_lines_empty:
 
 	RZB	1

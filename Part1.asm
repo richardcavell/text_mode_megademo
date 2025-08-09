@@ -201,8 +201,6 @@ _setup_loop:
 * Set DDRA bits to input
 ************************
 
-set_ddra_bits_to_input:
-
 * This code was written by other people, taken from
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * and then modified by me

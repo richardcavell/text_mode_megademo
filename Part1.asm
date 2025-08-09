@@ -610,21 +610,17 @@ pluck_collated_lines:
 
 pluck_end_collated_lines:
 
-**********************************
-* Whether to rebuild our collation
-**********************************
-
-collation_needs_rebuilding:
-
-	FCB	255
+********************
+* Collation variable
+********************
 
 collation_number_of_lines:
 
 	FCB	0
 
-**********************************
-* cache vars
-**********************************
+*************************
+* Pluck lines empty cache
+*************************
 
 cached_pluck_lines_empty:
 
@@ -923,8 +919,8 @@ _no_chars_left:
 
 pluck_collate_non_zero_lines:
 
-	lda	collation_needs_rebuilding
-	beq	pluck_use_collation
+	lda	collation_number_of_lines
+	bne	pluck_use_collation
 ********************************
 * Pluck - Collate non-zero lines
 *
@@ -956,15 +952,13 @@ _skip_collation:
 	bra	_pluck_collate_loop
 
 _pluck_collate_finished:
-
-	clr	collation_needs_rebuilding	; Probably don't need to
+						; Probably don't need to
 	sta	collation_number_of_lines	; rebuild next time
 
 	rts					; Return A
 
-pluck_use_collation:
+pluck_use_collation:				; Return A
 
-	lda	collation_number_of_lines	; Return A
 	rts
 
 ******************************
@@ -1009,8 +1003,7 @@ olda1:	lda	#$00
 	bne	_skip_cache_dirtying
 
 	clr	cached_pluck_lines_empty_is_good ; Dirty this cache
-	ldb	#1				 ; And rebuild collation
-	stb	collation_needs_rebuilding	 ; next time
+	clr	collation_number_of_lines	 ; Rebuild collation next time
 
 _skip_cache_dirtying:
 	rts

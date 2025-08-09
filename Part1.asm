@@ -594,12 +594,11 @@ plucks_data:
 
 	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
 
+plucks_data_end:
+
 spare_slot:
 
 	RZB	2
-
-
-plucks_data_end:
 
 *********************************
 * Pluck - Collated non-zero lines

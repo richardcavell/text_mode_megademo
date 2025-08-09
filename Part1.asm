@@ -337,10 +337,8 @@ _clear_screen_loop2:
 * Display the baby elephant graphic
 ***********************************
 
-display_text_graphic:
-
 	ldu	#baby_elephant
-	ldx	#BACKBUF+COLS_PER_LINE
+	ldx	#BACKBUF+COLS_PER_LINE	; Start one line down
 
 _display_text_graphic_loop:
         lda     ,u+

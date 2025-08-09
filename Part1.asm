@@ -124,17 +124,40 @@ PLUCK_PHASE_PULLING	EQU	3
 * Setup backbuffer
 ******************
 
-	ldx	#TEXTBUF
-	ldu	#BACKBUF
+	ldu	#TEXTBUF
+	ldx	#BACKBUF
 
-_setup_loop:
-	ldd	,x++
-	std	,u++
-	ldd	,x++
-	std	,u++
+_setup_backbuffer_loop:
+        pulu    d,y
+        std     ,x
+        sty     2,x
+        pulu    d,y
+        std     4,x
+        sty     6,x
+        pulu    d,y
+        std     8,x
+        sty     10,x
 
-	cmpx	#TEXTBUFEND
-	blo	_setup_loop
+        pulu    d,y
+        std     12,x
+        sty     14,x
+        pulu    d,y
+        std     16,x
+        sty     18,x
+        pulu    d,y
+        std     20,x
+        sty     22,x
+
+        pulu    d,y
+        std     24,x
+        sty     26,x
+        pulu    d,y
+        std     28,x
+        sty     30,x
+
+	leax	COLS_PER_LINE,x
+	cmpx	#BACKBUFEND
+	blo	_setup_backbuffer_loop
 
 ***************************************
 * Set DP register for interrupt handler

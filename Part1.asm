@@ -637,7 +637,7 @@ pluck_end_collated_lines:
 
 collation_number_of_lines:
 
-	FCB	0
+	RZB	1
 
 *************************
 * Pluck lines empty cache
@@ -680,7 +680,7 @@ _pluck_count_loop:
 _skip_count:
 	tfr	x,d
 	andb	#0b00011111
-	bne	_no_increment
+	bne	_pluck_count_loop
 
 	leau	1,u
 

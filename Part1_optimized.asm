@@ -155,11 +155,11 @@ _setup_loop:
 	stx	decb_irq_service_routine	; We could call it at the end
 						; of our own handler
 
-	lda	#$0e			; DP JMP
-	sta	IRQ_INSTRUCTION		; Shaves off 1 byte and cycle !!
+	lda	#$0e				; DP JMP Shaves off 1 byte and cycle !!
+	ldb	#(irq_service_routine&255)  	;*256+0
+	std	IRQ_INSTRUCTION
 
-	ldd	#(irq_service_routine&255)*256+0
-	std	IRQ_HANDLER
+
 
 *********************
 * Turn off disk motor
@@ -422,81 +422,9 @@ _display_text_graphic_finished:
 *****************************************************************************
 *	Subroutines
 *****************************************************************************
-
 * Assume that no registers are preserved
 
 	align 256	; All the variables should be accessible in direct mode
-
-******************************************************
-* Variables that are relevant to vertical blank timing
-******************************************************
-
-waiting_for_vblank:
-
-	RZB	1		; The interrupt handler reads this
-
-vblank_happened:
-
-	RZB	1		; and sets this
-
-**********************************************
-* Variables relating to DECB's own IRQ handler
-**********************************************
-
-decb_irq_service_instruction:
-
-	RZB	1		; Should be JMP (extended)
-
-decb_irq_service_routine:
-
-	RZB	2
-
-*************************************
-* Used by our random number generator
-*************************************
-
-conner_seed:
-
-	FCB	0xBE
-	FCB	0xEF
-
-************
-* Pluck data
-************
-
-pluck_line_counts:
-
-	RZB PLUCK_LINES			; 15 zeroes
-
-pluck_line_counts_end:
-
-plucks_data:
-
-	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
-
-plucks_data_end:
-
-*********************************
-* Pluck - Collated non-zero lines
-*********************************
-
-pluck_collated_lines:
-
-	RZB	PLUCK_LINES
-
-pluck_end_collated_lines:
-
-**********************************
-* Whether to rebuild our collation
-**********************************
-
-collation_needs_rebuilding:
-
-	FCB	255
-
-collation_number_of_lines:
-
-	FCB	0
 
 *************************
 * Our IRQ handler
@@ -624,11 +552,99 @@ _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
 	rti
 
+
+******************************************************
+;DP VARIABLES (FOR SPEED)
+******************************************************
+* Variables that are relevant to vertical blank timing
+******************************************************
+waiting_for_vblank:
+	RZB	1		; The interrupt handler reads this
+vblank_happened:
+	RZB	1		; and sets this
+**********************************************
+* Variables relating to DECB's own IRQ handler
+**********************************************
+
+decb_irq_service_instruction:
+
+	RZB	1		; Should be JMP (extended)
+
+decb_irq_service_routine:
+
+	RZB	2
+
+*************************************
+* Used by our random number generator
+*************************************
+
+conner_seed:
+
+	FCB	0xBE
+	FCB	0xEF
+
+************
+* Pluck data
+************
+
+pluck_line_counts:
+
+	RZB PLUCK_LINES			; 15 zeroes
+
+pluck_line_counts_end:
+
+plucks_data:
+
+	RZB	MAX_SIMULTANEOUS_PLUCKS * 4	; Reserve 4 bytes per pluck
+
+spare_slot:
+
+	RZB	2
+
+
+plucks_data_end:
+
+*********************************
+* Pluck - Collated non-zero lines
+*********************************
+
+pluck_collated_lines:
+
+	RZB	PLUCK_LINES
+
+pluck_end_collated_lines:
+
+**********************************
+* Whether to rebuild our collation
+**********************************
+
+collation_needs_rebuilding:
+
+	FCB	255
+
+collation_number_of_lines:
+
+	FCB	0
+
+**********************************
+* cache vars
+**********************************
+cached_pluck_lines_empty:
+
+	RZB	1
+
+cached_pluck_lines_empty_is_good:
+
+	RZB	1
+
+
 skip_message:
 
 	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
 
+
+	align	$100
 ******************
 * Pluck the screen
 *
@@ -734,14 +750,6 @@ _pluck_screen_not_empty:
 * A = 0 Lines are not clear
 * A = (Non-zero) All lines are clear
 ************************************
-cached_pluck_lines_empty:
-
-	RZB	1
-
-cached_pluck_lines_empty_is_good:
-
-	RZB	1
-
 pluck_are_lines_empty:
 
 	lda	cached_pluck_lines_empty_is_good
@@ -790,10 +798,6 @@ _line_not_empty:
 * Inputs: None
 * Outputs: None
 *****************
-
-spare_slot:
-
-	RZB	2
 
 process_pluck_1:
 

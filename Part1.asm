@@ -173,9 +173,6 @@ _setup_backbuffer_loop:
 
 *********************************
 * Install our IRQ service routine
-*
-* Inputs: None
-* Outputs: None
 *********************************
 
 	lda	IRQ_INSTRUCTION		; Should be JMP (extended ($7e))
@@ -261,9 +258,6 @@ _setup_backbuffer_loop:
 
 **************************************************
 * Display skip message at the bottom of the screen
-*
-* Inputs: None
-* Outputs: None
 **************************************************
 
 	ldu	#skip_message
@@ -320,6 +314,10 @@ _clear_screen_loop:
 	std	,x++
 	std	,x++
 	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
 
 	cmpx	#BACKBUFEND		; Finish in the lower-right corner
 	blo	_clear_screen_loop
@@ -345,6 +343,10 @@ _skip_joke_startup:
 	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
 
 _clear_screen_loop2:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
 	std	,x++
 	std	,x++
 	std	,x++

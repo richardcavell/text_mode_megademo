@@ -26,44 +26,67 @@
 *************************
 * EQUATES
 *************************
+
 * Between each section, wait this number of frames
+
 WAIT_PERIOD	EQU	25
+
 *************************
 * Text buffer information
 *************************
+
 TEXTBUF		EQU	$400	; This is the output text screen
 TEXTBUFSIZE	EQU	$200
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 BACKBUF		EQU	back_buffer	; We're double-buffering
 BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
+
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 BOTTOM_LINE	EQU	(TEXT_LINES-1)
 
+***********************
+* Vertical blank vector
+***********************
 
 IRQ_INSTRUCTION	EQU	$10C
 IRQ_HANDLER	EQU	$10D
 
-DSKREG	EQU	$FF40
 *****************************
 * PIA memory-mapped registers
 *****************************
 
-PIA0AD	EQU	$FF00
-PIA0AC	EQU	$FF01
-PIA0BD	EQU	$FF02
-PIA0BC	EQU	$FF03
+PIA0AD		EQU	$FF00
+PIA0AC		EQU	$FF01
+PIA0BD		EQU	$FF02
+PIA0BC		EQU	$FF03
 
 AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
 DDRA		EQU	$FF20
 PIA2_CRA	EQU	$FF21
 AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
+
+DSKREG		EQU	$FF40
+
+*****************************
+* Define POLCAT and BREAK_KEY
 *****************************
 
-TEXT_GRAPHIC_END	EQU	255
+POLCAT		EQU	$A000	; POLCAT is a pointer to a pointer
 
-* Pluck variables
-*****************
+BREAK_KEY	EQU	3
+
+*************************
+* We need to mark the end
+*************************
+
+MESSAGES_END	EQU	255
+
+TEXTGRAPHIC_END	EQU	255
+
+***************
+* Pluck equates
+***************
 
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
@@ -88,18 +111,6 @@ PLUCK_PHASE_TURN_WHITE	EQU	1
 PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
-*****************************
-* Define POLCAT and BREAK_KEY
-*****************************
-
-; POLCAT is a pointer to a pointer
-
-POLCAT		EQU	$A000
-
-BREAK_KEY	EQU	3
-
-MESSAGES_END	EQU	255
-
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
@@ -110,7 +121,7 @@ MESSAGES_END	EQU	255
 ************************************
 
 	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-	dec	$71		;make any reset COLD
+	dec	$71		; Make any reset COLD
 
 ******************
 * Setup backbuffer
@@ -342,7 +353,7 @@ display_text_graphic:
 _display_text_graphic_loop:
         lda     ,u+
         beq     text_graphic_new_line
-        cmpa    #TEXT_GRAPHIC_END
+        cmpa    #TEXTGRAPHIC_END
         beq	_display_text_graphic_finished
         sta     ,x+
         bra     _display_text_graphic_loop
@@ -1530,7 +1541,7 @@ baby_elephant:
 	FCV	"    \"       !   /  \\   !  \\   )",0
 	FCV	"      SND   !   !./'   :.. \.-'",0
 	FCV	"            '--'",0
-	FCB	TEXT_GRAPHIC_END
+	FCB	TEXTGRAPHIC_END
 
 baby_elephant_end:
 

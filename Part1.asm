@@ -116,12 +116,9 @@ PLUCK_PHASE_PULLING	EQU	3
 
 		ORG $1800
 
-************************************
-* Switch off IRQ and FIRQ interrupts
-************************************
-
 	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-	dec	$71		; Make any reset COLD
+
+	dec	$71		; Make any reset COLD (Simon Jonassen)
 
 ******************
 * Setup backbuffer
@@ -139,10 +136,9 @@ _setup_loop:
 	cmpx	#TEXTBUFEND
 	blo	_setup_loop
 
-
-***************************
-* Set DP register for HSYNC
-***************************
+***************************************
+* Set DP register for interrupt handler
+***************************************
 
 * This code was written by Simon Jonassen and modified by me
 
@@ -167,10 +163,8 @@ _setup_loop:
 						; of our own handler
 
 	lda	#$0e				; DP JMP Shaves off 1 byte and cycle !!
-	ldb	#(irq_service_routine&255)  	;*256+0
+	ldb	#(irq_service_routine&255)  	; The lower byte of the address
 	std	IRQ_INSTRUCTION
-
-
 
 *********************
 * Turn off disk motor

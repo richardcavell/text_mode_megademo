@@ -680,8 +680,6 @@ _skip_count:
 	bne	_pluck_count_loop
 
 	leau	1,u
-
-_no_increment:
 	cmpu	#pluck_line_counts_end
 	blo	_pluck_count_loop
 

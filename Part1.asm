@@ -654,9 +654,6 @@ skip_message:
 
 ******************
 * Pluck the screen
-*
-* Inputs: None
-* Outputs: None
 ******************
 
 pluck_the_screen:

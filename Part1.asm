@@ -524,8 +524,8 @@ service_vblank:
 	lda	waiting_for_vblank	; The demo is waiting for the signal
 	beq	_dropped_frame
 
-	ldd	#$0001			; This code written by Simon
-	std	waiting_for_vblank	;    (back to back vars)
+	lda	#$00			; No longer waiting
+	sta	waiting_for_vblank
 
 	ldx	#TEXTBUF
 	ldu	#BACKBUF
@@ -581,8 +581,6 @@ _dropped_frame:
 
 waiting_for_vblank:
 	RZB	1		; The interrupt handler reads this
-vblank_happened:
-	RZB	1		; and sets this
 
 **********************************************
 * Variables relating to DECB's own IRQ handler
@@ -1243,8 +1241,8 @@ pluck_phase_3_ended:		; Character has gone off the right side
 
 wait_for_vblank_and_check_for_skip:
 
-	ldd	#$100			; back to back vars (simon)
-	std	waiting_for_vblank
+	lda	#1
+	sta	waiting_for_vblank
 
 _wait_for_vblank_and_check_for_skip_loop:
 	jsr	[POLCAT]		; POLCAT is a pointer to a pointer
@@ -1253,8 +1251,8 @@ _wait_for_vblank_and_check_for_skip_loop:
 	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
 
-	lda	vblank_happened
-	beq	_wait_for_vblank_and_check_for_skip_loop
+	lda	waiting_for_vblank
+	bne	_wait_for_vblank_and_check_for_skip_loop
 
 	clra		; A VBlank happened
 	rts

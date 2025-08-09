@@ -1,7 +1,7 @@
 # Makefile
 # Part of Text Mode Megademo by Richard Cavell
 # Still being written
-# June-July 2025
+# June-August 2025
 
 DISK		=	TMMGDEMO.DSK
 BASIC_PART	=	DEMO.BAS
@@ -11,7 +11,7 @@ PART3		=	PART3.BIN
 PART4		=	PART4.BIN
 PART5		=	PART5.BIN
 
-PART1_SRC	= 	Part1_optimized.asm
+PART1_SRC	= 	Part1.asm
 PART2_SRC	= 	Part2.asm
 PART3_SRC	=	Part3.asm
 PART4_SRC	=	Part4.asm

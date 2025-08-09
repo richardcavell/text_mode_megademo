@@ -376,7 +376,7 @@ _display_text_graphic_loop:
 text_graphic_new_line:
 
 	tfr	x,d
-	addd	#32
+	addd	#COLS_PER_LINE
 	andb	#%11100000
 	tfr	d,x
 
@@ -437,7 +437,7 @@ _display_text_graphic_finished:
 * Zero the DP register and return zero
 **************************************
 
-	ldd	#0
+	lda	#0
 	tfr	a, dp
 
 	rts		; Return to Disk Extended Color BASIC
@@ -569,7 +569,7 @@ _dropped_frame:
 	rti
 
 ******************************************************
-;DP VARIABLES (FOR SPEED)
+* DP VARIABLES (FOR SPEED)
 ******************************************************
 
 ***********************
@@ -586,7 +586,7 @@ waiting_for_vblank:
 
 decb_irq_service_instruction:
 
-	RZB	1		; Should be JMP (extended)
+	RZB	1	; Should be JMP (extended)
 
 decb_irq_service_routine:
 
@@ -607,7 +607,7 @@ conner_seed:
 
 pluck_line_counts:
 
-	RZB PLUCK_LINES			; 15 zeroes
+	RZB PLUCK_LINES		; 15 zeroes
 
 pluck_line_counts_end:
 
@@ -1346,7 +1346,7 @@ _display_messages_end:
 display_messages_next_line:
 
 	tfr	u,d
-	addd	#32
+	addd	#COLS_PER_LINE
 	andb	#%11100000
 	tfr	d,u
 

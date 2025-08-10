@@ -297,12 +297,6 @@ _setup_backbuffer_loop:
 
 ; End of code contributed by Simon Jonassen
 
-**************************************
-* Turn IRQ and FIRQ interrupts back on
-**************************************
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-
 *************************************
 * Pluck the screen
 * This is the first section of Part 1
@@ -326,6 +320,12 @@ _skip_count:
 	leau	1,u
 	cmpu	#pluck_line_counts_end
 	blo	_pluck_count_loop
+
+**************************************
+* Turn IRQ and FIRQ interrupts back on
+**************************************
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 
 ************
 * Pluck loop

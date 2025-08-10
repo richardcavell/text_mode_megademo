@@ -728,9 +728,9 @@ pluck_is_screen_empty:
 pluck_check_empty_slots_2:
 
 	ldx	#plucks_data
-	tst	,x
+	lda	,x
 	bne	_pluck_screen_not_empty		; Only 2 plucks
-	tst	4,x				; can happen
+	lda	4,x				; can happen
 	bne	_pluck_screen_not_empty		; at once
 	bra	pluck_are_lines_empty	; Return whatever this returns
 

@@ -345,7 +345,7 @@ _skip_joke_startup:
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
 	tfr	d,x
-	leay	,u		; SJ contributed this
+	leay	,x		; SJ contributed this
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
 loop48s_2:

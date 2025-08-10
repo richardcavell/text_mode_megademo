@@ -633,15 +633,6 @@ decb_irq_service_routine:
 
 	RZB	2
 
-*************************************
-* Used by our random number generator
-*************************************
-
-conner_seed:
-
-	FCB	0xBE
-	FCB	0xEF
-
 ************
 * Pluck data
 ************
@@ -942,14 +933,14 @@ pluck_char_choose_a_line:
 
 get_random:
 
-	ldd	conner_seed
+	ldd	#0xBEEF
 	lsra
 	rorb
 	bcc	get_random_no_feedback
 	eora	#$B4
 
 get_random_no_feedback:
-	std	conner_seed
+	std	get_random+1
 
 ; End of code written by Sean Conner
 

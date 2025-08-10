@@ -828,31 +828,10 @@ pluck_a_char:
 	bsr	pluck_are_lines_empty
 	tsta
 	bne	_no_chars_left
-*********************************
-* Pluck a character - Choose line
-*
-* Inputs: None
-*
-* Output:
-* A = Line number
-*********************************
-
-pluck_char_choose_line:
 
 	bsr	pluck_collate_non_zero_lines
 	bsr	pluck_char_choose_a_line
 	bsr	pluck_get_char
-
-************************************************
-* Pluck - Pluck character
-*
-* Input:
-* X = Screen position of character to be plucked
-*
-* Outputs:None
-************************************************
-
-pluck_char:
 
 ************************************************************
 * Pluck - Register

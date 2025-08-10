@@ -303,7 +303,47 @@ _setup_backbuffer_loop:
 
 	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 
-	jsr	pluck_the_screen		; First section
+*************************************
+* Pluck the screen
+* This is the first section of Part 1
+*************************************
+
+	ldx	#BACKBUF
+	ldu	#pluck_line_counts
+
+_pluck_count_loop:
+	lda	#GREEN_BOX
+	cmpa	,x+
+	beq	_skip_count
+
+	inc	,u		; Count non-spaces only
+
+_skip_count:
+	tfr	x,d
+	andb	#0b00011111
+	bne	_pluck_count_loop
+
+	leau	1,u
+	cmpu	#pluck_line_counts_end
+	blo	_pluck_count_loop
+
+************
+* Pluck loop
+************
+
+pluck_loop:
+
+	jsr	process_pluck_1
+
+	jsr	wait_for_vblank_and_check_for_skip
+	tsta				; If the user wants to skip, we finish
+	bne	_pluck_finished
+
+	jsr	pluck_is_screen_empty
+	tsta				; If the screen is empty, we finish
+	beq	pluck_loop
+
+_pluck_finished:
 
 *********************
 * Joke startup screen
@@ -652,56 +692,6 @@ skip_message:
 
 	FCV	"  PRESS SPACE TO SKIP ANY PART  "
 	FCB	0
-
-******************
-* Pluck the screen
-******************
-
-pluck_the_screen:
-
-***********************************
-* Pluck - Count characters per line
-***********************************
-
-pluck_count_chars_per_line:
-
-	ldx	#BACKBUF
-	ldu	#pluck_line_counts
-
-_pluck_count_loop:
-	lda	#GREEN_BOX
-	cmpa	,x+
-	beq	_skip_count
-
-	inc	,u		; Count non-spaces only
-
-_skip_count:
-	tfr	x,d
-	andb	#0b00011111
-	bne	_pluck_count_loop
-
-	leau	1,u
-	cmpu	#pluck_line_counts_end
-	blo	_pluck_count_loop
-
-************
-* Pluck loop
-************
-
-pluck_loop:
-
-	jsr	process_pluck_1
-
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta				; If the user wants to skip, we finish
-	bne	_pluck_finished
-
-	jsr	pluck_is_screen_empty
-	tsta				; If the screen is empty, we finish
-	beq	pluck_loop
-
-_pluck_finished:
-	rts
 
 *************************************************
 * Pluck - Check to see if the screen is empty yet

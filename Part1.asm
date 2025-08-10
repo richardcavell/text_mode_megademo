@@ -309,11 +309,11 @@ _setup_backbuffer_loop:
 * Joke startup screen
 *********************
 
-* This code was written by Allen C. Huffman and modified by me
+* This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
 	tfr	d,x
-	leay	,x
+	leay	,x		; SJ contributed this
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
 loop48s:
@@ -322,7 +322,7 @@ loop48s:
 	bgt	loop48s		; If X!=that, GOTO loop48s
 	pshu	d		; Final 2 bytes
 
-* End of code written by Allen C. Huffman and modified by me
+* End of code written by Allen C. Huffman and modified by me and SJ
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
@@ -341,11 +341,11 @@ _skip_joke_startup:
 * Loading screen
 ****************
 
-* This code was written by Allen C. Huffman and modified by me
+* This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
 	tfr	d,x
-	leay	,u
+	leay	,u		; SJ contributed this
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
 loop48s_2:
@@ -354,7 +354,7 @@ loop48s_2:
 	bgt	loop48s_2	; If X!=that, GOTO loop48s_2
 	pshu	d		; Final 2 bytes
 
-* End of code written by Allen C. Huffman and modified by me
+* End of code written by Allen C. Huffman and modified by me and SJ
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames

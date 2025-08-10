@@ -1215,12 +1215,12 @@ _wait_for_vblank_skip:
 
 wait_frames:
 
-	pshs	a
+	sta	st_a+1
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	puls	a
 	bne	_wait_frames_skip	; User wants to skip
 
+st_a:	lda	#1
 	deca
 	bne	wait_frames
 

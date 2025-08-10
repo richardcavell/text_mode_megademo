@@ -1218,18 +1218,12 @@ wait_frames:
 	sta	st_a+1
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	bne	_wait_frames_skip	; User wants to skip
-
+	bne	_wait_frames_return	; User wants to skip
 st_a:	lda	#1
 	deca
 	bne	wait_frames
 
-_wait_frames_success:
-	clra				; Normal termination
-	rts
-
-_wait_frames_skip:
-	lda	#1			; User wants to skip
+_wait_frames_return:			; Return A
 	rts
 
 *********************************

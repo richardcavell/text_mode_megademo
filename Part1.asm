@@ -1429,16 +1429,6 @@ play_sound:
 
 	rts
 
-*******************************
-* Slot 2
-*
-* Inputs:
-* X = The sound data
-* U = The end of the sound data
-*
-* Outputs: None
-*******************************
-
 _slot_2:
 	ldy	smp_2+1
 	cmpy	end_2+1
@@ -1452,16 +1442,6 @@ _slot_2:
 * End of code modified from code written by Simon Jonassen
 
 	rts
-
-*******************************
-* Slot 3
-*
-* Inputs:
-* X = The sound data
-* U = The end of the sound data
-*
-* Outputs: None
-*******************************
 
 _slot_3:
 	ldy	smp_3+1
@@ -1486,7 +1466,6 @@ _slot_4:
 ***********************
 * Joke startup messages
 ***********************
-
 
 joke_startup_messages:
 

@@ -15,7 +15,10 @@
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
 * Part of this code was written by Sean Conner (Deek)
-
+* Part of this code was written by Allen C. Huffman at Sub-Etha Software
+* You can see it here:
+* https://subethasoftware.com/2022/09/06/counting-6809-cycles-with-lwasm/
+*
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg
 * The sound Type.raw is from Modelm.ogg by Cpuwhiz13 from Wikimedia Commons
@@ -306,21 +309,20 @@ _setup_backbuffer_loop:
 * Joke startup screen
 *********************
 
-	ldx	#BACKBUF
-	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
+* This code was written by Allen C. Huffman and modified by me
 
-_clear_screen_loop:
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+	tfr	d,x
+	tfr	d,y
+	ldu	#BACKBUFEND	; (1 past end of screen)
 
-	cmpx	#BACKBUFEND		; Finish in the lower-right corner
-	blo	_clear_screen_loop
+loop48s:
+	pshu	d,x,y
+	cmpu	#BACKBUF+2	; Compare U to two bytes from start
+	bgt	loop48s		; If X!=that, GOTO loop48s
+	pshu	d		; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
@@ -339,21 +341,20 @@ _skip_joke_startup:
 * Loading screen
 ****************
 
-	ldx	#BACKBUF
-	ldd	#(GREEN_BOX << 8 | GREEN_BOX)	; Two green boxes
+* This code was written by Allen C. Huffman and modified by me
 
-_clear_screen_loop2:
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+	tfr	d,x
+	tfr	d,y
+	ldu	#BACKBUFEND	; (1 past end of screen)
 
-	cmpx	#BACKBUFEND		; Finish in the lower-right corner
-	blo	_clear_screen_loop2
+loop48s_2:
+	pshu	d,x,y
+	cmpu	#BACKBUF+2	; Compare U to two bytes from start
+	bgt	loop48s_2	; If X!=that, GOTO loop48s
+	pshu	d		; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames

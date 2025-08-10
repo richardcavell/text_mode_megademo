@@ -313,7 +313,7 @@ _setup_backbuffer_loop:
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
 	tfr	d,x
-	tfr	d,y
+	leay	,x
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
 loop48s:
@@ -345,7 +345,7 @@ _skip_joke_startup:
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
 	tfr	d,x
-	tfr	d,y
+	leay	,u
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
 loop48s_2:

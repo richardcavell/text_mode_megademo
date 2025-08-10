@@ -333,7 +333,7 @@ _skip_count:
 
 pluck_loop:
 
-	jsr	process_pluck_1
+	jsr	process_pluck
 
 	jsr	wait_for_vblank_and_check_for_skip
 	tsta				; If the user wants to skip, we finish
@@ -724,6 +724,7 @@ _pluck_screen_not_empty:
 * A = 0 Lines are not clear
 * A = (Non-zero) All lines are clear
 ************************************
+
 pluck_are_lines_empty:
 
 	lda	cached_pluck_lines_empty
@@ -763,14 +764,11 @@ _line_not_empty:
 	clra				; Lines are not clear
 	rts
 
-*****************
-* Process pluck 1
-*
-* Inputs: None
-* Outputs: None
-*****************
+***************
+* Process pluck
+***************
 
-process_pluck_1:
+process_pluck:
 
 	jsr	is_there_a_spare_sound_slot	; Is there a spare sound slot?
 	tsta

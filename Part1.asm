@@ -351,7 +351,7 @@ _skip_joke_startup:
 loop48s_2:
 	pshu	d,x,y
 	cmpu	#BACKBUF+2	; Compare U to two bytes from start
-	bgt	loop48s_2	; If X!=that, GOTO loop48s
+	bgt	loop48s_2	; If X!=that, GOTO loop48s_2
 	pshu	d		; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me
@@ -522,7 +522,7 @@ service_vblank:
 	lda	waiting_for_vblank	; The demo is waiting for the signal
 	beq	_dropped_frame
 
-	lda	#$00			; No longer waiting
+	clra				; No longer waiting
 	sta	waiting_for_vblank
 
 	ldx	#TEXTBUF

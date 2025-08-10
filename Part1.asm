@@ -684,12 +684,9 @@ _skip_count:
 	cmpu	#pluck_line_counts_end
 	blo	_pluck_count_loop
 
-***************
+************
 * Pluck loop
-*
-* Inputs: None
-* Outputs: None
-***************
+************
 
 pluck_loop:
 

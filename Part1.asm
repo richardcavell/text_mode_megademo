@@ -705,10 +705,9 @@ skip_message:
 
 pluck_is_screen_empty:
 
-	ldx	#plucks_data
-	lda	,x
+	lda	plucks_data
 	bne	_pluck_screen_not_empty		; Only 2 plucks
-	lda	4,x				; can happen
+	lda	plucks_data+4			; can happen
 	bne	_pluck_screen_not_empty		; at once
 	bra	pluck_are_lines_empty	; Return whatever this returns
 

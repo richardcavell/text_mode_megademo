@@ -705,18 +705,6 @@ skip_message:
 
 pluck_is_screen_empty:
 
-**********************************************************
-* Pluck - Check empty slots 2
-*
-* Inputs: None
-*
-* Output:
-* A = 0 At least 1 slot is being used, screen is not clear
-* A = (Non-zero) All slots are empty
-**********************************************************
-
-pluck_check_empty_slots_2:
-
 	ldx	#plucks_data
 	lda	,x
 	bne	_pluck_screen_not_empty		; Only 2 plucks

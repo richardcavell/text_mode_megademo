@@ -1244,11 +1244,14 @@ _display_messages_loop:
 	cmpa	#GREEN_BOX
 	beq	_display_messages_skip_sound
 
-	pshs	x,u
+	stx	st_x+1
+	stu	st_u+1
 	ldx	#type_sound
 	ldu	#type_sound_end
 	jsr	play_sound		; Play the typing noise
-	puls	x,u
+
+st_x	ldx	#0000
+st_u	ldu	#0000
 
 _display_messages_skip_sound:
 
@@ -1308,8 +1311,7 @@ display_messages_big_pause:
 	jsr	wait_frames
 	tsta
 	beq	_display_messages_loop
-	lda	#1		; User wants to skip
-	rts
+	rts			; User wants to skip
 
 *****************************
 * Is there a spare sound slot

@@ -882,6 +882,7 @@ pluck_collate_non_zero_lines:
 
 	lda	collation_number_of_lines
 	bne	pluck_use_collation
+
 ********************************
 * Pluck - Collate non-zero lines
 *
@@ -1005,6 +1006,7 @@ get_end_of_line:
 	leax	d,x
 
 	lda	#GREEN_BOX	; A = Green box (space)
+
 *******************************************************
 * Pluck - Get char 2
 *

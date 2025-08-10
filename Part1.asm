@@ -320,7 +320,7 @@ loop48s:
 	pshu	d,x,y
 	cmpu	#BACKBUF+2	; Compare U to two bytes from start
 	bgt	loop48s		; If X!=that, GOTO loop48s
-	pshu	d		; Final 2 bytes
+	std	-2,u		; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ
 
@@ -352,7 +352,7 @@ loop48s_2:
 	pshu	d,x,y
 	cmpu	#BACKBUF+2	; Compare U to two bytes from start
 	bgt	loop48s_2	; If X!=that, GOTO loop48s_2
-	pshu	d		; Final 2 bytes
+	std	-2,u		; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ
 

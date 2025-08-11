@@ -13,32 +13,22 @@
 * Part of this code was written by a number of other authors
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
-* Part of this code was written by Simon Jonassen (The Invisible Man)
-*
-* The speech "RJFC Presents Text Mode Megademo" was created by this website:
-* https://speechsynthesis.online/
-* The voice is "Ryan"
-* The routine that plays the speech was written by Simon Jonassen
-*
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
 * Both graphics have been modified by me
 * Animation of the small creature by me
-*
-* If DEBUG_MODE is non-zero, then Debug Mode is "on".
-* If Debug Mode is on:
-*   1) You can press T to toggle frame-by-frame mode
-*        In frame-by-frame mode, you press F to see the next frame.
-*   2) You can have the lower right corner character cycle when the
-*      interrupt request routine is called
-*        Press C to turn the cycling of the lower-right character off or on
-*   3) You can see if there are dropped frames
-*      The lower left corner will display how many frames have been skipped
-*        (0 to 9 and up arrow meaning 10 or more)
-*        Press D to turn the dropped frames counter off or on
+* The speech "RJFC Presents Text Mode Megademo" was created by this website:
+* https://speechsynthesis.online/
+* The voice is "Ryan"
+* The routine that plays the speech was written by Simon Jonassen
 
-DEBUG_MODE	EQU	1
+* DEBUG_MODE means you press T to toggle frame-by-frame mode.
+* In frame-by-frame mode, you press F to see the next frame.
+* Also, you can make the lower right corner character cycle when
+* the interrupt request service routine operates.
+
+DEBUG_MODE	EQU	0
 
 * Between each section, wait this number of frames
 
@@ -49,30 +39,21 @@ WAIT_PERIOD	EQU	25
 
 		ORG $1800
 
-*****************
-* Part 2 Sequence
-*
-* Inputs: None
-*
-* Output:
-* D = 0 Success
-*****************
-
-start:
-
 	jsr	zero_dp_register		; Zero the DP register
-	jsr	turn_on_debug_features		; Turn on debugging features
 	jsr	install_irq_service_routine	; Install our IRQ handler
+	jsr	switch_off_irq_and_firq
 	jsr	turn_off_disk_motor		; Silence the disk drive
 	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
 
 	jsr	title_screen			; First section
-	jsr	turn_on_interrupts		; Start the music
+;***************************************
+; put zix call here
+;***************************************
+	jsr	musplay
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
 
-	jsr	turn_off_interrupts		; Go back to what BASIC uses
-	jsr	restore_basic_irq_service_routine
+	jsr	uninstall_irq_service_routine
 
 	clra
 	clrb
@@ -86,9 +67,6 @@ start:
 
 **********************
 * Zero the DP register
-*
-* Inputs: None
-* Outputs: None
 **********************
 
 zero_dp_register:
@@ -98,26 +76,6 @@ zero_dp_register:
 
 	rts
 
-************************
-* Turn on debug features
-*
-* Inputs: None
-* Outputs: None
-************************
-
-turn_on_debug_features:
-
-        lda     #DEBUG_MODE
-        beq     _not_in_debug_mode
-
-        clra
-        coma                            ; Load #255 into these variables
-        sta     cycle
-        sta     dropped_frame_counter_toggle
-
-_not_in_debug_mode:
-        rts
-
 *********************************
 * Install our IRQ service routine
 *
@@ -125,16 +83,23 @@ _not_in_debug_mode:
 * Outputs: None
 *********************************
 
+IRQ_HANDLER	EQU	$10D
+
 install_irq_service_routine:
 
-        bsr     switch_off_irq          ; Switch off IRQ interrupts for now
+	bsr	switch_off_irq		; Switch off IRQ interrupts for now
 
-        bsr     get_irq_handler
-        bsr     set_irq_handler
+	ldx	IRQ_HANDLER		; Load the current vector into X
+	stx	decb_irq_service_routine	; We will call it at the end
+						; of our own handler
 
-        bsr     switch_on_irq           ; Switch IRQ interrupts back on
+	ldx	#irq_service_routine
+	stx	IRQ_HANDLER		; Our own interrupt service routine
+					; is installed
 
-        rts
+	bsr	switch_on_irq		; Switch IRQ interrupts back on
+
+	rts
 
 ***************************
 * Switch IRQ interrupts off
@@ -162,247 +127,36 @@ switch_on_irq:
 
 	rts
 
-*****************
-* Get IRQ handler
-*
-* Inputs: None
-* Outputs: None
-*****************
-
-IRQ_INSTRUCTION EQU     $10C
-IRQ_HANDLER     EQU     $10D
-
-get_irq_handler:
-
-        lda     IRQ_INSTRUCTION         ; Should be JMP (extended)
-        sta     decb_irq_service_instruction
-
-        ldx     IRQ_HANDLER             ; Load the current vector into X
-        stx     decb_irq_service_routine        ; We could call it at the end
-                                                ; of our own handler
-        rts
-
-*****************
-* Set IRQ handler
-*
-* Inputs: None
-* Outputs: None
-*****************
-
-set_irq_handler:
-
-        ldx     #irq_service_routine
-        stx     IRQ_HANDLER             ; Our own interrupt service routine
-                                        ; is now installed
-
-        rts
-
-*************************
-* Text buffer information
-*************************
-
-TEXTBUF         EQU     $400    ; We're not double-buffering in this part
-TEXTBUFSIZE     EQU     $200    ; so there's only one text screen
-TEXTBUFEND      EQU     (TEXTBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE   EQU     32
-TEXT_LINES      EQU     16
-
-LOWER_LEFT_CORNER       EQU     $5E0
-LOWER_RIGHT_CORNER      EQU     $5FF
-
-******************************************************
-* Variables that are relevant to vertical blank timing
-******************************************************
-
-waiting_for_vblank:
-
-        RZB     1               ; The interrupt handler reads this
-
-vblank_happened:
-
-        RZB     1               ; and sets this
-
-dropped_frames:
-
-        RZB     1               ; From 0 to 10 (don't count more than 10)
-
-**********************************************
-* Variables relating to DECB's own IRQ handler
-**********************************************
-
-decb_irq_service_instruction:
-
-        RZB     1               ; Should be JMP (extended)
-
-decb_irq_service_routine:
-
-        RZB     2
-
-call_decb_irq_handler:          ; We get significantly better performance
-                                ; by ignoring DECB's IRQ handler
-        RZB     1
-
-*************************
+***************************************************
 * Our IRQ handler
 *
-* Inputs: Not applicable
-* Outputs: Not applicable
-*************************
+* Make sure decb_irq_service_routine is initialized
+***************************************************
 
 irq_service_routine:
 
-        lda     PIA0AC          ; Was it a VBlank or HSync?
-        bpl     service_vblank  ; VBlank - go there
+	lda	#1
+	sta	vblank_happened
 
-* If HSYNC, fallthrough to HSYNC handler
-
-*************************
-* Service HSYNC
-*
-* Inputs: Not applicable
-* Outputs: Not applicable
-*************************
-
-smp_pt: ldx     #0              ; pointer to sample
-end_pt: cmpx    #0              ; done ?
-        beq     quit_isr
-
-        lda     ,x+             ; Get the next byte of data
-        sta     AUDIO_PORT      ; and shove it into the audio port
-        stx     smp_pt+1        ; Self-modifying code here
-
-quit_isr:
-        lda     PIA0AD          ; Acknowledge HSYNC interrupt
-        rti
-
-*************************
-* Service VBlank
-*
-* Inputs: Not applicable
-* Outputs: Not applicable
-*************************
-
-service_vblank:
-
-        lda     waiting_for_vblank      ; The demo is waiting for the signal
-        bne     _no_dropped_frames      ; so let's give it to them
-
-        bsr     count_dropped_frame     ; If the demo is not ready for a
-        bra     _dropped_frame          ; vblank, then we drop a frame
-
-_no_dropped_frames:
-        bsr     signal_demo             ; VBlank has happened
-
-_dropped_frame:
-        bsr     print_dropped_frames
-        bsr     cycle_corner_character
-        bra     exit_irq_handler
-
-*********************
-* Count dropped frame
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-count_dropped_frame:
-
-        lda     dropped_frames
-        cmpa    #10
-        beq     _skip_increment         ; Stop counting dropped frames at 10
-
-        inca
-        sta     dropped_frames
-
-_skip_increment:
-        rts
-
-***************
-* Signal demo
-*
-* Inputs: None
-* Outputs: None
-***************
-
-signal_demo:
-
-        clr     waiting_for_vblank      ; No longer waiting
-        lda     #1                      ; If waiting for VBlank,
-        sta     vblank_happened         ; here's the signal
-
-        clr     dropped_frames
-
-        rts
-
-*********************
-* Print dropped frames
-*
-* Inputs: None
-* Outputs: None
-**********************
-
-print_dropped_frames:
-
-        lda     dropped_frame_counter_toggle
-        beq     _do_not_print_frame_counter
-
-        lda     dropped_frames
-        cmpa    #10
-        blo     _adjust_a
-
-        lda     #94                     ; This is the up arrow
-        bra     _store_a
-
-_adjust_a:
-        adda    #'0'+64
-
-_store_a:
-        sta     LOWER_LEFT_CORNER       ; Put it in the lower-left corner
-
-_do_not_print_frame_counter:
-        rts
-
-************************
-* Cycle corner character
-*
-* Inputs: None
-* Outputs: None
-************************
-
-cycle:
-
-        FCB     0       ; If DEBUG_MODE is on, this will start with 255
+	lda	#DEBUG_MODE
+	beq	_skip_debug_visual_indication
 
 ; For debugging, this provides a visual indication that
-; our IRQ handler is running
+; our handler is running
 
-cycle_corner_character:
+	inc	TEXTBUFEND-1	; The lower-right corner character cycles
 
-        lda     cycle
-        beq     _skip_cycle
+_skip_debug_visual_indication:
 
-        inc     LOWER_RIGHT_CORNER ; The lower-right corner character cycles
+		; In the interests of making our IRQ handler run fast,
+		; the routine assumes that decb_irq_service_routine
+		; has been correctly initialized
 
-_skip_cycle:
+	jmp	[decb_irq_service_routine]
 
-        rts
+decb_irq_service_routine:
 
-******************
-* Exit IRQ handler
-******************
-
-exit_irq_handler:
-
-        lda     call_decb_irq_handler
-        beq     _rti_from_here
-        ldx     decb_irq_service_routine
-        beq     _rti_from_here
-        jmp     ,x
-
-_rti_from_here:
-        lda     PIA0BD                  ; Acknowledge interrupt
-        rti
+	RZB	2
 
 *********************
 * Turn off disk motor
@@ -434,90 +188,43 @@ AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
 turn_6bit_audio_on:
 
-	bsr     set_audio_port_on
-	bsr     set_ddra
-
-	rts
-
-*******************
-* Set audio port on
-*
-* Inputs: None
-* Outputs: None
-*******************
-
-set_audio_port_on:
-
 * This code was modified from code written by Trey Tomes
 
-        lda     AUDIO_PORT_ON
-        ora     #0b00001000
-        sta     AUDIO_PORT_ON   ; Turn on 6-bit audio
+	lda	AUDIO_PORT_ON
+	ora	#0b00001000
+	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
 
 * End code modified from code written by Trey Tomes
 
-        rts
+* This code was written by other people (see here)
+* https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 
-***************
-* Set DDRA
-*
-* Inputs: None
-* Outputs: None
-***************
+	ldb	PIA2_CRA
+	andb	#0b11111011
+	stb	PIA2_CRA
 
-set_ddra:
+	lda	#0b11111100
+	sta	DDRA
 
-* This code was written by other people, taken from
-* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0>
-* and then modified by me
-
-        ldb     PIA2_CRA
-        andb    #0b11111011
-        stb     PIA2_CRA
-
-        lda     #0b11111100
-        sta     DDRA
-
-        orb     #0b00000100
-        stb     PIA2_CRA
+	orb	#0b00000100
+	stb	PIA2_CRA
 
 * End of code modified by me from code written by other people
 
-        rts
+	rts
 
-********************
-* Turn on interrupts
-********************
+*************************
+* Text buffer information
+*************************
 
-PIA0AD  EQU     $FF00
-PIA0AC  EQU     $FF01
-PIA0BD  EQU     $FF02
-PIA0BC  EQU     $FF03
+TEXTBUF		EQU	$400		; We're not double-buffering
+TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
-turn_on_interrupts:
+COLS_PER_LINE	EQU	32
+TEXT_LINES	EQU	16
 
-        jsr     switch_off_irq_and_firq
-
-* This code was originally written by Simon Jonassen (The Invisible Man)
-* and then modified by me
-
-        lda     PIA0BC          ; Enable VSync interrupt
-        ora     #3
-        sta     PIA0BC
-        lda     PIA0BD          ; Acknowledge any outstanding VSync interrupt
-
-        lda     PIA0AC          ; Enable HSync interrupt
-        ora     #3
-        sta     PIA0AC
-        lda     PIA0AD          ; Acknowledge any outstanding HSync interrupt
-
-* End code modified by me from code written by Simon Jonassen
-
-        jsr     switch_on_irq_and_firq
-
-        rts
-
-******************************************
+****************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
@@ -525,372 +232,123 @@ turn_on_interrupts:
 * Output:
 * A = 0          -> A VBlank happened
 * A = (Non-zero) -> User is trying to skip
-******************************************
+****************************************
+
+POLCAT		EQU	$A000
+
+BREAK_KEY	EQU	3
+
+vblank_happened:
+
+	RZB	1
 
 wait_for_vblank_and_check_for_skip:
 
-        jsr     switch_off_irq_and_firq
-        clr     vblank_happened         ; See "Variables that are relevant to
-        lda     #1                      ; vertical blank timing" above
-        sta     waiting_for_vblank
-        jsr     switch_on_irq_and_firq
+	clr	vblank_happened
 
 _wait_for_vblank_and_check_for_skip_loop:
-        bsr     poll_keyboard
-        cmpa    #1
-        beq     _skip
-        cmpa    #2
-        beq     _wait_for_vblank_and_check_for_skip_loop
+	jsr	[POLCAT]
+	cmpa	#' '			; Space bar
+	beq	_wait_for_vblank_skip
+	cmpa	#BREAK_KEY		; Break key
+	beq	_wait_for_vblank_skip
+	ldb	#DEBUG_MODE
+	beq	_wait_for_vblank
+	cmpa	#'t'			; T key
+	beq	_wait_for_vblank_invert_toggle
+	cmpa	#'T'
+	beq	_wait_for_vblank_invert_toggle
+	ldb	_debug_mode_toggle
+	beq	_wait_for_vblank
 
-        tst     vblank_happened
-        beq     _wait_for_vblank_and_check_for_skip_loop
+; If toggle is on, require an F to go forward 1 frame
 
-        clra            ; A VBlank happened
-        rts
+	cmpa	#'f'
+	beq	_wait_for_vblank
+	cmpa	#'F'
+	beq	_wait_for_vblank
+	bra	_wait_for_vblank_and_check_for_skip_loop
 
-_skip:
-        lda     #1      ; User skipped
-        rts
+_wait_for_vblank:
+wvs	tst	$ff03	; Check for interrupt
+	bpl	wvs
+	lda	$ff02	; Acknowledge interrupt
 
-*****************************
-* Define POLCAT and BREAK_KEY
-*****************************
+;	tst	vblank_happened
+;	beq	_wait_for_vblank_and_check_for_skip_loop
 
-; POLCAT is a pointer to a pointer
-
-POLCAT          EQU     $A000
-
-BREAK_KEY       EQU     3
-
-*******************************
-* Poll keyboard
-*
-* Inputs: None
-*
-* Output:
-* A = 0 No input
-* A = 1 User wants to skip
-* A = 2 Require an F to proceed
-*******************************
-
-poll_keyboard:
-
-        jsr     [POLCAT]                ; POLCAT is a pointer to a pointer
-        cmpa    #' '                    ; Space bar
-        beq     _wait_for_vblank_skip
-        cmpa    #BREAK_KEY              ; Break key
-        beq     _wait_for_vblank_skip
-
-        ldb     #DEBUG_MODE
-        bne     debugging_mode_is_on
-
-        clra            ; Debug mode is off, so exit normally
-        rts
+	clra		; A VBlank happened
+	rts
 
 _wait_for_vblank_skip:
-        lda     #1      ; User wants to skip
-        rts
+	lda	#1	; User wants to skip
+	rts
 
-*******************************
-* Debugging mode is on
-*
-* Inputs: None
-* Outputs:
-* A = 0 All normal
-* A = 2 Require F to go forward
-*******************************
+_wait_for_vblank_invert_toggle:
+	com	_debug_mode_toggle
+	bra	_wait_for_vblank
 
-debugging_mode_is_on:
+_debug_mode_toggle:
 
-        cmpa    #'T'
-        beq     toggle_frame_by_frame
-        cmpa    #'C'
-        beq     toggle_cycle
-        cmpa    #'D'
-        beq     toggle_dropped_frame_counter
+	RZB	1
 
-_key_processed:
-        ldb     frame_by_frame_mode_toggle
-        bne     require_f
-
-        clra
-        rts
-
-**********************************
-* Invert frame-by-frame toggle
-*
-* Input:
-* A = Keypress
-*
-* Outputs: None
-**********************************
-
-frame_by_frame_mode_toggle:
-
-        RZB     1
-
-toggle_frame_by_frame:
-
-        com     frame_by_frame_mode_toggle
-        bra     _key_processed
-
-***************
-* Toggle cycle
-*
-* Inputs: None
-* Outputs: None
-***************
-
-toggle_cycle:
-
-        com     cycle
-        bne     _skip_redraw_cycle
-                                        ; If it's being turned off
-        lda     #GREEN_BOX              ; then draw over the lower-right
-        sta     LOWER_RIGHT_CORNER      ; corner
-
-_skip_redraw_cycle:
-        bra     _key_processed
-
-*****************************
-* Toggle dropped frame counter
-*
-* Inputs: None
-* Outputs: None
-******************************
-
-dropped_frame_counter_toggle:
-
-        FCB     0       ; If DEBUG_MODE is on, then this starts with 255
-
-toggle_dropped_frame_counter:
-
-        com     dropped_frame_counter_toggle
-        bne     _skip_redraw_dropped_frame_counter
-                                        ; If it's being turned off
-        lda     #GREEN_BOX              ; then draw over the lower-left
-        sta     LOWER_LEFT_CORNER       ; corner
-
-_skip_redraw_dropped_frame_counter:
-        bra     _key_processed
-
-*******************************
-* Require F
-*
-* Input:
-* A = Keypress
-*
-* Output:
-* A = 0 All is well
-* A = 2 Require an F to proceed
-*******************************
-
-require_f:
-
-        cmpa    #'F'            ; If toggle is on, require an F
-        beq     _forward                ; to go forward 1 frame
-
-        lda     #2              ; If no F, go back to polling the keyboard
-        rts
-
-_forward:
-        clra
-        rts
-
-***********************************
+**************************************
 * Wait for a number of frames
 *
 * Input:
-* A = Number of frames
+* A = number of frames
 *
 * Output:
-* A = 0 Success
-* A = (Non-zero) User wants to skip
-***********************************
+* A = 0          -> Successful waiting
+* A = (Non-zero) -> User wants to skip
+**************************************
 
 wait_frames:
-        tsta                            ; If A = 0, immediately exit
-        beq     _wait_frames_success
 
-        pshs    a
-        jsr     wait_for_vblank_and_check_for_skip
-        tsta
-        puls    a
-        bne     _wait_frames_skip       ; User wants to skip
-
-        deca
-        bne     wait_frames
-
-_wait_frames_success:
-        clra                            ; Normal termination
-        rts
-
-_wait_frames_skip:
-        lda     #1                      ; User wants to skip
-        rts
-
-*********************
-* Get screen position
-*
-* Inputs:
-* A = Row (0-15)
-* B = Column (0-31)
-*
-* Output:
-* X = Screen position
-*********************
-
-get_screen_position:
-
-;   X = TEXTBUF + A * COLS_PER_LINE + B
-
-        pshs    b
-
-        ldx     #TEXTBUF
-        ldb     #COLS_PER_LINE
-        mul
-        leax    d,x
-
-        puls    b
-        abx
-
-        rts
-
-******************
-* Clear the screen
-*
-* Inputs: None
-* Outputs: None
-******************
-
-GREEN_BOX       EQU     $60     ; These are MC6847 codes
-WHITE_BOX       EQU     $CF
-
-clear_screen:
-
-        ldx     #TEXTBUF
-        ldd     #(GREEN_BOX << 8 | GREEN_BOX)   ; Two green boxes
-
-_clear_screen_loop:
-        std     ,x++
-        std     ,x++
-        std     ,x++
-        std     ,x++
-
-        cmpx    #TEXTBUFEND             ; Finish in the lower-right corner
-        blo     _clear_screen_loop
-        rts
-
-*********************
-* Turn off interrupts
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-turn_off_interrupts:
-
-        jsr     switch_off_irq
-
-* This code is modified from code written by Simon Jonassen
-
-        lda     PIA0AC          ; Turn off HSYNC interrupt
-        anda    #0b11111110
-        sta     PIA0AC
-
-        lda     PIA0AD          ; Acknowledge any outstanding
-                                ; interrupt request
-
-* End of code modified from code written by Simon Jonassen
-
-        jsr     switch_on_irq
-
-        rts
-
-*************************************
-* Restore BASIC's IRQ service routine
-*
-* Inputs: None
-* Outputs: None
-*************************************
-
-restore_basic_irq_service_routine:
-
-        jsr     switch_off_irq
-        bsr     restore_irq_handler
-        jsr     switch_on_irq
-
-        rts
-
-restore_irq_handler:
-
-        lda     decb_irq_service_instruction
-        sta     IRQ_INSTRUCTION
-
-        ldx     decb_irq_service_routine
-        stx     IRQ_HANDLER
-
-***************
-* Title screen
-*
-* Inputs: None
-* Outputs: None
-***************
-
-title_screen:
-
-	jsr	prepare_title_screen
-
-	jsr	display_text
+	pshs	a
+	jsr	wait_for_vblank_and_check_for_skip
 	tsta
-	bne	_skip_title_screen
+	puls	a
+	bne	_wait_frames_skip	; User wants to skip
 
-	jsr	title_screen_sequences
-	tsta
-	bne	_skip_title_screen
+	deca
+	bne	wait_frames
 
-_skip_title_screen:
+	clra
 	rts
 
-**********************
-* Prepare title screen
-*
-* Inputs: None
-* Outputs: None
-**********************
+_wait_frames_skip:
+	lda	#1
+	rts
 
-prepare_title_screen:
+**************
+* Title screen
+**************
+
+title_screen:
 
 	jsr	clear_screen
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
-						; Ignore the result
+
 	clra
 	clrb
 	ldx	#title_screen_graphic
 	jsr	display_text_graphic
 
-	rts
-
-**********************
-* Title screen graphic
-**********************
+	bra	display_text
 
 ; This graphic was made by Microsoft Copilot and modified by me
 ; Animation done by me
 
-END_OF_TEXT	EQU	255
-
 title_screen_graphic:
-
 	FCV	"(\\/)",0
 	FCV	"(O-O)",0
 	FCV	"/> >\\",0
-	FCB	END_OF_TEXT
+	FCB	255
 
 title_screen_text:
-
 	FCB	5, 5
 	FCN	"RJFC"	; Each string ends with a zero when you use FCN
 	FCB	8, 9
@@ -898,262 +356,151 @@ title_screen_text:
 	FCB	12, 11
 	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
 	FCB	0		; So we manually terminate that line
-	FCB	END_OF_TEXT	; The end
-
-***************
-* Display text
-*
-* Inputs: None
-* Outputs: None
-***************
+	FCB	255		; The end
 
 display_text:
 
 	ldx	#title_screen_text
+
 	jsr	print_text
 	tsta
-	bne	skip_display_text
+	bne	skip_title_screen
 
-	jsr	play_speech	; Play the speech synthesis
+; Play the sound
 
-	clra
-skip_display_text:
-	rts
+	jsr	play_sound
 
-***********************************
-* Title screen sequences
-*
-* Inputs: None
-*
-* Output:
-* A = 0 Success
-* A = (Non-zero) User wants to skip
-***********************************
-
-title_screen_sequences:
-
-	bsr	encase_sequence
-	tsta
-	bne	_skip_title_screen_sequences
-
-	bsr	flash_sequence
-	tsta
-	bne	_skip_title_screen_sequences
-
-	bsr	flash_whole_screen
-	tsta
-	bne	_skip_title_screen_sequences
-
-	bsr	drop_sequence
-	tsta
-	bne	_skip_title_screen_sequences
-
-	clra
-_skip_title_screen_sequences:
-	rts
-
-***********************************
-* Encase sequence
-*
-* Inputs: None
-*
-* Output:
-* A = 0 Success
-* A = (Non-zero) User wants to skip
-***********************************
-
-encase_sequence:	; "Encase" the three text items
+; "Encase" the three text items
 
 	lda	#5
 	clrb
 	jsr	encase_text
 	tsta
-	bne	_skip_encase_sequence
+	bne	skip_title_screen
 
 	lda	#8
 	ldb	#1
 	jsr	encase_text
 	tsta
-	bne	_skip_encase_sequence
+	bne	skip_title_screen
 
 	lda	#12
 	clrb
 	jsr	encase_text
 	tsta
-	bne	_skip_encase_sequence
+	bne	skip_title_screen
 
-	clra
-_skip_encase_sequence:
-	rts
-
-***********************************
-* Flash sequence
-*
-* Inputs: None
-*
-* Output:
-* A = 0 Success
-* A = (Non-zero) User wants to skip
-***********************************
-
-flash_sequence:		; Now flash the text white
+* Now flash the text white
 
 	lda	#5
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	_skip_flash_sequence
+	bne	skip_title_screen
 
 	lda	#8
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	_skip_flash_sequence
+	bne	skip_title_screen
 
 	lda	#12
 	ldb	#3
 	jsr	flash_text_white
 	tsta
-	bne	_skip_flash_sequence
+	bne	skip_title_screen
 
-	clra
-_skip_flash_sequence:
-	rts
-
-***********************************
-* Flash whole screen
-*
-* Inputs: None
-*
-* Output:
-* A = 0 Success
-* A = (Non-zero) User wants to skip
-***********************************
-
-flash_whole_screen:		; Now flash the whole screen
+* Now flash the whole screen
 
 	jsr	flash_screen
 	tsta
-	bne	_skip_flash_whole_screen
+	bne	skip_title_screen
 
 	jsr	flash_screen
 	tsta
-	bne	_skip_flash_whole_screen
+	bne	skip_title_screen
 
 	jsr	flash_screen
 	tsta
-	bne	_skip_flash_whole_screen
+	bne	skip_title_screen
 
-	clra
-_skip_flash_whole_screen:
-	rts
-
-***********************************
-* Drop sequence
-*
-* Inputs: None
-*
-* Output:
-* A = 0 Success
-* A = (Non-zero) User wants to skip
-***********************************
-
-drop_sequence:		; Drop the lines off the bottom end of the screen
+* Drop the lines off the bottom end of the screen
 
 	lda	#11
 	jsr	drop_screen_content
 	tsta
-	bne	_skip_drop_sequence
+	bne	skip_title_screen
 
 	lda	#7
 	jsr	drop_screen_content
 	tsta
-	bne	_skip_drop_sequence
+	bne	skip_title_screen
 
 	lda	#4
 	jsr	drop_screen_content
 
-	clra
-	rts
+				; and fallthrough
 
-_skip_drop_sequence:
+skip_title_screen:
 	lda	#1
 	sta	creature_blink_finished
+
 	rts
 
 ***********************************
 * Print text
 *
-* Input:
+* Inputs:
 * X = Pointer to data block
 *
-* Output:
+* Outputs:
 * A = 0          Successful
 * A = (non-zero) User wants to skip
 ***********************************
 
 print_text:
 
-	tfr	x,u
+	tfr	x,y
 
 _print_text_loop:
-	lda	,u+
-	cmpa	#END_OF_TEXT
-	beq	print_text_finished
-	ldb	,u+
-	tfr	u,x
+	lda	,y+
+	ldb	,y+
+	tfr	y,x
 
-	pshs	u
+	pshs	y
 	jsr	text_appears
-	puls	u
+	puls	y
 	tsta
-	bne	print_text_skipped
+	bne	_print_text_skipped
 
 _find_zero:
-	tst	,u+
+	tst	,y+
 	bne	_find_zero
 
-	bra	_print_text_loop
-
-***********************************
-* Exit print text routine
-*
-* Input: None
-*
-* Output:
-* A = 0          Successful
-* A = (non-zero) User wants to skip
-***********************************
-
-print_text_finished:
-
+	lda	#255			; This marks the end of the text
+					;   lines
+	cmpa	,y			; Is that what we have?
+	bne	_print_text_loop	; If not, then print the next line
+					; If yes, then fall through
 	clra
 	rts
 
-print_text_skipped:
-
+_print_text_skipped:
 	lda	#1			; User has skipped this
 	rts
 
-************************************
-* Switch IRQ and FIRQ interrupts off
+******************************************
+* Switch IRQ and FIRQ interrupts on or off
 *
 * Inputs: None
 * Outputs: None
-************************************
+******************************************
 
 switch_off_irq_and_firq:
 
 	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
 
 	rts
-
-***********************************
-* Switch IRQ and FIRQ interrupts on
-*
-* Inputs: None
-* Outputs: None
-***********************************
 
 switch_on_irq_and_firq:
 
@@ -1168,7 +515,7 @@ switch_on_irq_and_firq:
 * Outputs: None
 *************************
 
-play_speech:
+play_sound:
 
 ; This routine was written by Simon Jonassen and slightly modified by me
 
@@ -1230,6 +577,113 @@ w2	decb
 
 	rts
 
+
+;********************************************
+; 2 voice inherent sawtooth player 
+; for 6 bit dac @$ff20 using HYSNC on coco2
+; (C) Simon Jonassen (invisible man)
+;
+; FREE FOR ALL - USE AS YOU SEE FIT, JUST
+; REMEMBER WHERE IT ORGINATED AND GIVE CREDIT
+;********************************************
+		align		$100
+musplay		orcc		#$50		;nuke irq/firq
+		lda		#musplay/256
+		tfr		a,dp
+;********************************************
+;* DAC AT $FF20
+;********************************************
+		lda		$ff01			; Select DAC as sound source
+		anda		#$f7
+		sta		$ff01
+		lda		$ff03
+		anda		#$f7
+		sta		$ff03
+		lda		$ff23
+		ora		#8
+		sta		$ff23
+
+;********************************************
+; SETUP IRQ ROUTINE
+;********************************************
+		lda		#$0e		(DP JMP #NOTE)
+		ldb		#note&255
+		std		$10c
+
+		lda		$ff03		DISABLE VSYNC VECTORED IRQ
+		anda		#$fe
+		sta		$ff03
+		lda		$ff02		ACK ANY OUTSTANDING VSYNC
+
+		lda		$ff01		ENABLE HSYNC VECTORED IRQ
+		ora		#3		3/1 DEPENDS ON EDGE
+		sta		$ff01
+		lda		$ff00		ACK ANY OUTSTANDING HSYNC
+;********************************************
+; ENABLE IRQ/FIRQ
+;********************************************
+		andcc		#$af		;enable irq		
+		rts
+
+;********************************************
+; NOTE ROUTINE
+;********************************************
+note		dec	<counter
+		beq	seq
+sum		ldd 	#$0000 
+freq		addd 	#$0000
+		std 	<sum+1
+sum2		ldd	#$0000
+freq2		addd	#$0000
+		std	<sum2+1
+val1		adda	<sum+1
+		rora
+		sta	$ff20	
+		lda	$ff00	
+		rti
+
+;********************************************
+; SEQUENCER
+;********************************************
+seq
+oldu		ldu	#zix		;save pattern position
+		cmpu	#endzix
+		bne	plnote
+		ldu	#zix
+plnote		pulu	d,x		;load 2 notes from pattern
+		stu	<oldu+1		;restore pattern position to start
+		std	<freq+1		;store
+		stx	<freq2+1
+out		lda	$ff00		;ack irq
+		rti			;
+
+counter		fcb	0
+
+******************
+* Clear the screen
+*
+* Inputs: None
+* Outputs: None
+******************
+
+GREEN_BOX       EQU     $60
+WHITE_BOX       EQU     $CF
+
+clear_screen:
+
+	ldx	#TEXTBUF
+	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
+
+_clear_screen_loop:
+	std	,x++
+	std	,x++
+	std	,x++
+	std	,x++
+
+	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
+	bne	_clear_screen_loop
+	rts
+
 *****************************
 * Clear a line
 *
@@ -1241,48 +695,27 @@ w2	decb
 
 clear_line:
 
-	clrb
-	jsr	get_screen_position	; X is our starting point
+	ldx	#TEXTBUF
+	ldb	#COLS_PER_LINE
+	mul
+	leax	d,x
 
-	ldu	#GREEN_BOX << 8 | GREEN_BOX
+	ldy	#GREEN_BOX << 8 | GREEN_BOX
 	lda	#4
 
 _clear_line_loop:
-	stu	,x++
-	stu	,x++
-	stu	,x++
-	stu	,x++
+	sty	,x++
+	sty	,x++
+	sty	,x++
+	sty	,x++
 
 	deca
 	bne	_clear_line_loop
 
 	rts
 
-************************************
-* Is D divisible by 32
-*
-* Inputs:
-* D = any unsigned number or pointer
-*
-* Output:
-* A = 0           No it isn't
-* A = (Non-zero)  Yes it is
-************************************
-
-is_d_divisible_by_32:
-
-        andb    #0b00011111
-        beq     _divisible
-
-        clra
-        rts
-
-_divisible:
-        lda     #1
-        rts
-
-***********************************************
-* Bring text onto the screen using an animation
+************************************************
+* Brings text onto the screen using an animation
 *
 * Inputs:
 * A = Line number (0 to 15)
@@ -1292,18 +725,20 @@ _divisible:
 * Outputs:
 * A = 0 Finished, everything is okay
 * A = (Non-zero) User wants to skip
-***********************************************
+************************************************
 
 text_appears:
 
 	tfr	x,u		; U = string to print
-	pshs	b,u
-	clrb
-	jsr	get_screen_position	; X is where to start the animation
-	puls	b,u		; B is the character position to start
+	pshs	b
+	ldy	#TEXTBUF
+	ldb	#COLS_PER_LINE
+	mul
+	leax	d,y		; X is where to start the animation
+	puls	b		; B is the character position to start
 				;   printing the string
 
-text_appears_buff_box:
+_text_appears_buff_box:
 	lda	#WHITE_BOX	; A buff (whiteish) box
 	sta	,x		; Put it on the screen
 
@@ -1311,27 +746,10 @@ text_appears_buff_box:
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x,u
 	tsta			; Has the user chosen to skip?
-	beq	text_appears_keep_going	; If no, keep going
+	beq	_text_appears_keep_going
+	rts			; If yes, just return a
 
-	lda	#1
-	rts			; If yes, return
-
-******************************************
-* Text appears - Keep going
-*
-* Inputs:
-* B = Column to start printing
-* X = Screen position to start
-* U = String, null-terminated
-*
-* Outputs:
-* B = (Updated)   Column to start printing
-* X = (Unchanged) Screen position to start
-* U = (Updated)   String, null-terminated
-******************************************
-
-text_appears_keep_going:
-
+_text_appears_keep_going:
 	pshs	b,x,u
 	bsr	creature_blink	; The creature in the top-left corner
 	puls	b,x,u
@@ -1340,135 +758,101 @@ text_appears_keep_going:
 	bne	_text_appears_green_box	; yet
 
 	lda	,u+		; Get the next character from the string
-	bne	text_appears_store_char	; And put it on the screen
+	bne	_text_appears_store_char	; And put it on the screen
 
 	leau	-1,u		; It was a zero we retrieved: Repoint U
 				; And fall through to using a green box
+
+_text_appears_green_box:
 	tstb
 	beq	_text_appears_skip_decrement
 
-_text_appears_green_box:
 	decb
 
 _text_appears_skip_decrement:
 	lda	#GREEN_BOX	; Put a green box in A
-	bra	text_appears_store_char
 
-********************************
-* Text appears - Store char
-*
-* Inputs:
-* A = Character to print
-* B = Countdown to when to print
-* X = Screen position
-* U = String position
-*
-* Outputs:
-* A = 0	Success
-********************************
-
-text_appears_store_char:
-
+_text_appears_store_char:
 	sta	,x+	; Put the relevant character (green box or char) into
-			;   the relevant position (X)
+			;   the relevant position
 
-	pshs	b
+	pshs	d
 	tfr	x,d
-	jsr	is_d_divisible_by_32
-	puls	b
-	beq	text_appears_buff_box	; If no, then go back and do it again
+	andb	#0b00011111	; Is the character position divisible by 32?
+	puls	d
+	bne	_text_appears_buff_box	; If no, then go back and do it again
 
 	clra			; User has not chosen to skip
 	rts			; Return to the main code
 
-**************************
-* Creature blink variables
-**************************
-
-creature_blink_finished:
-	RZB	1
-
-creature_blink_frames:
-	RZB	2
-
-creature_blink_is_blinking:
-	RZB	1
-
-****************
-* Creature blink
+*****************
+* Creature blinks
 *
 * Inputs: None
 * Outputs: None
-****************
+*****************
+
+creature_blink_finished:
+	RZB	1
 
 creature_blink:
 
 	tst	creature_blink_finished
 	bne	_creature_blink_skip
 
-	ldd	creature_blink_frames
+	ldd	_creature_blink_frames
 	addd	#1
-	std	creature_blink_frames
+	std	_creature_blink_frames
 
-	lda	creature_blink_is_blinking
-	beq	creature_blink_eyes_are_open
+	lda	_creature_blink_is_blinking
+	beq	_creature_blink_open_eyes
 
-	ldd	creature_blink_frames
+	ldd	_creature_blink_frames
 	cmpd	#5
-	blo	_creature_blink_skip
+	blo	_creature_blink_take_no_action
 
-	bra	creature_open_eyes
+; Open the creature's eyes
 
-_creature_blink_skip:
-	rts
-
-**********************
-* Creature - Open eyes
-*
-* Inputs: None
-* Outputs: None
-**********************
-
-creature_open_eyes:
-
-	clr	creature_blink_is_blinking
+	clr	_creature_blink_is_blinking
 	clra
 	clrb
-	std	creature_blink_frames
+	std	_creature_blink_frames
 
 	ldx	#TEXTBUF+COLS_PER_LINE+1
 	lda	#'O'
 	sta	,x
 	sta	2,x
 
+_creature_blink_skip:
 	rts
 
-**************************
-* Creature - Eyes are open
-*
-* Inputs: None
-* Outputs: None
-**************************
+_creature_blink_open_eyes:
 
-creature_blink_eyes_are_open:
-
-	ldd	creature_blink_frames
+	ldd	_creature_blink_frames
 	cmpd	#85
-	blo	_creature_blink_skip_2
+	blo	_creature_blink_take_no_action
+
+; Close the creature's eyes
 
 	lda	#1
-	sta	creature_blink_is_blinking
+	sta	_creature_blink_is_blinking
 	clra
 	clrb
-	std	creature_blink_frames
+	std	_creature_blink_frames
 
-	ldx	#TEXTBUF+COLS_PER_LINE+1	; Close the eyes
+	ldx	#TEXTBUF+COLS_PER_LINE+1
 	lda	#'-' + 64
 	sta	,x
 	sta	2,x
 
-_creature_blink_skip_2:
+_creature_blink_take_no_action:
 	rts
+
+_creature_blink_is_blinking:
+	RZB	1
+
+_creature_blink_frames:
+	RZB	2
 
 *************************************
 * Encases text on the screen
@@ -1484,11 +868,14 @@ EQUALS_SIGN	EQU	125
 
 encase_text:
 
-	tfr	d,u		; U (lower 8 bits) is direction
-	clrb
-	jsr	get_screen_position	; X is our starting position
-	tfr	u,d		; B is direction
+	tfr	d,y		; Y (lower 8 bits) is direction
 
+	ldb	#COLS_PER_LINE
+	mul
+	ldx	#TEXTBUF
+	leax	d,x		; X is our starting position
+
+	tfr	y,d		; B is direction
 	tstb			; If 0, start on the left side
 	beq	_encase_text_loop
 
@@ -1500,24 +887,11 @@ _encase_text_loop:
 	jsr	wait_for_vblank_and_check_for_skip
 	puls	b,x
 	tsta
-	beq	encase_text_more
+	beq	_encase_no_skip
 	rts			; Simply return a
-	bra	encase_text_more
 
-*************************************
-* Encase text more
-*
-* Inputs:
-* B = Direction (0 = right, 1 = left)
-* X = Screen position
-*
-* Outputs:
-* A = 0 Finished, everything is okay
-* A = (Non-zero) User wants to skip
-*************************************
-
-encase_text_more:
-
+_encase_no_skip:
+_encase_text_more:
 	pshs	b,x
 	bsr	creature_blink
 	puls	b,x
@@ -1525,26 +899,9 @@ encase_text_more:
 	lda	#GREEN_BOX	; Green box (space)
 
 	cmpa	,x		; If x points to a green box...
-	bne	encase_char_found
+	bne	_encase_char_found
 
 	lda	#EQUALS_SIGN	; then put a '=' in it
-
-	bra	encase_store_and_adjust
-
-*************************************
-* Encase store and adjust
-*
-* Inputs:
-* A = Character to store
-* B = Direction (0 = right, 1 = left)
-* X = Screen position
-*
-* Outputs:
-* A = 0 Finished, everything is okay
-* A = (Non-zero) User wants to skip
-*************************************
-
-encase_store_and_adjust:
 
 	tstb
 	bne	_encase_backwards
@@ -1559,20 +916,7 @@ _encase_backwards:
 _encase_finished_storing:
 	bra	_encase_are_we_done	; Go back and do the next one
 
-*************************************
-* Encase char found
-*
-* Inputs:
-* B = Direction (0 = right, 1 = left)
-* X = Screen position
-*
-* Outputs:
-* A = 0 Finished, everything is okay
-* A = (Non-zero) User wants to skip
-*************************************
-
-encase_char_found:
-
+_encase_char_found:
 	lda	#EQUALS_SIGN		; This is '='
 	sta	-COLS_PER_LINE,x	; add '=' above
 	sta	+COLS_PER_LINE,x	;   and below
@@ -1588,57 +932,26 @@ _encase_chars_found_backwards:
 				; fallthrough
 _encase_are_we_done:
 	tstb
-	beq	encase_right	; If we're going right
-	bra	encase_left
+	beq	_encase_right	; If we're going right
 
-*************************************
-* Encase left
-*
-* Inputs:
-* B = Direction (0 = right, 1 = left)
-* X = Screen position
-*
-* Outputs:
-* A = 0 Finished, everything is okay
-* A = (Non-zero) User wants to skip
-*************************************
-
-encase_left:
-
-	tfr	d,u
+	tfr	d,y
 	tfr	x,d
 	andb	#0b00011111
 	cmpb	#0b00011111	; If X mod 32 == 31
-	tfr	u,d
+	tfr	y,d
 	bne	_encase_text_loop
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
-	clra
 	rts			; we are finished. Return A
 
-*************************************
-* Encase right
-*
-* Inputs:
-* B = Direction (0 = right, 1 = left)
-* X = Screen position
-*
-* Outputs:
-* A = 0 Finished, everything is okay
-* A = (Non-zero) User wants to skip
-*************************************
-
-encase_right:
-
-	tfr	d,u
+_encase_right:
+	tfr	d,y
 	tfr	x,d
-	jsr	is_d_divisible_by_32
-	tsta
-	tfr	u,d
-	beq	_encase_text_loop
+	andb	#0b00011111	; If X is evenly divisible
+	tfr	y,d
+	bne	_encase_text_loop	;   by 32, then
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
-	clra
 	rts			; we are finished. Return A
 
 **************************************
@@ -1657,33 +970,26 @@ flash_text_white:
 	decb			; We test at the bottom
 	pshs	b
 
-	clrb
-	jsr	get_screen_position
+	ldb	#COLS_PER_LINE
+	mul
+	ldx	#TEXTBUF
+	leax	d,x		; X = starting position
 
-	ldu	#flash_text_storage
+	ldy	#flash_text_storage
 
 _flash_copy_line:
 	ldd	,x++		; Save the whole line
-	std	,u++
+	std	,y++
 
-	cmpu	#flash_text_storage_end
+	cmpy	#flash_text_storage_end
 	bne	_flash_copy_line
 
-	puls	b
-
-	bra	turn_text_white
-
-*******************************
-* Turn text white
-*
-* Inputs:
-* B = Number of times to flash
-* X = End of line to turn white
-*******************************
-
-turn_text_white:
+				; Now the line has been saved,
+				; Turn all text to white
 
 	leax	-COLS_PER_LINE,x	; Back to the start of the line
+
+	puls	b
 
 _flash_chars_loop:
 	pshs	b,x
@@ -1720,15 +1026,16 @@ _flash_finished:
 
 flash_chars_white:
 
+_flash_chars_white_loop:
 	lda	,x
+
+	cmpa	#125		; '='
+	beq	_flash_chars_not_flashable
 
 	cmpa	#65		; Is it from A to
 	blo	_flash_chars_not_flashable
 	cmpa	#127		; question mark
 	bhi	_flash_chars_not_flashable
-
-	cmpa	#125		; '='
-	beq	_flash_chars_not_flashable
 
 	lda	#WHITE_BOX	; a white (buff) box
 	sta	,x		; store it, and fall through
@@ -1736,11 +1043,8 @@ flash_chars_white:
 _flash_chars_not_flashable:
 	leax	1,x
 	tfr	x,d
-	pshs	b,x
-	jsr	is_d_divisible_by_32
-	tsta
-	puls	b,x
-	beq	flash_chars_white	; If more, go back
+	andb	#0b00011111	; Calculate x mod 32
+	bne	_flash_chars_white_loop	; If more, go back
 
 	rts
 
@@ -1755,23 +1059,21 @@ _flash_chars_not_flashable:
 
 restore_chars:
 
-	ldu	#flash_text_storage
+	ldy	#flash_text_storage
 
 _flash_restore_chars:
-	ldd	,u++
+	ldd	,y++
 	std	,x++
-	ldd	,u++
+	ldd	,y++
 	std	,x++
 
-	cmpu	#flash_text_storage_end
+	cmpy	#flash_text_storage_end
 	bne	_flash_restore_chars
 
 	rts
 
 flash_text_storage:
-
 	RZB	COLS_PER_LINE
-
 flash_text_storage_end:
 
 **************************
@@ -1784,17 +1086,17 @@ flash_text_storage_end:
 flash_screen:
 
 	ldx	#TEXTBUF
-	ldu	#flash_screen_storage	; We overwrite the sound data
+	ldy	#flash_screen_storage	; We overwrite the sound data
 
 _flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
-	std	,u++			; on the screen
+	std	,y++			; on the screen
 	ldd	,x++
-	std	,u++
+	std	,y++
 	ldd	,x++
-	std	,u++
+	std	,y++
 	ldd	,x++
-	std	,u++
+	std	,y++
 
 	cmpx	#TEXTBUFEND
 	blo	_flash_screen_copy_loop
@@ -1844,16 +1146,16 @@ _skip_flash_screen_3:
 
 _skip_flash_screen_4:
 	ldx	#TEXTBUF
-	ldu	#flash_screen_storage
+	ldy	#flash_screen_storage
 
 _flash_screen_restore_loop:
-	ldd	,u++
+	ldd	,y++
 	std	,x++
-	ldd	,u++
+	ldd	,y++
 	std	,x++
-	ldd	,u++
+	ldd	,y++
 	std	,x++
-	ldd	,u++
+	ldd	,y++
 	std	,x++
 
 	cmpx	#TEXTBUFEND
@@ -1868,20 +1170,20 @@ _flash_screen_skip_5:
 	jsr	wait_for_vblank_and_check_for_skip
 	rts				; Return A
 
-*********************
+********************************
 * Drop screen content
 *
 * Inputs:
-* A = Starting line
-*********************
+* A = starting line
+********************************
 
 drop_screen_content:
 
 	pshs	a
-	bsr	drop_each_line
+	bsr	_drop_each_line
 	tsta
-	puls	a
 	bne	_skip_drop_each_line
+	puls	a
 
 	inca				; Next time, start a line lower
 
@@ -1893,29 +1195,23 @@ drop_screen_content:
 	rts
 
 _skip_drop_each_line:
-	lda	#1
+	leas	1,s
 	rts
 
-*******************
-* Drop each line
-*
-* Inputs:
-* A = Starting line
-*******************
-
-drop_each_line:
-
+_drop_each_line:
 	pshs	a
 	inca
 	inca
-	bsr	drop_line		; Drop the bottom line
+	bsr	_drop_line		; Drop the bottom line
+	puls	a
 
-	lda	,s
+	pshs	a
 	inca
-	bsr	drop_line		; Drop the middle line
+	bsr	_drop_line		; Drop the middle line
+	puls	a
 
-	lda	,s
-	bsr	drop_line		; Drop the top line
+	pshs	a
+	bsr	_drop_line		; Drop the top line
 	puls	a
 
 	jsr	clear_line		; Clear the top line
@@ -1923,21 +1219,19 @@ drop_each_line:
 	jsr	wait_for_vblank_and_check_for_skip
 	rts
 
-********************************
-* Drop line
-*
-* Inputs:
-* A = Starting line
-********************************
-
-drop_line:
-
+_drop_line:
 	cmpa	#TEXT_LINES-1
-	bhs	_drop_line_finished	; Off the bottom end of the screen
+	blo	_do_drop
+
+	clra
+	rts				; Off the bottom end of the screen
+
 
 _do_drop:
-	clrb
-	jsr	get_screen_position
+	ldb	#COLS_PER_LINE
+	mul
+	ldx	#TEXTBUF
+	leax	d,x			; X = pointer to a line of the screen
 
 	ldb	#COLS_PER_LINE
 
@@ -1949,8 +1243,11 @@ _move_line_down:
 	decb
 	bne	_move_line_down
 
-_drop_line_finished:
 	clra
+	rts
+
+_skip_drop_screen:
+	lda	#1
 	rts
 
 ************************
@@ -1964,46 +1261,36 @@ _drop_line_finished:
 
 display_text_graphic:
 
-	pshs	b,x			; B = Column number
-	jsr	get_screen_position	; X = Screen position
-	puls	b,u			; U = Graphic data
+	tfr	x,y	; Y = graphic data
+
+	tfr	d,u	; Save B
+	ldb	#COLS_PER_LINE
+	mul
+	ldx	#TEXTBUF
+	leax	d,x
+	tfr	u,d	; B = column number
+	leax	b,x	; X = Screen memory to start at
 
 _display_text_graphic_loop:
-        lda     ,u+
+        lda     ,y+
         beq     _text_graphic_new_line
-        cmpa    #END_OF_TEXT
+        cmpa    #255
         beq	_display_text_graphic_finished
         sta     ,x+
         bra     _display_text_graphic_loop
 
 _text_graphic_new_line:
-	pshs	b,u
-	bsr	move_to_next_line
-	puls	b,u
+	tfr	d,u		; Save register B
+        tfr     x,d
+        andb    #0b11100000
+        addd    #COLS_PER_LINE
+        tfr     d,x
+	tfr	u,d		; Get B back
 	leax	b,x
 	bra	_display_text_graphic_loop
 
 _display_text_graphic_finished:
 	rts
-
-***************************************
-* Move to next line
-*
-* Input:
-* X = Screen position pointer
-*
-* Output:
-* X = (Updated) Screen position pointer
-***************************************
-
-move_to_next_line:
-
-        tfr     x,d
-        addd    #COLS_PER_LINE
-        andb    #0b11100000
-        tfr     d,x
-
-        rts
 
 *****************
 * Opening credits
@@ -2014,9 +1301,7 @@ opening_credits:
 	jsr	clear_screen
 
 	lda	#WAIT_PERIOD
-	jsr	wait_frames			; Ignore return value
-
-	jsr	turn_on_interrupts		; Get the HSYNC active
+	jsr	wait_frames		; Ignore return value
 
 	ldx	#opening_credits_text
 	bsr	roll_credits
@@ -2048,7 +1333,7 @@ opening_credits_text:
 	FCV	"AND ANOTHER BLAH BLAH BLAH"
 	FCB	0
 	FCB	0
-	FCB	END_OF_TEXT
+	FCB	255
 
 line:
 
@@ -2059,7 +1344,7 @@ roll_credits:
 _roll_credits_loop:
 
 	lda	,x
-	cmpa	#END_OF_TEXT
+	cmpa	#255
 	beq	_roll_credits_finished
 
 	pshs	x
@@ -2443,13 +1728,31 @@ ascii_art_cat:
 	FCV	"        ; '   : :'-:     ..'* ;",0
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0
-	FCB	END_OF_TEXT
+	FCB	255
 
 ascii_art_cat_end:
 
 loading_text:
 
 	FCV	"LOADING...",0
+
+***********************************
+* Uninstall our IRQ service routine
+*
+* Inputs: None
+* Outputs: None
+***********************************
+
+uninstall_irq_service_routine:
+
+	jsr	switch_off_irq
+
+	ldx	decb_irq_service_routine
+	stx	IRQ_HANDLER
+
+	jsr	switch_on_irq
+
+	rts
 
 ************************************
 * Here is our raw data for our sound
@@ -3857,3 +3160,6 @@ sample:     fcb     32
             fcb     $00,$00,$10,$00,$00,$00
 
 sample.end:
+
+zix		include	"datune.asm"
+endzix		equ	*

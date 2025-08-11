@@ -843,18 +843,6 @@ pluck_a_char:
 	bsr	pluck_char_choose_a_line
 	bsr	pluck_get_char
 
-************************************************************
-* Pluck - Register
-*
-* Input:
-* X = Screen position of character being plucked
-*
-* Outputs:
-* X = (Unchanged) Screen position of character being plucked
-************************************************************
-
-pluck_register:
-
 	leau	,x		; Contributed by Simon Jonassen
 	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
 	ldb	,u		; B = the character being plucked
@@ -1071,23 +1059,11 @@ pluck_phase_3:
 	andb	#0b00011111	; Is it divisible by 32?
 	beq	pluck_phase_3_ended
 
-oldb	ldb	1,u
+	ldb	1,u
 	stb	,x		; Draw it in the next column to the right
 	stx	2,u		; Update position in plucks_data
 
 	rts
-
-*********************
-* Pluck phase 3 ended
-*
-* Inputs:
-* A = Phase
-* B = Character
-* X = Screen position
-* U = Pluck data
-*
-* Outputs: None
-*********************
 
 pluck_phase_3_ended:		; Character has gone off the right side
 

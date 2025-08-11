@@ -166,6 +166,17 @@ TEXT_END 	EQU     255
 
 * End code modified by me from code written by Simon Jonassen
 
+**************************
+* Turn off HSync interrupt
+**************************
+
+        lda     PIA0AC          ; Turn off HSYNC interrupt
+        anda    #0b11111110
+        sta     PIA0AC
+
+        lda     PIA0AD          ; Acknowledge any outstanding
+                                ; interrupt request
+
 *********************************
 * Install our IRQ service routine
 *********************************
@@ -234,7 +245,7 @@ TEXT_END 	EQU     255
 **************************************
 
         lda     #0
-        tfr     a, dp
+        tfr     a,dp
 
         andcc   #0b11101111             ; Switch IRQ interrupts back on
 
@@ -248,31 +259,6 @@ TEXT_END 	EQU     255
 
 	align	256	; The interrupt service routine and all the variables
                         ; should be accessible in direct mode
-
-;********************************************
-; 2 voice inherent sawtooth player
-; for 6 bit dac @$ff20 using HYSNC on coco2
-; (C) Simon Jonassen (invisible man)
-;
-; FREE FOR ALL - USE AS YOU SEE FIT, JUST
-; REMEMBER WHERE IT ORGINATED AND GIVE CREDIT
-;********************************************
-musplay		orcc		#$50		;nuke irq/firq
-
-;********************************************
-; SETUP IRQ ROUTINE
-;********************************************
-		lda		$ff01		ENABLE HSYNC VECTORED IRQ
-		ora		#3		3/1 DEPENDS ON EDGE
-		sta		$ff01
-		lda		$ff00		ACK ANY OUTSTANDING HSYNC
-;********************************************
-; ENABLE IRQ/FIRQ
-;********************************************
-		andcc		#$af		;enable irq
-		rts
-
-; End of work by Simon Jonassen
 
 *************************
 * Our IRQ handler
@@ -288,6 +274,9 @@ irq_service_routine:
 ***************
 * Service HSYNC
 ***************
+
+	lda	music_on
+	beq	_skip_music
 
 * This was written by Simon Jonassen and modified by me
 
@@ -305,8 +294,14 @@ freq2		addd	#$0000
 val1		adda	<sum+1
 		rora
 		sta	$ff20
+
+_skip_music:
 		lda	$ff00
 		rti
+
+music_on:
+
+	RZB	1
 
 ;********************************************
 ; SEQUENCER
@@ -643,6 +638,33 @@ w2	decb
 ; End of routine written by Simon Jonassen and slightly modified by me
 
 	rts
+
+;********************************************
+; 2 voice inherent sawtooth player
+; for 6 bit dac @$ff20 using HYSNC on coco2
+; (C) Simon Jonassen (invisible man)
+;
+; FREE FOR ALL - USE AS YOU SEE FIT, JUST
+; REMEMBER WHERE IT ORGINATED AND GIVE CREDIT
+;********************************************
+musplay		orcc		#$50		;nuke irq/firq
+
+;********************************************
+; SETUP IRQ ROUTINE
+;********************************************
+		lda		$ff01		ENABLE HSYNC VECTORED IRQ
+		ora		#3		3/1 DEPENDS ON EDGE
+		sta		$ff01
+		lda		$ff00		ACK ANY OUTSTANDING HSYNC
+;********************************************
+; ENABLE IRQ/FIRQ
+;********************************************
+		lda		#$ff
+		sta		music_on
+		andcc		#$af		;enable irq
+		rts
+
+; End of work by Simon Jonassen
 
 ******************
 * Clear the screen
@@ -1661,6 +1683,9 @@ _display_string_finished:
 loading_screen:
 
 	jsr	clear_screen
+
+	clra
+	sta	music_on
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames

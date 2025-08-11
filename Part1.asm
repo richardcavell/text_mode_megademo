@@ -1234,7 +1234,6 @@ _display_messages_skip_sound:
 					; user has not skipped
 
 _display_messages_skip:
-	lda	#1		; User wants to skip
 	rts
 
 _display_messages_end:

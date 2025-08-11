@@ -1020,8 +1020,6 @@ process_pluck_2:
 
 	lda	,u
 	beq	_no_pluck_happening_1	; This will run faster
-	ldb	1,u
-	ldx	2,u
 
 	bsr	pluck_do_one_pluck
 
@@ -1030,8 +1028,6 @@ _no_pluck_happening_1:
 
 	lda	,u
 	beq	_no_pluck_happening_2	; This will run faster
-	ldb	1,u
-	ldx	2,u
 
 	bsr	pluck_do_one_pluck
 
@@ -1067,7 +1063,8 @@ plp2	cmpa	#PLUCK_PHASE_PLAIN
 
 * Phase 2
 
-	stb	,x		; Show the plain character
+	ldb	1,u
+	stb	[2,u]		; Show the plain character
 
 	lda	#PLUCK_PHASE_PULLING	; Go to phase 3
 	sta	,u
@@ -1078,15 +1075,15 @@ plp2	cmpa	#PLUCK_PHASE_PLAIN
 
 pluck_phase_3:
 
+	ldx	2,u
 	lda	#GREEN_BOX
 	sta	,x+		; Erase the drawn character
-	stb	oldb+1
 
 	tfr	x,d
 	andb	#0b00011111	; Is it divisible by 32?
 	beq	pluck_phase_3_ended
 
-oldb	ldb	#$00
+oldb	ldb	1,u
 	stb	,x		; Draw it in the next column to the right
 	stx	2,u		; Update position in plucks_data
 

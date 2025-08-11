@@ -425,6 +425,50 @@ text_graphic_new_line:
 
 _display_text_graphic_finished:
 
+	lda	#123
+	sta	32767
+
+	lda	32767
+	cmpa	#123
+	beq	_continue
+
+	ldx	#BACKBUF+15*COLS_PER_LINE+2
+	ldd	#"YO"
+	std	,x
+	ldd	#'U'*256+$60
+	std	2,x
+	ldd	#"NE"
+	std	4,x
+	ldd	#"ED"
+	std	6,x
+	ldd	#$60*256+'3'+64
+	std	8,x
+	ldd	#('2'+64)*256+'K'
+	std	10,x
+	ldd	#$60*256+'R'
+	std	12,x
+	ldd	#"AM"
+	std	14,x
+	ldd	#$60*256+'T'
+	std	16,x
+	ldd	#'O'*256+$60
+	std	18,x
+	ldd	#"CO"
+	std	20,x
+	ldd	#"NT"
+	std	22,x
+	ldd	#"IN"
+	std	24,x
+	ldd	#"UE"
+	std	26,x
+
+	lda	#1
+	jsr	wait_frames
+
+_infinite:
+	bra	_infinite
+
+_continue:
 ********************
 * Print loading text
 ********************

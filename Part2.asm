@@ -193,7 +193,7 @@ TEXT_END 	EQU     255
         andcc   #0b10101111     ; Switch IRQ and FIRQ interrupts back on
 
 	jsr	title_screen			; First section
-	jsr	musplay
+;	jsr	musplay
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
 

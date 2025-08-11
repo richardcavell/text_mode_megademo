@@ -945,22 +945,6 @@ _skip_cache_dirtying:
 
 pluck_get_char:
 
-	sta	olda2+1		; Simon Jonassen contributed this line
-	ldx	#plucks_data_end
-olda2:	lda	#$00		; and this one
-
-********************************************
-* Get end of line
-*
-* Input:
-* A = Line to pluck from
-*
-* Output:
-* X = Screen position of the end of the line
-********************************************
-
-get_end_of_line:
-
 	ldx	#BACKBUF
 	inca	; Make X point to the right end of the line
 	ldb	#COLS_PER_LINE
@@ -968,10 +952,6 @@ get_end_of_line:
 	leax	d,x
 
 	lda	#GREEN_BOX	; A = Green box (space)
-
-********************
-* Pluck - Get char 2
-********************
 
 pluck_get_char_2:
 
@@ -988,9 +968,6 @@ pluck_get_char_2:
 
 *****************
 * Process pluck 2
-*
-* Inputs: None
-* Outputs: None
 *****************
 
 process_pluck_2:

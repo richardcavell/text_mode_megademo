@@ -75,7 +75,7 @@ DSKREG		EQU	$FF40
 * Define POLCAT and BREAK_KEY
 *****************************
 
-POLCAT		EQU	$A000	; POLCAT is a pointer to a pointer
+POLCAT		EQU	$A000		; POLCAT is a pointer to a pointer
 
 BREAK_KEY	EQU	3
 
@@ -671,13 +671,9 @@ collation_number_of_lines:
 
 	RZB	1
 
-*************************
-* Pluck lines empty cache
-*************************
-
-cached_pluck_lines_empty:
-
-	RZB	1
+******************
+* Our skip message
+******************
 
 skip_message:
 
@@ -717,27 +713,6 @@ _pluck_screen_not_empty:
 ************************************
 
 pluck_are_lines_empty:
-
-	lda	cached_pluck_lines_empty
-	bne	_return_cache
-
-	bsr	pluck_are_lines_empty_2
-	sta	cached_pluck_lines_empty
-
-_return_cache:
-	rts
-
-************************************
-* Pluck - Are lines empty 2
-*
-* Inputs: None
-*
-* Output:
-* A = 0 Lines are not clear
-* A = (Non-zero) All lines are clear
-************************************
-
-pluck_are_lines_empty_2:
 
 	ldx	#pluck_line_counts
 

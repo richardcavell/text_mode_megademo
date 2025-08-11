@@ -883,11 +883,8 @@ _pluck_collate_finished:
 						; Probably don't need to
 	sta	collation_number_of_lines	; rebuild next time
 
+pluck_use_collation:
 	rts					; Return A
-
-pluck_use_collation:				; Return A
-
-	rts
 
 ******************************
 * Pluck - Choose a line

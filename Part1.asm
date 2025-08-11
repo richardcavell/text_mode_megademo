@@ -928,7 +928,6 @@ olda1:	lda	#$00
 	bne	_skip_cache_dirtying
 
 	clrb
-	stb	cached_pluck_lines_empty	; Dirty this cache
 	stb	collation_number_of_lines	; Rebuild collation next time
 
 _skip_cache_dirtying:
@@ -970,17 +969,9 @@ get_end_of_line:
 
 	lda	#GREEN_BOX	; A = Green box (space)
 
-*******************************************************
+********************
 * Pluck - Get char 2
-*
-* Inputs:
-*  A = Green box (space character)
-*  X = Screen position to search (backwards) from
-* ,S = End of pluck data
-*
-* Outputs:
-*  X = Pointer to screen position of pluckable character
-*******************************************************
+********************
 
 pluck_get_char_2:
 
@@ -1042,42 +1033,18 @@ pluck_do_one_pluck:
 
 	cmpa	#PLUCK_PHASE_TURN_WHITE
 	bne	plp2	; We are white
-*********************
-* Pluck phase 1
-*
-* Inputs:
-* A = Phase
-* B = Character
-* X = Screen position
-* U = Pluck data
-*
-* Outputs: None
-*********************
 
-pluck_phase_1:
+* Phase 1
 
 	lda	#PLUCK_PHASE_PLAIN
 	sta	,u
 	rts
 
-*********************
 plp2	cmpa	#PLUCK_PHASE_PLAIN
 	bne	pluck_phase_3	; We are plain
 
 
-*********************
-* Pluck phase 2
-*
-* Inputs:
-* A = Phase
-* B = Character
-* X = Screen position
-* U = Pluck data
-*
-* Outputs: None
-*********************
-
-pluck_phase_2:
+* Phase 2
 
 	stb	,x		; Show the plain character
 
@@ -1086,17 +1053,7 @@ pluck_phase_2:
 
 	rts
 
-*********************
 * Pluck phase 3
-*
-* Inputs:
-* A = Phase
-* B = Character
-* X = Screen position
-* U = Pluck data
-*
-* Outputs: None
-*********************
 
 pluck_phase_3:
 
@@ -1128,7 +1085,7 @@ oldb	ldb	#$00
 
 pluck_phase_3_ended:		; Character has gone off the right side
 
-	lda	#PLUCK_PHASE_NOTHING
+	clra
 	sta	,u		; This slot is now empty
 
 	rts
@@ -1222,8 +1179,8 @@ _display_messages_loop:
 	ldu	#type_sound_end
 	jsr	play_sound		; Play the typing noise
 
-st_x	ldx	#0000
-st_u	ldu	#0000
+st_x:	ldx	#0000
+st_u:	ldu	#0000
 
 _display_messages_skip_sound:
 

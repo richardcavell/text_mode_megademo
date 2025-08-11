@@ -533,7 +533,7 @@ _continue:
 
 * Assume that no registers are preserved
 
-	align 256	; The interrupt service routine and all the variables
+	align	256	; The interrupt service routine and all the variables
 			; should be accessible in direct mode
 
 *************************

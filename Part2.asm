@@ -14,52 +14,96 @@
 * Part of this code was written by a number of other authors
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
-
+* Part of this code was written by Allen C. Huffman at Sub-Etha Software
+* You can see it here:
+* https://subethasoftware.com/2022/09/06/counting-6809-cycles-with-lwasm/
+*
+* The speech "RJFC Presents Text Mode Megademo" was created by this website:
+* https://speechsynthesis.online/
+* The voice is "Ryan"
+*
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
 * Both graphics have been modified by me
 * Animation of the small creature by me
-* The speech "RJFC Presents Text Mode Megademo" was created by this website:
-* https://speechsynthesis.online/
-* The voice is "Ryan"
-* The routine that plays the speech was written by Simon Jonassen
+*
+* Between each section, wait this number of frames
 
-* DEBUG_MODE means you press T to toggle frame-by-frame mode.
-* In frame-by-frame mode, you press F to see the next frame.
-* Also, you can make the lower right corner character cycle when
-* the interrupt request service routine operates.
-
-DEBUG_MODE	EQU	0
+*************************
+* EQUATES
+*************************
 
 * Between each section, wait this number of frames
 
 WAIT_PERIOD	EQU	25
 
+*************************
+* Text buffer information
+*************************
+
+TEXTBUF		EQU	$400		; We're not double-buffering
+TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
+
+COLS_PER_LINE	EQU	32
+TEXT_LINES	EQU	16
+
+***********************
+* Vertical blank vector
+***********************
+
+IRQ_INSTRUCTION EQU     $10C
+IRQ_HANDLER     EQU     $10D
+
+*****************************
+* PIA memory-mapped registers
+*****************************
+
+PIA0AD          EQU     $FF00
+PIA0AC          EQU     $FF01
+PIA0BD          EQU     $FF02
+PIA0BC          EQU     $FF03
+
+AUDIO_PORT      EQU     $FF20           ; (the top 6 bits)
+DDRA            EQU     $FF20
+PIA2_CRA        EQU     $FF21
+AUDIO_PORT_ON   EQU     $FF23           ; Port Enable Audio (bit 3)
+
+DSKREG          EQU     $FF40
+
+*****************************
+* Define POLCAT and BREAK_KEY
+*****************************
+
+POLCAT          EQU     $A000           ; POLCAT is a pointer to a pointer
+
+BREAK_KEY       EQU     3
+
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
+*************************
+* We need to mark the end
+*************************
+
+TEXT_END 	EQU     255
+
 		ORG $1800
 
-	jsr	zero_dp_register		; Zero the DP register
-	jsr	install_irq_service_routine	; Install our IRQ handler
-	jsr	switch_off_irq_and_firq
-	jsr	turn_off_disk_motor		; Silence the disk drive
-	jsr	turn_6bit_audio_on		; Turn on the 6-bit DAC
+        orcc    #0b01010000     ; Switch off IRQ and FIRQ interrupts
+
+        dec     $71             ; Make any reset COLD (Simon Jonassen)
+
+
+
+
 
 	jsr	title_screen			; First section
-;***************************************
-; put zix call here
-;***************************************
 	jsr	musplay
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
 
-	jsr	uninstall_irq_service_routine
-
-	clra
-	clrb
-	rts		; Return to Disk Extended Color BASIC
 
 *****************************************************************************
 *	Subroutines
@@ -84,8 +128,6 @@ zero_dp_register:
 * Inputs: None
 * Outputs: None
 *********************************
-
-IRQ_HANDLER	EQU	$10D
 
 install_irq_service_routine:
 
@@ -140,7 +182,7 @@ irq_service_routine:
 	lda	#1
 	sta	vblank_happened
 
-	lda	#DEBUG_MODE
+	lda	#0
 	beq	_skip_debug_visual_indication
 
 ; For debugging, this provides a visual indication that
@@ -167,8 +209,6 @@ decb_irq_service_routine:
 * Outputs: None
 *********************
 
-DSKREG	EQU	$FF40
-
 turn_off_disk_motor:
 
 	clra
@@ -182,11 +222,6 @@ turn_off_disk_motor:
 * Inputs: None
 * Outputs: None
 *********************
-
-AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
-DDRA		EQU	$FF20
-PIA2_CRA	EQU	$FF21
-AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
 turn_6bit_audio_on:
 
@@ -215,17 +250,6 @@ turn_6bit_audio_on:
 
 	rts
 
-*************************
-* Text buffer information
-*************************
-
-TEXTBUF		EQU	$400		; We're not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
-TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
-
-COLS_PER_LINE	EQU	32
-TEXT_LINES	EQU	16
-
 ****************************************
 * Wait for VBlank and check for skip
 *
@@ -235,10 +259,6 @@ TEXT_LINES	EQU	16
 * A = 0          -> A VBlank happened
 * A = (Non-zero) -> User is trying to skip
 ****************************************
-
-POLCAT		EQU	$A000
-
-BREAK_KEY	EQU	3
 
 vblank_happened:
 
@@ -254,7 +274,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	beq	_wait_for_vblank_skip
 	cmpa	#BREAK_KEY		; Break key
 	beq	_wait_for_vblank_skip
-	ldb	#DEBUG_MODE
+	ldb	#0
 	beq	_wait_for_vblank
 	cmpa	#'t'			; T key
 	beq	_wait_for_vblank_invert_toggle
@@ -348,7 +368,7 @@ title_screen_graphic:
 	FCV	"(\\/)",0
 	FCV	"(O-O)",0
 	FCV	"/> >\\",0
-	FCB	255
+	FCB	TEXT_END
 
 title_screen_text:
 	FCB	5, 5
@@ -358,7 +378,7 @@ title_screen_text:
 	FCB	12, 11
 	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
 	FCB	0		; So we manually terminate that line
-	FCB	255		; The end
+	FCB	TEXT_END	; The end
 
 display_text:
 
@@ -479,7 +499,7 @@ _find_zero:
 	tst	,y+
 	bne	_find_zero
 
-	lda	#255			; This marks the end of the text
+	lda	#TEXT_END		; This marks the end of the text
 					;   lines
 	cmpa	,y			; Is that what we have?
 	bne	_print_text_loop	; If not, then print the next line
@@ -1276,7 +1296,7 @@ display_text_graphic:
 _display_text_graphic_loop:
         lda     ,y+
         beq     _text_graphic_new_line
-        cmpa    #255
+        cmpa    #TEXT_END
         beq	_display_text_graphic_finished
         sta     ,x+
         bra     _display_text_graphic_loop
@@ -1335,7 +1355,7 @@ opening_credits_text:
 	FCV	"AND ANOTHER BLAH BLAH BLAH"
 	FCB	0
 	FCB	0
-	FCB	255
+	FCB	TEXT_END
 
 line:
 
@@ -1346,7 +1366,7 @@ roll_credits:
 _roll_credits_loop:
 
 	lda	,x
-	cmpa	#255
+	cmpa	#TEXT_END
 	beq	_roll_credits_finished
 
 	pshs	x
@@ -1730,7 +1750,7 @@ ascii_art_cat:
 	FCV	"        ; '   : :'-:     ..'* ;",0
 	FCV	"[BUG].*' /  .*' ; .*'- +'  '*'",0
 	FCV	"     '*-*   '*-*  '*-*'",0
-	FCB	255
+	FCB	TEXT_END
 
 ascii_art_cat_end:
 

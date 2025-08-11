@@ -1,6 +1,6 @@
 * This is Part 2 of Text Mode Demo
 * by Richard Cavell
-* June - July 2025
+* June - August 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -8,11 +8,13 @@
 * This demo part is intended to run on a TRS-80 Color Computer 1,2 or 3
 * with at least 32K of RAM
 *
+* Parts of this code were written by Simon Jonassen (The Invisible Man)
 * Part of this code was written by Trey Tomes. You can see it here:
 * https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
 * Part of this code was written by a number of other authors
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
+
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
@@ -3161,5 +3163,5 @@ sample:     fcb     32
 
 sample.end:
 
-zix		include	"datune.asm"
+zix		include	"Music/datune.asm"
 endzix		equ	*

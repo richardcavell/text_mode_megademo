@@ -93,33 +93,24 @@ TEXT_END 	EQU     255
 
         dec     $71             ; Make any reset COLD (Simon Jonassen)
 
-***************************************
-* Set DP register for interrupt handler
-***************************************
+*********************************
+* Set DP register for convenience
+*********************************
 
-* This code was written by Simon Jonassen and modified by me
-
-        lda     #irq_service_routine/256
-        tfr     a,dp
-        SETDP   irq_service_routine/256
-
-* End of code written by Simon Jonassen and modified by me
+	lda	#$ff
+	tfr	a,dp
+	SETDP	$ff
 
 *********************************
 * Install our IRQ service routine
 *********************************
 
-        lda     IRQ_INSTRUCTION         ; Should be JMP (extended ($7e))
-        sta     decb_irq_service_instruction
-
         ldx     IRQ_HANDLER                     ; Load the current vector
         stx     decb_irq_service_routine        ; We could call it at the end
                                                 ; of our own handler
 
-                ; DP JMP Shaves off 1 byte and cycle !!
-
-        ldd     #$0e*256+(irq_service_routine&255)
-        std     IRQ_INSTRUCTION
+        ldd     #irq_service_routine
+        std     IRQ_HANDLER
 
 *********************
 * Turn off disk motor
@@ -218,13 +209,8 @@ TEXT_END 	EQU     255
 * Restore BASIC's IRQ service routine
 *************************************
 
-        lda     decb_irq_service_instruction
-        sta     IRQ_INSTRUCTION
-
         ldx     decb_irq_service_routine
         stx     IRQ_HANDLER
-
-        andcc   #0b11101111             ; Switch IRQ interrupts back on
 
 **************************************
 * Zero the DP register and return zero
@@ -232,6 +218,8 @@ TEXT_END 	EQU     255
 
         lda     #0
         tfr     a, dp
+
+        andcc   #0b11101111             ; Switch IRQ interrupts back on
 
         rts             ; Return to Disk Extended Color BASIC
 
@@ -490,7 +478,7 @@ _print_text_loop:
 	tsta
 	bne	_print_text_skipped
 
-st_x+1	ldx	#0000
+st_x:	ldx	#$0000
 _find_zero:
 	lda	,x+
 	bne	_find_zero

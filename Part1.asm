@@ -162,15 +162,15 @@ _setup_backbuffer_loop:
 	cmpx	#BACKBUFEND
 	blo	_setup_backbuffer_loop
 
-***************************************
-* Set DP register for interrupt handler
-***************************************
+****************************************
+* Set DP register for hardware registers
+****************************************
 
 * This code was written by Simon Jonassen and modified by me
 
-	lda	#irq_service_routine/256
+	lda	#$FF
 	tfr	a,dp
-	SETDP	irq_service_routine/256
+	SETDP	$FF
 
 * End of code written by Simon Jonassen and modified by me
 
@@ -297,6 +297,18 @@ _setup_backbuffer_loop:
         sty     30,x
 
 ; End of code contributed by Simon Jonassen
+
+***************************************
+* Set DP register for interrupt handler
+***************************************
+
+* This code was written by Simon Jonassen and modified by me
+
+	lda	#irq_service_routine/256
+	tfr	a,dp
+	SETDP	irq_service_routine/256
+
+* End of code written by Simon Jonassen and modified by me
 
 *************************************
 * Pluck the screen

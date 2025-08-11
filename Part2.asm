@@ -28,8 +28,6 @@
 * Both graphics have been modified by me
 * Animation of the small creature by me
 *
-* Between each section, wait this number of frames
-
 *************************
 * EQUATES
 *************************
@@ -42,16 +40,16 @@ WAIT_PERIOD	EQU	25
 * Text buffer information
 *************************
 
-TEXTBUF		EQU	$400		; We're not double-buffering
-TEXTBUFSIZE	EQU	$200		; so there's only one text screen
+TEXTBUF		EQU	$400	; We're not double-buffering in this part
+TEXTBUFSIZE	EQU	$200	; so there's only one text screen
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
-***********************
-* Vertical blank vector
-***********************
+**************************
+* Interrupt request vector
+**************************
 
 IRQ_INSTRUCTION EQU     $10C
 IRQ_HANDLER     EQU     $10D
@@ -118,8 +116,8 @@ TEXT_END 	EQU     255
         stx     decb_irq_service_routine        ; We could call it at the end
                                                 ; of our own handler
 
-        lda     #$0e                            ; DP JMP Shaves off 1 byte and >
-        ldb     #(irq_service_routine&255)      ; The lower byte of the address
+		                   ; DP JMP Shaves off 1 byte and cycle
+        ldd     #$0e*256 | (irq_service_routine&255)
         std     IRQ_INSTRUCTION
 
 *********************
@@ -1774,24 +1772,6 @@ loading_text:
 
 	FCV	"LOADING...",0
 
-***********************************
-* Uninstall our IRQ service routine
-*
-* Inputs: None
-* Outputs: None
-***********************************
-
-uninstall_irq_service_routine:
-
-	jsr	switch_off_irq
-
-	ldx	decb_irq_service_routine
-	stx	IRQ_HANDLER
-
-	jsr	switch_on_irq
-
-	rts
-
 ************************************
 * Here is our raw data for our sound
 ************************************
@@ -1799,7 +1779,6 @@ uninstall_irq_service_routine:
 flash_screen_storage:		; Use the area of memory reserved for
 				; the sound, because we're not
 				; using it again
-
 
             fcb     $f8,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
             fcb     $f9,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00

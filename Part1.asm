@@ -1035,17 +1035,6 @@ _no_pluck_happening_2:
 
 	rts
 
-**********************
-* Pluck - Do one pluck
-*
-* Inputs:
-* A = Phase
-* B = Character
-* X = Screen position
-* U = Pluck data
-*
-* Outputs: None
-**********************
 pluck_do_one_pluck:
 
 	cmpa	#PLUCK_PHASE_TURN_WHITE
@@ -1059,7 +1048,6 @@ pluck_do_one_pluck:
 
 plp2	cmpa	#PLUCK_PHASE_PLAIN
 	bne	pluck_phase_3	; We are plain
-
 
 * Phase 2
 

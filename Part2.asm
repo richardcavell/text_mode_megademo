@@ -360,38 +360,26 @@ _wait_frames_return:                    ; Return A
 
 title_screen:
 
-	jsr	clear_screen
+* This code was written by Allen C. Huffman and modified by me and SJ
+
+        ldd     #GREEN_BOX << 8 | GREEN_BOX
+        tfr     d,x
+        leay    ,x              ; SJ contributed this
+        ldu     #TEXTBUFEND     ; (1 past end of screen)
+
+loop48s:
+        pshu    d,x,y
+        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        bgt     loop48s         ; If X!=that, GOTO loop48s
+        std     -2,u            ; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me and SJ
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames			; Wait a certain no of frames
 
-	clra
-	clrb
 	ldx	#title_screen_graphic
 	jsr	display_text_graphic
-
-	bra	display_text
-
-; This graphic was made by Microsoft Copilot and modified by me
-; Animation done by me
-
-title_screen_graphic:
-	FCV	"(\\/)",0
-	FCV	"(O-O)",0
-	FCV	"/> >\\",0
-	FCB	TEXT_END
-
-title_screen_text:
-	FCB	5, 5
-	FCN	"RJFC"	; Each string ends with a zero when you use FCN
-	FCB	8, 9
-	FCN	"PRESENTS"
-	FCB	12, 11
-	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
-	FCB	0		; So we manually terminate that line
-	FCB	TEXT_END	; The end
-
-display_text:
 
 	ldx	#title_screen_text
 
@@ -475,6 +463,7 @@ display_text:
 				; and fallthrough
 
 skip_title_screen:
+
 	lda	#1
 	sta	creature_blink_finished
 
@@ -493,26 +482,22 @@ skip_title_screen:
 
 print_text:
 
-	tfr	x,y
-
 _print_text_loop:
-	lda	,y+
-	ldb	,y+
-	tfr	y,x
+	ldd	,x++
 
-	pshs	y
+	stx	st_x+1
 	jsr	text_appears
-	puls	y
 	tsta
 	bne	_print_text_skipped
 
+st_x+1	ldx	#0000
 _find_zero:
-	tst	,y+
+	lda	,x+
 	bne	_find_zero
 
 	lda	#TEXT_END		; This marks the end of the text
 					;   lines
-	cmpa	,y			; Is that what we have?
+	cmpa	,x			; Is that what we have?
 	bne	_print_text_loop	; If not, then print the next line
 					; If yes, then fall through
 	clra
@@ -520,25 +505,6 @@ _find_zero:
 
 _print_text_skipped:
 	lda	#1			; User has skipped this
-	rts
-
-******************************************
-* Switch IRQ and FIRQ interrupts on or off
-*
-* Inputs: None
-* Outputs: None
-******************************************
-
-switch_off_irq_and_firq:
-
-	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
-
-	rts
-
-switch_on_irq_and_firq:
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-
 	rts
 
 *************************
@@ -609,7 +575,6 @@ w2	decb
 ; End of routine written by Simon Jonassen and slightly modified by me
 
 	rts
-
 
 ;********************************************
 ; 2 voice inherent sawtooth player 
@@ -1287,12 +1252,12 @@ _skip_drop_screen:
 * Display a text graphic
 *
 * Inputs:
-* A = Line number
-* B = Column number
 * X = Graphic data
 ************************
 
 display_text_graphic:
+	clra
+	clrb
 
 	tfr	x,y	; Y = graphic data
 
@@ -1740,6 +1705,25 @@ _skipped_loading_screen:
 
 	jsr	clear_screen
 	rts
+
+; This graphic was made by Microsoft Copilot and modified by me
+; Animation done by me
+
+title_screen_graphic:
+	FCV	"(\\/)",0
+	FCV	"(O-O)",0
+	FCV	"/> >\\",0
+	FCB	TEXT_END
+
+title_screen_text:
+	FCB	5, 5
+	FCN	"RJFC"	; Each string ends with a zero when you use FCN
+	FCB	8, 9
+	FCN	"PRESENTS"
+	FCB	12, 11
+	FCV	"TEXT MODE MEGADEMO" ; FCV places green boxes for spaces
+	FCB	0		; So we manually terminate that line
+	FCB	TEXT_END	; The end
 
 * This art is modified by me from the original by Blazej Kozlowski
 * It's from https://www.asciiart.eu/animals/cats

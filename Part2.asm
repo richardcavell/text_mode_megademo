@@ -95,15 +95,146 @@ TEXT_END 	EQU     255
 
         dec     $71             ; Make any reset COLD (Simon Jonassen)
 
+***************************************
+* Set DP register for interrupt handler
+***************************************
 
+* This code was written by Simon Jonassen and modified by me
 
+        lda     #irq_service_routine/256
+        tfr     a,dp
+        SETDP   irq_service_routine/256
 
+* End of code written by Simon Jonassen and modified by me
+
+*********************************
+* Install our IRQ service routine
+*********************************
+
+        lda     IRQ_INSTRUCTION         ; Should be JMP (extended ($7e))
+        sta     decb_irq_service_instruction
+
+        ldx     IRQ_HANDLER                     ; Load the current vector
+        stx     decb_irq_service_routine        ; We could call it at the end
+                                                ; of our own handler
+
+        lda     #$0e                            ; DP JMP Shaves off 1 byte and >
+        ldb     #(irq_service_routine&255)      ; The lower byte of the address
+        std     IRQ_INSTRUCTION
+
+*********************
+* Turn off disk motor
+*********************
+
+        clra
+        sta     DSKREG          ; Turn off disk motor
+
+*********************
+* Turn 6-bit audio on
+*********************
+
+* This is modified by me from code written by Simon Jonassen
+
+        lda     PIA0BC
+        anda    #0b11110111
+        sta     PIA0BC
+
+        lda     PIA0AC
+        anda    #0b11110111
+        sta     PIA0AC
+
+* End code modified from code written by Simon Jonassen
+
+* This code was modified from code written by Trey Tomes
+
+        lda     AUDIO_PORT_ON
+        ora     #0b00001000
+        sta     AUDIO_PORT_ON   ; Turn on 6-bit audio
+
+* End code modified from code written by Trey Tomes
+
+************************
+* Set DDRA bits to input
+************************
+
+* This code was written by other people, taken from
+* https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0>
+* and then modified by me
+
+        ldb     PIA2_CRA
+        andb    #0b11111011
+        stb     PIA2_CRA
+
+        lda     #0b11111100
+        sta     DDRA
+
+        orb     #0b00000100
+        stb     PIA2_CRA
+
+* End of code modified by me from code written by other people
+
+*************************
+* Turn on VSync interrupt
+*************************
+
+* This code was originally written by Simon Jonassen (The Invisible Man)
+* and then modified by me
+
+        lda     PIA0BC          ; Enable VSync interrupt
+        ora     #3
+        sta     PIA0BC
+        lda     PIA0BD          ; Acknowledge any outstanding VSync interrupt
+
+* End code modified by me from code written by Simon Jonassen
+
+**************************************
+* Turn IRQ and FIRQ interrupts back on
+**************************************
+
+        andcc   #0b10101111     ; Switch IRQ and FIRQ interrupts back on
 
 	jsr	title_screen			; First section
 	jsr	musplay
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
 
+*********************
+* Turn off interrupts
+*********************
+
+        orcc    #0b00010000             ; Switch off IRQ interrupts
+
+* This code is modified from code written by Simon Jonassen
+
+        lda     PIA0AC          ; Turn off HSYNC interrupt
+        anda    #0b11111110
+        sta     PIA0AC
+
+        lda     PIA0AD          ; Acknowledge any outstanding
+                                ; interrupt request
+
+* End of code modified from code written by Simon Jonassen
+
+*************************************
+* Restore BASIC's IRQ service routine
+*************************************
+
+        lda     decb_irq_service_instruction
+        sta     IRQ_INSTRUCTION
+
+        ldx     decb_irq_service_routine
+        stx     IRQ_HANDLER
+
+        andcc   #0b11101111             ; Switch IRQ interrupts back on
+
+**************************************
+* Zero the DP register and return zero
+**************************************
+
+        lda     #0
+        tfr     a, dp
+
+        rts             ; Return to Disk Extended Color BASIC
 
 *****************************************************************************
 *	Subroutines
@@ -111,146 +242,68 @@ TEXT_END 	EQU     255
 
 * Assume that no registers are preserved
 
-**********************
-* Zero the DP register
-**********************
+	align	256	; The interrupt service routine and all the variables
+                        ; should be accessible in direct mode
 
-zero_dp_register:
-
-	clra
-	tfr	a, dp
-
-	rts
-
-*********************************
-* Install our IRQ service routine
-*
-* Inputs: None
-* Outputs: None
-*********************************
-
-install_irq_service_routine:
-
-	bsr	switch_off_irq		; Switch off IRQ interrupts for now
-
-	ldx	IRQ_HANDLER		; Load the current vector into X
-	stx	decb_irq_service_routine	; We will call it at the end
-						; of our own handler
-
-	ldx	#irq_service_routine
-	stx	IRQ_HANDLER		; Our own interrupt service routine
-					; is installed
-
-	bsr	switch_on_irq		; Switch IRQ interrupts back on
-
-	rts
-
-***************************
-* Switch IRQ interrupts off
-*
-* Inputs: None
-* Outputs: None
-***************************
-
-switch_off_irq:
-
-	orcc	#0b00010000		; Switch off IRQ interrupts
-
-	rts
-
-**************************
-* Switch IRQ interrupts on
-*
-* Inputs: None
-* Outputs: None
-**************************
-
-switch_on_irq:
-
-	andcc	#0b11101111		; Switch IRQ interrupts back on
-
-	rts
-
-***************************************************
+*************************
 * Our IRQ handler
-*
-* Make sure decb_irq_service_routine is initialized
-***************************************************
+*************************
 
 irq_service_routine:
 
-	lda	#1
-	sta	vblank_happened
+        lda     PIA0BC          ; Was it a VBlank or HSync?
+        bmi     service_vblank  ; VBlank - go there
 
-	lda	#0
-	beq	_skip_debug_visual_indication
+* If HSYNC, fallthrough to HSYNC handler
 
-; For debugging, this provides a visual indication that
-; our handler is running
+***************
+* Service HSYNC
+***************
 
-	inc	TEXTBUFEND-1	; The lower-right corner character cycles
+        lda     PIA0AD          ; Acknowledge HSYNC interrupt
+        rti
 
-_skip_debug_visual_indication:
+****************
+* Service VBlank
+****************
 
-		; In the interests of making our IRQ handler run fast,
-		; the routine assumes that decb_irq_service_routine
-		; has been correctly initialized
+service_vblank:
 
-	jmp	[decb_irq_service_routine]
+        lda     waiting_for_vblank      ; The demo is waiting for the signal
+        beq     _dropped_frame
+
+        clra                            ; No longer waiting
+        sta     waiting_for_vblank
+
+_dropped_frame:
+        lda     PIA0BD                  ; Acknowledge interrupt
+        rti
+
+******************************************************
+* DP VARIABLES (FOR SPEED)
+******************************************************
+
+***********************
+* Vertical blank timing
+***********************
+
+waiting_for_vblank:
+
+        RZB     1       ; The interrupt handler reads and clears this
+
+**********************************************
+* Variables relating to DECB's own IRQ handler
+**********************************************
+
+decb_irq_service_instruction:
+
+        RZB     1       ; Should be JMP (extended)
 
 decb_irq_service_routine:
 
-	RZB	2
+        RZB     2
 
-*********************
-* Turn off disk motor
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-turn_off_disk_motor:
-
-	clra
-	sta	DSKREG		; Turn off disk motor
-
-	rts
-
-*********************
-* Turn 6-bit audio on
-*
-* Inputs: None
-* Outputs: None
-*********************
-
-turn_6bit_audio_on:
-
-* This code was modified from code written by Trey Tomes
-
-	lda	AUDIO_PORT_ON
-	ora	#0b00001000
-	sta	AUDIO_PORT_ON	; Turn on 6-bit audio
-
-* End code modified from code written by Trey Tomes
-
-* This code was written by other people (see here)
-* https://treytomes.wordpress.com/2019/12/31/a-rogue-like-in-6809-assembly-pt-2/
-
-	ldb	PIA2_CRA
-	andb	#0b11111011
-	stb	PIA2_CRA
-
-	lda	#0b11111100
-	sta	DDRA
-
-	orb	#0b00000100
-	stb	PIA2_CRA
-
-* End of code modified by me from code written by other people
-
-	rts
-
-****************************************
+******************************************
 * Wait for VBlank and check for skip
 *
 * Inputs: None
@@ -258,90 +311,53 @@ turn_6bit_audio_on:
 * Output:
 * A = 0          -> A VBlank happened
 * A = (Non-zero) -> User is trying to skip
-****************************************
-
-vblank_happened:
-
-	RZB	1
+******************************************
 
 wait_for_vblank_and_check_for_skip:
 
-	clr	vblank_happened
+        lda     #1
+        sta     waiting_for_vblank
 
 _wait_for_vblank_and_check_for_skip_loop:
-	jsr	[POLCAT]
-	cmpa	#' '			; Space bar
-	beq	_wait_for_vblank_skip
-	cmpa	#BREAK_KEY		; Break key
-	beq	_wait_for_vblank_skip
-	ldb	#0
-	beq	_wait_for_vblank
-	cmpa	#'t'			; T key
-	beq	_wait_for_vblank_invert_toggle
-	cmpa	#'T'
-	beq	_wait_for_vblank_invert_toggle
-	ldb	_debug_mode_toggle
-	beq	_wait_for_vblank
+        jsr     [POLCAT]                ; POLCAT is a pointer to a pointer
+        cmpa    #' '                    ; Space bar
+        beq     _wait_for_vblank_skip
+        cmpa    #BREAK_KEY              ; Break key
+        beq     _wait_for_vblank_skip
 
-; If toggle is on, require an F to go forward 1 frame
+        lda     waiting_for_vblank
+        bne     _wait_for_vblank_and_check_for_skip_loop
 
-	cmpa	#'f'
-	beq	_wait_for_vblank
-	cmpa	#'F'
-	beq	_wait_for_vblank
-	bra	_wait_for_vblank_and_check_for_skip_loop
-
-_wait_for_vblank:
-wvs	tst	$ff03	; Check for interrupt
-	bpl	wvs
-	lda	$ff02	; Acknowledge interrupt
-
-;	tst	vblank_happened
-;	beq	_wait_for_vblank_and_check_for_skip_loop
-
-	clra		; A VBlank happened
-	rts
+        clra            ; A VBlank happened
+        rts
 
 _wait_for_vblank_skip:
-	lda	#1	; User wants to skip
-	rts
+        lda     #1      ; User skipped
+        rts
 
-_wait_for_vblank_invert_toggle:
-	com	_debug_mode_toggle
-	bra	_wait_for_vblank
-
-_debug_mode_toggle:
-
-	RZB	1
-
-**************************************
+***********************************
 * Wait for a number of frames
 *
 * Input:
-* A = number of frames
+* A = Number of frames
 *
 * Output:
-* A = 0          -> Successful waiting
-* A = (Non-zero) -> User wants to skip
-**************************************
+* A = 0 Success
+* A = (Non-zero) User wants to skip
+***********************************
 
 wait_frames:
 
-	pshs	a
-	jsr	wait_for_vblank_and_check_for_skip
-	tsta
-	puls	a
-	bne	_wait_frames_skip	; User wants to skip
+        sta     st_a+1
+        jsr     wait_for_vblank_and_check_for_skip
+        tsta
+        bne     _wait_frames_return     ; User wants to skip
+st_a:   lda     #1
+        deca
+        bne     wait_frames
 
-	deca
-	bne	wait_frames
-
-	clra
-	rts
-
-_wait_frames_skip:
-	lda	#1
-	rts
+_wait_frames_return:                    ; Return A
+        rts
 
 **************
 * Title screen

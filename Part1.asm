@@ -1098,11 +1098,7 @@ _wait_for_vblank_and_check_for_skip_loop:
 	lda	waiting_for_vblank
 	bne	_wait_for_vblank_and_check_for_skip_loop
 
-	clra		; A VBlank happened
-	rts
-
 _wait_for_vblank_skip:
-	lda	#1	; User skipped
 	rts
 
 ***********************************

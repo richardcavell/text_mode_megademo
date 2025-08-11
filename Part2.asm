@@ -1080,7 +1080,9 @@ _flash_restore_chars:
 	rts
 
 flash_text_storage:
+
 	RZB	COLS_PER_LINE
+
 flash_text_storage_end:
 
 **************************

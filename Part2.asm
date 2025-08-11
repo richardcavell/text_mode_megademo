@@ -101,17 +101,6 @@ TEXT_END 	EQU     255
 	tfr	a,dp
 	SETDP	$ff
 
-*********************************
-* Install our IRQ service routine
-*********************************
-
-        ldx     IRQ_HANDLER                     ; Load the current vector
-        stx     decb_irq_service_routine        ; We could call it at the end
-                                                ; of our own handler
-
-        ldd     #irq_service_routine
-        std     IRQ_HANDLER
-
 *********************
 * Turn off disk motor
 *********************
@@ -177,6 +166,30 @@ TEXT_END 	EQU     255
 
 * End code modified by me from code written by Simon Jonassen
 
+*********************************
+* Install our IRQ service routine
+*********************************
+
+        lda     IRQ_INSTRUCTION         ; Should be JMP (extended ($7e))
+        sta     decb_irq_service_instruction
+
+        ldx     IRQ_HANDLER                     ; Load the current vector
+        stx     decb_irq_service_routine        ; We could call it at the end
+                                                ; of our own handler
+
+                ; DP JMP Shaves off 1 byte and cycle !!
+
+        ldd     #$0e*256+(irq_service_routine&255)
+        std     IRQ_INSTRUCTION
+
+*******************************************
+* Set DP register to our IRQ/variables page
+*******************************************
+
+	lda	#irq_service_routine/256
+	tfr	a,dp
+	SETDP	irq_service_routine/256
+
 **************************************
 * Turn IRQ and FIRQ interrupts back on
 **************************************
@@ -184,7 +197,6 @@ TEXT_END 	EQU     255
         andcc   #0b10101111     ; Switch IRQ and FIRQ interrupts back on
 
 	jsr	title_screen			; First section
-;	jsr	musplay
 	jsr	opening_credits			; Second section
 	jsr	loading_screen
 
@@ -209,8 +221,13 @@ TEXT_END 	EQU     255
 * Restore BASIC's IRQ service routine
 *************************************
 
+        lda     decb_irq_service_instruction
+        sta     IRQ_INSTRUCTION
+
         ldx     decb_irq_service_routine
         stx     IRQ_HANDLER
+
+        andcc   #0b11101111             ; Switch IRQ interrupts back on
 
 **************************************
 * Zero the DP register and return zero
@@ -232,6 +249,31 @@ TEXT_END 	EQU     255
 	align	256	; The interrupt service routine and all the variables
                         ; should be accessible in direct mode
 
+;********************************************
+; 2 voice inherent sawtooth player
+; for 6 bit dac @$ff20 using HYSNC on coco2
+; (C) Simon Jonassen (invisible man)
+;
+; FREE FOR ALL - USE AS YOU SEE FIT, JUST
+; REMEMBER WHERE IT ORGINATED AND GIVE CREDIT
+;********************************************
+musplay		orcc		#$50		;nuke irq/firq
+
+;********************************************
+; SETUP IRQ ROUTINE
+;********************************************
+		lda		$ff01		ENABLE HSYNC VECTORED IRQ
+		ora		#3		3/1 DEPENDS ON EDGE
+		sta		$ff01
+		lda		$ff00		ACK ANY OUTSTANDING HSYNC
+;********************************************
+; ENABLE IRQ/FIRQ
+;********************************************
+		andcc		#$af		;enable irq
+		rts
+
+; End of work by Simon Jonassen
+
 *************************
 * Our IRQ handler
 *************************
@@ -247,8 +289,43 @@ irq_service_routine:
 * Service HSYNC
 ***************
 
-        lda     PIA0AD          ; Acknowledge HSYNC interrupt
-        rti
+* This was written by Simon Jonassen and modified by me
+
+;********************************************
+; NOTE ROUTINE
+;********************************************
+note		dec	<counter
+		beq	seq
+sum		ldd 	#$0000
+freq		addd 	#$0000
+		std 	<sum+1
+sum2		ldd	#$0000
+freq2		addd	#$0000
+		std	<sum2+1
+val1		adda	<sum+1
+		rora
+		sta	$ff20
+		lda	$ff00
+		rti
+
+;********************************************
+; SEQUENCER
+;********************************************
+seq
+oldu		ldu	#zix		;save pattern position
+		cmpu	#endzix
+		bne	plnote
+		ldu	#zix
+plnote		pulu	d,x		;load 2 notes from pattern
+		stu	<oldu+1		;restore pattern position to start
+		std	<freq+1		;store
+		stx	<freq2+1
+out		lda	$ff00		;ack irq
+		rti			;
+
+counter		fcb	0
+
+* End of work done by Simon Jonassen and modified by me
 
 ****************
 * Service VBlank
@@ -370,7 +447,6 @@ loop48s:
 	jsr	display_text_graphic
 
 	ldx	#title_screen_text
-
 	jsr	print_text
 	tsta
 	bne	skip_title_screen
@@ -378,6 +454,10 @@ loop48s:
 ; Play the sound
 
 	jsr	play_sound
+
+; Then play the music
+
+	jsr	musplay
 
 ; "Encase" the three text items
 
@@ -563,87 +643,6 @@ w2	decb
 ; End of routine written by Simon Jonassen and slightly modified by me
 
 	rts
-
-;********************************************
-; 2 voice inherent sawtooth player
-; for 6 bit dac @$ff20 using HYSNC on coco2
-; (C) Simon Jonassen (invisible man)
-;
-; FREE FOR ALL - USE AS YOU SEE FIT, JUST
-; REMEMBER WHERE IT ORGINATED AND GIVE CREDIT
-;********************************************
-		align		$100
-musplay		orcc		#$50		;nuke irq/firq
-		lda		#musplay/256
-		tfr		a,dp
-;********************************************
-;* DAC AT $FF20
-;********************************************
-		lda		$ff01			; Select DAC as sound source
-		anda		#$f7
-		sta		$ff01
-		lda		$ff03
-		anda		#$f7
-		sta		$ff03
-		lda		$ff23
-		ora		#8
-		sta		$ff23
-
-;********************************************
-; SETUP IRQ ROUTINE
-;********************************************
-		lda		#$0e		(DP JMP #NOTE)
-		ldb		#note&255
-		std		$10c
-
-		lda		$ff03		DISABLE VSYNC VECTORED IRQ
-		anda		#$fe
-		sta		$ff03
-		lda		$ff02		ACK ANY OUTSTANDING VSYNC
-
-		lda		$ff01		ENABLE HSYNC VECTORED IRQ
-		ora		#3		3/1 DEPENDS ON EDGE
-		sta		$ff01
-		lda		$ff00		ACK ANY OUTSTANDING HSYNC
-;********************************************
-; ENABLE IRQ/FIRQ
-;********************************************
-		andcc		#$af		;enable irq		
-		rts
-
-;********************************************
-; NOTE ROUTINE
-;********************************************
-note		dec	<counter
-		beq	seq
-sum		ldd 	#$0000 
-freq		addd 	#$0000
-		std 	<sum+1
-sum2		ldd	#$0000
-freq2		addd	#$0000
-		std	<sum2+1
-val1		adda	<sum+1
-		rora
-		sta	$ff20	
-		lda	$ff00	
-		rti
-
-;********************************************
-; SEQUENCER
-;********************************************
-seq
-oldu		ldu	#zix		;save pattern position
-		cmpu	#endzix
-		bne	plnote
-		ldu	#zix
-plnote		pulu	d,x		;load 2 notes from pattern
-		stu	<oldu+1		;restore pattern position to start
-		std	<freq+1		;store
-		stx	<freq2+1
-out		lda	$ff00		;ack irq
-		rti			;
-
-counter		fcb	0
 
 ******************
 * Clear the screen

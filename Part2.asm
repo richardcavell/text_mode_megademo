@@ -572,9 +572,6 @@ _print_text_skipped:
 
 *************************
 * Play synthesized speech
-*
-* Inputs: None
-* Outputs: None
 *************************
 
 play_sound:

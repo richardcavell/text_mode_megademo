@@ -80,9 +80,9 @@ main(int argc, char *argv[])
 
 	while ((c = fgetc(input_fp)) != EOF)
 	{
-		c &= 0xfc;	/* the lowest 2 bits = 0 */
+		signed int d = c - 128;
 
-		c >>= 2;
+		c = d / 2;
 
 		if (fputc(c, output_fp) == EOF)
 		{

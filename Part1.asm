@@ -553,13 +553,13 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
-	clra
+	lda	#128
 
 smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?
 	beq	_1_is_silent
 
-	lda	,x+		; Get the next byte of data
+	adda	,x+		; Get the next byte of data
 	stx	smp_1+1		; Self-modifying code here
 
 _1_is_silent:

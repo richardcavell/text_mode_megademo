@@ -116,8 +116,9 @@ TEXT_END 	EQU     255
         stx     decb_irq_service_routine        ; We could call it at the end
                                                 ; of our own handler
 
-		                   ; DP JMP Shaves off 1 byte and cycle
-        ldd     #$0e*256 | (irq_service_routine&255)
+                ; DP JMP Shaves off 1 byte and cycle !!
+
+        ldd     #$0e*256+(irq_service_routine&255)
         std     IRQ_INSTRUCTION
 
 *********************

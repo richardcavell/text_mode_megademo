@@ -185,8 +185,9 @@ _setup_backbuffer_loop:
 	stx	decb_irq_service_routine	; We could call it at the end
 						; of our own handler
 
-	lda	#$0e				; DP JMP Shaves off 1 byte and cycle !!
-	ldb	#(irq_service_routine&255)  	; The lower byte of the address
+		; DP JMP Shaves off 1 byte and cycle !!
+
+	ldd	#$0e*256+(irq_service_routine&255)
 	std	IRQ_INSTRUCTION
 
 *********************

@@ -1684,9 +1684,6 @@ loading_screen:
 
 	jsr	clear_screen
 
-	clra
-	sta	music_on
-
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
 

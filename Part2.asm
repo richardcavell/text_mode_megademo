@@ -577,7 +577,7 @@ w2	decb
 	rts
 
 ;********************************************
-; 2 voice inherent sawtooth player 
+; 2 voice inherent sawtooth player
 ; for 6 bit dac @$ff20 using HYSNC on coco2
 ; (C) Simon Jonassen (invisible man)
 ;

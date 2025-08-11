@@ -830,7 +830,7 @@ pluck_register:
 
 	ldx	#pop_sound
 	ldu	#pop_sound_end
-	jsr	play_sound	; Play the pluck noise
+	jmp	play_sound	; Play the pluck noise
 
 _no_chars_left:
 	rts		; No more unplucked characters left on the screen

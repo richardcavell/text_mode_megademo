@@ -360,6 +360,7 @@ _pluck_finished:
 * Joke startup screen
 *********************
 
+* Clear the screen
 * This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
@@ -392,6 +393,7 @@ _skip_joke_startup:
 * Loading screen
 ****************
 
+* Clear the screen
 * This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX

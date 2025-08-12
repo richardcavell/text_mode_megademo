@@ -275,7 +275,8 @@ irq_service_routine:
 * Service HSYNC
 ***************
 
-	lda	music_on
+music_on:
+	lda	#$00
 	beq	_skip_music
 
 * This was written by Simon Jonassen and modified by me
@@ -293,30 +294,19 @@ note            dec     <frames+1       ;
 ; SEQUENCER
 ;********************************************
 ;               opt     cc,ct
+
 seq
-oldu            ldu     #zix            ;save pattern position
-curnote         pulu    d               ;load 2 notes from pattern
-                cmpu    #endzix         ;we done ?
-                bne     plnote          ;nope - play it again sam
-                ldu     #zix            ;start over
-plnote          stu     <oldu+1         ;restore pattern position to start
-
-                ldu     #freqtab        ;pointer to frequency table
-                ldx     a,u             ;get note1 value
-                stx     <freq+1         ;store to freq counter
-                ldx     b,u             ;get note2 value
-                stx     <freq2+1        ;store to freq counter  
-
-                lda     $ff00           ;ack irq
-                rti
-
+oldu		ldu	#zix		;save pattern position
+		cmpu	#endzix
+		bne	plnote
+		ldu	#zix
+plnote		pulu	d,x		;load 2 notes from pattern
+		stu	<oldu+1		;restore pattern position to start
+		std	<freq+1		;store
+		stx	<freq2+1
 _skip_music:
 		lda	$ff00
 		rti
-
-music_on:
-
-	RZB	1
 
 ;********************************************
 ; NOTE ROUTINE
@@ -676,8 +666,9 @@ musplay		orcc		#$50		;nuke irq/firq
 ;********************************************
 ; ENABLE IRQ/FIRQ
 ;********************************************
-		lda		#$ff
-		sta		music_on
+;		lda		#$ff
+;		sta		music_on
+		com		music_on+1
 		andcc		#$af		;enable irq
 		rts
 
@@ -3187,24 +3178,6 @@ sample:     fcb     32
 
 sample.end:
 
-                align   $100
-
-;******************************************************
-;equal tempered 12 note per octave frequency table
-;
-; HSYNC/2 (7.875Khz)
-;******************************************************
-
-freqtab
-;c0     fdb     0,70,75,79,83,88,94,99,105,111,118,125
-;c1     fdb     0,141,149,158,167,177,188,199,211,223,237,251
-c2      fdb     0,282,298,316,335,355,376,398,422,447,474,502
-c3      fdb     532,563,597,632,670,710,752,796,844,894,947,1003
-c4      fdb     1063,1126,1193,1264,1339,1419,1503,1593,1688,1788,1894,2007
-c5      fdb     2126,2253,2387,2529,2679,2838,3007,3186,3375,3576,3789,4014
-c6      fdb     4252,4505,4773,5057,5358,5676,6014,6371,6750,7152,7577,8028
-c7      fdb     8505,9011,9546,10114,10716,11353,12028,12743,13501,14303,15154,16055
-c8      fdb     17010,18021,19093,20228,21431,22705,24056,25486,27001,28607,30308,32110
 
 zix		include	"Music/pop.asm"		; Popcorn tune
 endzix		equ	*

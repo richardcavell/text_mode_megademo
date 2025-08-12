@@ -87,6 +87,13 @@ MESSAGES_END	EQU	255
 
 TEXTGRAPHIC_END	EQU	255
 
+**************
+* MC6847 Codes
+**************
+
+GREEN_BOX	EQU	$60
+WHITE_BOX	EQU	$CF
+
 ***************
 * Pluck equates
 ***************
@@ -94,13 +101,6 @@ TEXTGRAPHIC_END	EQU	255
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for
 					; our skip message
-
-GREEN_BOX	EQU	$60		; These are MC6847 codes
-WHITE_BOX	EQU	$CF
-
-*************
-* Plucks data
-*************
 
 MAX_SIMULTANEOUS_PLUCKS	EQU	2
 
@@ -162,18 +162,6 @@ _setup_backbuffer_loop:
 	cmpx	#BACKBUFEND
 	blo	_setup_backbuffer_loop
 
-****************************************
-* Set DP register for hardware registers
-****************************************
-
-* This code was written by Simon Jonassen and modified by me
-
-	lda	#$FF
-	tfr	a,dp
-	SETDP	$FF
-
-* End of code written by Simon Jonassen and modified by me
-
 *********************************
 * Install our IRQ service routine
 *********************************
@@ -189,6 +177,14 @@ _setup_backbuffer_loop:
 
 	ldd	#$0e*256+(irq_service_routine&255)
 	std	IRQ_INSTRUCTION
+
+****************************************
+* Set DP register for hardware registers
+****************************************
+
+	lda	#$FF
+	tfr	a,dp
+	SETDP	$FF
 
 *********************
 * Turn off disk motor

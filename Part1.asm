@@ -94,9 +94,9 @@ TEXTGRAPHIC_END	EQU	255
 GREEN_BOX	EQU	$60
 WHITE_BOX	EQU	$CF
 
-***************
-* Pluck equates
-***************
+***********************
+* Pluck routine equates
+***********************
 
 PLUCK_LINES	EQU	(TEXT_LINES-1)	; The bottom line of
 					; the screen is for

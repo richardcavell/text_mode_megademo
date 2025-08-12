@@ -313,20 +313,22 @@ _setup_backbuffer_loop:
 
 	ldx	#BACKBUF
 	ldu	#pluck_line_counts
+	lda	#GREEN_BOX
+	clrb
 
 _pluck_count_loop:
-	lda	#GREEN_BOX
 	cmpa	,x+
 	beq	_skip_count
 
 	inc	,u		; Count non-spaces only
 
 _skip_count:
-	tfr	x,d
-	andb	#0b00011111
+	incb
+	cmpb	#COLS_PER_LINE
 	bne	_pluck_count_loop
 
 	leau	1,u
+	clrb
 	cmpu	#pluck_line_counts_end
 	blo	_pluck_count_loop
 

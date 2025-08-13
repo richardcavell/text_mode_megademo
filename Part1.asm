@@ -14,10 +14,10 @@
 * Part of this code was written by a number of other authors
 * You can see here:
 * https://github.com/cocotownretro/VideoCompanionCode/blob/main/AsmSound/Notes0.1/src/Notes.asm
-* Part of this code was written by Sean Conner (Deek)
 * Part of this code was written by Allen C. Huffman at Sub-Etha Software
 * You can see it here:
 * https://subethasoftware.com/2022/09/06/counting-6809-cycles-with-lwasm/
+* Part of this code was written by Sean Conner (Deek)
 *
 * The sound Pop.raw is from Mouth_pop.ogg by Cori from Wikimedia Commons
 * https://commons.wikimedia.org/wiki/File:Mouth_pop.ogg

@@ -535,7 +535,7 @@ _continue:
 * Zero the DP register and return zero
 **************************************
 
-	lda	#0
+	clra
 	tfr	a, dp
 
 	rts		; Return to Disk Extended Color BASIC

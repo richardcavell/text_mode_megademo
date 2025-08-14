@@ -114,6 +114,15 @@ PLUCK_PHASE_TURN_WHITE	EQU	1
 PLUCK_PHASE_PLAIN	EQU	2
 PLUCK_PHASE_PULLING	EQU	3
 
+******************
+* RAM test equates
+******************
+
+TEST_VALUE	EQU	123
+UPPER_BYTE	EQU	32767
+
+*********************************
+
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
@@ -208,6 +217,9 @@ _setup_backbuffer_loop:
 	sta	PIA0AC
 
 * End code modified from code written by Simon Jonassen
+
+	lda	#128
+	sta	AUDIO_PORT	; Get rid of that click
 
 * This code was modified from code written by Trey Tomes
 
@@ -364,8 +376,8 @@ _pluck_finished:
 * This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
-	tfr	d,x
-	leay	,x		; SJ contributed this
+	ldx	#GREEN_BOX << 8 | GREEN_BOX
+	ldy	#GREEN_BOX << 8 | GREEN_BOX
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
 loop48s:
@@ -397,8 +409,8 @@ _skip_joke_startup:
 * This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
-	tfr	d,x
-	leay	,x		; SJ contributed this
+	ldx	#GREEN_BOX << 8 | GREEN_BOX
+	ldy	#GREEN_BOX << 8 | GREEN_BOX
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
 loop48s_2:
@@ -438,11 +450,11 @@ text_graphic_new_line:
 
 _display_text_graphic_finished:
 
-	lda	#123
-	sta	32767
+	lda	#TEST_VALUE
+	sta	UPPER_BYTE
 
-	lda	32767
-	cmpa	#123
+	lda	UPPER_BYTE
+	cmpa	#TEST_VALUE
 	beq	_continue
 
 	ldx	#BACKBUF+15*COLS_PER_LINE+2

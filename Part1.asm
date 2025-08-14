@@ -450,7 +450,7 @@ text_graphic_new_line:
 
 _display_text_graphic_finished:
 
-	lda	#TEST_VALUE
+	lda	#TEST_VALUE		; Check for 32K RAM
 	sta	UPPER_BYTE
 
 	lda	UPPER_BYTE

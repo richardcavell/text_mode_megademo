@@ -788,6 +788,10 @@ pluck_are_lines_empty:
 _test_line:
 	lda	,x+
 	bne	_line_not_empty
+	lda	,x+
+	bne	_line_not_empty
+	lda	,x+
+	bne	_line_not_empty
 	cmpx	#pluck_line_counts_end
 	blo	_test_line
 
@@ -1248,6 +1252,7 @@ display_messages_big_pause:
 * Is there a spare sound slot
 *
 * Inputs: None
+*
 * Output:
 * A = (Non-zero) Yes
 * A = 0 No
@@ -1332,7 +1337,6 @@ _slot_3:
 	rts
 
 _slot_4:
-
 	stx	smp_4+1		; This is self-modifying code
 	stu	end_4+1
 	rts

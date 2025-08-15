@@ -911,18 +911,7 @@ _no_chars_left:
 pluck_collate_non_zero_lines:
 
 	lda	collation_number_of_lines
-	bne	pluck_use_collation
-
-********************************
-* Pluck - Collate non-zero lines
-*
-* Inputs: None
-*
-* Output:
-* A = Number of non-zero lines
-********************************
-
-pluck_collate_non_zero_lines_2:
+	bne	pluck_use_collation	; Cached from prior operation
 
 	ldx	#pluck_line_counts
 	ldu	#pluck_collated_lines
@@ -930,9 +919,6 @@ pluck_collate_non_zero_lines_2:
 	ldd	#$0000	; Simon Jonassen contributed this line
 
 _pluck_collate_loop:
-	cmpx	#pluck_line_counts_end
-	bhs	_pluck_collate_finished
-
 	tst	,x+
 	beq	_skip_collation
 
@@ -941,7 +927,45 @@ _pluck_collate_loop:
 
 _skip_collation:
 	incb
-	bra	_pluck_collate_loop
+
+	tst	,x+
+	beq	_skip_collation2
+
+	stb	,u+
+	inca
+
+_skip_collation2:
+	incb
+
+	tst	,x+
+	beq	_skip_collation3
+
+	stb	,u+
+	inca
+
+_skip_collation3:
+	incb
+
+	tst	,x+
+	beq	_skip_collation4
+
+	stb	,u+
+	inca
+
+_skip_collation4:
+	incb
+
+	tst	,x+
+	beq	_skip_collation5
+
+	stb	,u+
+	inca
+
+_skip_collation5:
+	incb
+
+	cmpx	#pluck_line_counts_end
+	blo	_pluck_collate_loop
 
 _pluck_collate_finished:
 						; Probably don't need to

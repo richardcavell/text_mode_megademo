@@ -1050,7 +1050,7 @@ _no_pluck_happening_1:
 	lda	,u
 	beq	_no_pluck_happening_2	; This will run faster
 
-	bsr	pluck_do_one_pluck
+	bra	pluck_do_one_pluck	; bsr then rts
 
 _no_pluck_happening_2:
 

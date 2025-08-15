@@ -1230,8 +1230,8 @@ display_messages_next_line:
 	lda	#5
 	jsr	wait_frames
 	tsta
-	bne	_display_messages_skip
-	bra	_display_messages_loop
+	beq	_display_messages_loop
+	rts			; User wants to skip
 
 ***************************************
 * Display messages - Big pause

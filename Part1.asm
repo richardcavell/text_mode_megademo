@@ -792,6 +792,10 @@ _test_line:
 	bne	_line_not_empty
 	lda	,x+
 	bne	_line_not_empty
+	lda	,x+
+	bne	_line_not_empty
+	lda	,x+
+	bne	_line_not_empty
 	cmpx	#pluck_line_counts_end
 	blo	_test_line
 

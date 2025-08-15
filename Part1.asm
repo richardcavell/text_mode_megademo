@@ -874,7 +874,6 @@ pluck_a_char:
 
 	bsr	pluck_collate_non_zero_lines
 	bsr	pluck_char_choose_a_line
-	bsr	pluck_get_char
 
 	leau	,x		; Contributed by Simon Jonassen
 	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
@@ -996,19 +995,6 @@ olda1:	lda	#$00
 	stb	collation_number_of_lines	; Rebuild collation next time
 
 _skip_cache_dirtying:
-	rts
-
-*******************************************************
-* Pluck - Get char
-*
-* Inputs:
-* A = Line number
-*
-* Outputs:
-* X = Pointer to screen position of pluckable character
-*******************************************************
-
-pluck_get_char:
 
 	ldx	#BACKBUF
 	inca	; Make X point to the right end of the line

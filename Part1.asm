@@ -983,7 +983,7 @@ get_random_no_feedback:
 
 olda1:	lda	#$00
 
-	mul			; A is a random number from 0 to no. lines
+	mul			; A is now a random number from 0 to no. lines
 
 	ldx	#pluck_collated_lines
 	lda	a,x		; Get the actual line number

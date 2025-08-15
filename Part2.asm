@@ -22,6 +22,9 @@
 * https://speechsynthesis.online/
 * The voice is "Ryan"
 *
+* The song "Pop Corn" is by Gershon Kingsley. I don't know who created the
+* arrangement that is used here.
+*
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
 * https://www.asciiart.eu/animals/birds-land
@@ -78,14 +81,23 @@ POLCAT          EQU     $A000           ; POLCAT is a pointer to a pointer
 
 BREAK_KEY       EQU     3
 
-* This starting location is found through experimentation with mame -debug
-* and the CLEAR command
-
 *************************
 * We need to mark the end
 *************************
 
 TEXT_END 	EQU     255
+
+**************
+* MC6847 Codes
+**************
+
+GREEN_BOX       EQU     $60
+WHITE_BOX       EQU     $CF
+
+***********************************
+
+* This starting location is found through experimentation with mame -debug
+* and the CLEAR command
 
 		ORG $1800
 
@@ -94,12 +106,28 @@ TEXT_END 	EQU     255
         dec     $71             ; Make any reset COLD (Simon Jonassen)
 
 *********************************
+* Install our IRQ service routine
+*********************************
+
+        lda     IRQ_INSTRUCTION         ; Should be JMP (extended ($7e))
+        sta     decb_irq_service_instruction
+
+        ldx     IRQ_HANDLER                     ; Load the current vector
+        stx     decb_irq_service_routine        ; We could call it at the end
+                                                ; of our own handler
+
+                ; DP JMP Shaves off 1 byte and cycle !!
+
+        ldd     #$0e*256+(irq_service_routine&255)
+        std     IRQ_INSTRUCTION
+
+*********************************
 * Set DP register for convenience
 *********************************
 
-	lda	#$ff
+	lda	#$FF
 	tfr	a,dp
-	SETDP	$ff
+	SETDP	$FF
 
 *********************
 * Turn off disk motor
@@ -123,6 +151,9 @@ TEXT_END 	EQU     255
         sta     PIA0AC
 
 * End code modified from code written by Simon Jonassen
+
+        lda     #128
+        sta     AUDIO_PORT      ; Get rid of that click
 
 * This code was modified from code written by Trey Tomes
 
@@ -174,24 +205,8 @@ TEXT_END 	EQU     255
         anda    #0b11111110
         sta     PIA0AC
 
-        lda     PIA0AD          ; Acknowledge any outstanding
+        lda     PIA0AD          ; Acknowledge any outstanding HSync
                                 ; interrupt request
-
-*********************************
-* Install our IRQ service routine
-*********************************
-
-        lda     IRQ_INSTRUCTION         ; Should be JMP (extended ($7e))
-        sta     decb_irq_service_instruction
-
-        ldx     IRQ_HANDLER                     ; Load the current vector
-        stx     decb_irq_service_routine        ; We could call it at the end
-                                                ; of our own handler
-
-                ; DP JMP Shaves off 1 byte and cycle !!
-
-        ldd     #$0e*256+(irq_service_routine&255)
-        std     IRQ_INSTRUCTION
 
 *******************************************
 * Set DP register to our IRQ/variables page
@@ -246,8 +261,6 @@ TEXT_END 	EQU     255
 
         lda     #0
         tfr     a,dp
-
-        andcc   #0b11101111             ; Switch IRQ interrupts back on
 
         rts             ; Return to Disk Extended Color BASIC
 

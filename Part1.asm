@@ -119,7 +119,7 @@ PLUCK_PHASE_PULLING	EQU	3
 ******************
 
 TEST_VALUE	EQU	123
-UPPER_BYTE	EQU	32767
+TEST_ADDR	EQU	32767
 
 *********************************
 
@@ -451,9 +451,9 @@ text_graphic_new_line:
 _display_text_graphic_finished:
 
 	lda	#TEST_VALUE		; Check for 32K RAM
-	sta	UPPER_BYTE
+	sta	TEST_ADDR
 
-	lda	UPPER_BYTE
+	lda	TEST_ADDR
 	cmpa	#TEST_VALUE
 	beq	_continue
 

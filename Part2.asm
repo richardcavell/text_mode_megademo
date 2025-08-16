@@ -23,7 +23,7 @@
 * The voice is "Ryan"
 *
 * The song "Pop Corn" is by Gershon Kingsley. I don't know who created the
-* arrangement that is used here.
+* arrangement that is used here. It was modified by Simon Jonassen and me.
 *
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
@@ -255,11 +255,11 @@ WHITE_BOX       EQU     $CF
 
         andcc   #0b11101111             ; Switch IRQ interrupts back on
 
-**************************************
-* Zero the DP register and return zero
-**************************************
+**********************
+* Zero the DP register
+**********************
 
-        lda     #0
+        clra
         tfr     a,dp
 
         rts             ; Return to Disk Extended Color BASIC

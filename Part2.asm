@@ -1730,7 +1730,21 @@ loading_screen:
 
 _skipped_loading_screen:
 
-	jsr	clear_screen
+* This code was written by Allen C. Huffman and modified by me and SJ
+
+        ldd     #GREEN_BOX << 8 | GREEN_BOX
+        ldx     #GREEN_BOX << 8 | GREEN_BOX
+        ldy     #GREEN_BOX << 8 | GREEN_BOX
+        ldu     #TEXTBUFEND     ; (1 past end of screen)
+
+loop48s_2:
+        pshu    d,x,y
+        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        bgt     loop48s_2       ; If X!=that, GOTO loop48s_2
+        std     -2,u            ; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me and SJ
+
 	rts
 
 ; This graphic was made by Microsoft Copilot and modified by me

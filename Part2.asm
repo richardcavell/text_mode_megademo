@@ -839,19 +839,18 @@ EQUALS_SIGN	EQU	125
 
 encase_text:
 
-	tfr	d,y		; Y (lower 8 bits) is direction
+	stb	stb_et+1
 
 	ldb	#COLS_PER_LINE
 	mul
 	ldx	#TEXTBUF
 	leax	d,x		; X is our starting position
 
-	tfr	y,d		; B is direction
-	tstb			; If 0, start on the left side
+stb_et:	ldb	#00		; If 0, start on the left side
 	beq	_encase_text_loop
 
-	leax	31,x		; If 1, start on the right side
-				; and fallthrough
+	leax	(COLS_PER_LINE-1),x	; If 1, start on the right side
+					; and fallthrough
 
 _encase_text_loop:
 	pshs	b,x

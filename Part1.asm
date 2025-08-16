@@ -184,7 +184,7 @@ _setup_backbuffer_loop:
 
 		; DP JMP Shaves off 1 byte and cycle !!
 
-	ldd	#$0e*256+(irq_service_routine&255)
+	ldd	#$0E*256+(irq_service_routine&255)
 	std	IRQ_INSTRUCTION
 
 ****************************************
@@ -543,9 +543,9 @@ _continue:
 
 	andcc	#0b11101111		; Switch IRQ interrupts back on
 
-**************************************
-* Zero the DP register and return zero
-**************************************
+**********************
+* Zero the DP register
+**********************
 
 	clra
 	tfr	a, dp

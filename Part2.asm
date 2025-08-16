@@ -685,37 +685,6 @@ musplay		orcc		#$50		;nuke irq/firq
 
 ; End of work by Simon Jonassen, modified by Richard Cavell
 
-*****************************
-* Clear a line
-*
-* Inputs:
-* A = Line to clear (0 to 15)
-*
-* Outputs: None
-*****************************
-
-clear_line:
-
-	ldx	#TEXTBUF
-	inca
-	ldb	#COLS_PER_LINE
-	mul
-	leau	d,x
-
-	ldd	#GREEN_BOX << 8 | GREEN_BOX
-	ldx	#GREEN_BOX << 8 | GREEN_BOX
-	ldy	#GREEN_BOX << 8 | GREEN_BOX
-
-_clear_line_loop:
-	pshu	d,x,y
-	pshu	d,x,y
-	pshu	d,x,y
-	pshu	d,x,y
-	pshu	d,x,y
-	std	-2,u
-
-	rts
-
 ************************************************
 * Brings text onto the screen using an animation
 *
@@ -1218,7 +1187,22 @@ _drop_each_line:
 	bsr	_drop_line		; Drop the top line
 	puls	a
 
-	jsr	clear_line		; Clear the top line
+	ldx	#TEXTBUF
+	inca
+	ldb	#COLS_PER_LINE
+	mul
+	leau	d,x
+
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+	ldx	#GREEN_BOX << 8 | GREEN_BOX
+	ldy	#GREEN_BOX << 8 | GREEN_BOX
+
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	std	-2,u
 
 	jsr	wait_for_vblank_and_check_for_skip
 	rts

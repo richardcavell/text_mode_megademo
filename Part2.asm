@@ -23,7 +23,9 @@
 * The voice is "Ryan"
 *
 * The song "Pop Corn" is by Gershon Kingsley. I don't know who created the
-* arrangement that is used here. It was modified by Simon Jonassen and me.
+* arrangement that is used here. You can see it here:
+* https://bitmidi.com/popcorn-4-mid
+* This was modified by Simon Jonassen and me.
 *
 * The ASCII art of the small creature is by Microsoft Copilot
 * The big cat was done by Blazej Kozlowski at
@@ -3185,7 +3187,6 @@ sample:     fcb     32
             fcb     $00,$00,$10,$00,$00,$00
 
 sample.end:
-
 
 zix		include	"Music/pop.asm"		; Popcorn tune
 endzix		equ	*

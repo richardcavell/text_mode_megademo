@@ -694,9 +694,6 @@ musplay		orcc		#$50		;nuke irq/firq
 * Outputs: None
 ******************
 
-GREEN_BOX       EQU     $60
-WHITE_BOX       EQU     $CF
-
 clear_screen:
 
 	ldx	#TEXTBUF

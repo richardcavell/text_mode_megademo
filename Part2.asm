@@ -662,7 +662,7 @@ w2	decb
 ;********************************************
 ; 2 voice inherent sawtooth player
 ; for 6 bit dac @$ff20 using HYSNC on coco2
-; (C) Simon Jonassen (invisible man)
+; (C) Simon Jonassen (invisible man), modified by Richard Cavell
 ;
 ; FREE FOR ALL - USE AS YOU SEE FIT, JUST
 ; REMEMBER WHERE IT ORGINATED AND GIVE CREDIT
@@ -679,13 +679,11 @@ musplay		orcc		#$50		;nuke irq/firq
 ;********************************************
 ; ENABLE IRQ/FIRQ
 ;********************************************
-;		lda		#$ff
-;		sta		music_on
 		com		music_on+1
 		andcc		#$af		;enable irq
 		rts
 
-; End of work by Simon Jonassen
+; End of work by Simon Jonassen, modified by Richard Cavell
 
 ******************
 * Clear the screen

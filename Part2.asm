@@ -588,11 +588,9 @@ _find_zero:
 	cmpa	,x			; Is that what we have?
 	bne	_print_text_loop	; If not, then print the next line
 					; If yes, then fall through
-	clra
-	rts
 
-_print_text_skipped:
-	lda	#1			; User has skipped this
+	clra
+_print_text_skipped:			; If user has skipped, return A
 	rts
 
 *************************

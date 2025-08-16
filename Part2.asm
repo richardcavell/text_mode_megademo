@@ -685,28 +685,6 @@ musplay		orcc		#$50		;nuke irq/firq
 
 ; End of work by Simon Jonassen, modified by Richard Cavell
 
-******************
-* Clear the screen
-*
-* Inputs: None
-* Outputs: None
-******************
-
-clear_screen:
-
-	ldx	#TEXTBUF
-	ldd	#GREEN_BOX << 8 | GREEN_BOX	; Two green boxes
-
-_clear_screen_loop:
-	std	,x++
-	std	,x++
-	std	,x++
-	std	,x++
-
-	cmpx	#TEXTBUFEND		; Finish in the lower-right corner
-	bne	_clear_screen_loop
-	rts
-
 *****************************
 * Clear a line
 *
@@ -719,21 +697,22 @@ _clear_screen_loop:
 clear_line:
 
 	ldx	#TEXTBUF
+	inca
 	ldb	#COLS_PER_LINE
 	mul
-	leax	d,x
+	leau	d,x
 
+	ldd	#GREEN_BOX << 8 | GREEN_BOX
+	ldx	#GREEN_BOX << 8 | GREEN_BOX
 	ldy	#GREEN_BOX << 8 | GREEN_BOX
-	lda	#4
 
 _clear_line_loop:
-	sty	,x++
-	sty	,x++
-	sty	,x++
-	sty	,x++
-
-	deca
-	bne	_clear_line_loop
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	std	-2,u
 
 	rts
 
@@ -1323,7 +1302,20 @@ _display_text_graphic_finished:
 
 opening_credits:
 
-	jsr	clear_screen
+* This code was written by Allen C. Huffman and modified by me and SJ
+
+        ldd     #GREEN_BOX << 8 | GREEN_BOX
+        ldx     #GREEN_BOX << 8 | GREEN_BOX
+        ldy     #GREEN_BOX << 8 | GREEN_BOX
+        ldu     #TEXTBUFEND     ; (1 past end of screen)
+
+loop48s_2:
+        pshu    d,x,y
+        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        bgt     loop48s_2       ; If X!=that, GOTO loop48s_2
+        std     -2,u            ; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me and SJ
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames		; Ignore return value
@@ -1373,7 +1365,22 @@ _roll_credits_loop:
 	beq	_roll_credits_finished
 
 	pshs	x
-	jsr	clear_screen
+
+* This code was written by Allen C. Huffman and modified by me and SJ
+
+        ldd     #GREEN_BOX << 8 | GREEN_BOX
+        ldx     #GREEN_BOX << 8 | GREEN_BOX
+        ldy     #GREEN_BOX << 8 | GREEN_BOX
+        ldu     #TEXTBUFEND     ; (1 past end of screen)
+
+loop48s_3:
+        pshu    d,x,y
+        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        bgt     loop48s_3       ; If X!=that, GOTO loop48s_3
+        std     -2,u            ; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me and SJ
+
 	puls	x
 
 _roll_credit:
@@ -1700,7 +1707,20 @@ _display_string_finished:
 
 loading_screen:
 
-	jsr	clear_screen
+* This code was written by Allen C. Huffman and modified by me and SJ
+
+        ldd     #GREEN_BOX << 8 | GREEN_BOX
+        ldx     #GREEN_BOX << 8 | GREEN_BOX
+        ldy     #GREEN_BOX << 8 | GREEN_BOX
+        ldu     #TEXTBUFEND     ; (1 past end of screen)
+
+loop48s_4:
+        pshu    d,x,y
+        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        bgt     loop48s_4       ; If X!=that, GOTO loop48s_4
+        std     -2,u            ; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me and SJ
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
@@ -1737,10 +1757,10 @@ _skipped_loading_screen:
         ldy     #GREEN_BOX << 8 | GREEN_BOX
         ldu     #TEXTBUFEND     ; (1 past end of screen)
 
-loop48s_2:
+loop48s_5:
         pshu    d,x,y
         cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
-        bgt     loop48s_2       ; If X!=that, GOTO loop48s_2
+        bgt     loop48s_5       ; If X!=that, GOTO loop48s_5
         std     -2,u            ; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ

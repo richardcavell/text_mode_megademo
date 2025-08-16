@@ -721,9 +721,9 @@ _text_appears_buff_box:
 	rts			; If yes, just return a
 
 _text_appears_keep_going:
-	pshs	b,x,u
+	pshs	b,x		; Also we would save U
 	bsr	creature_blink	; The creature in the top-left corner
-	puls	b,x,u
+	puls	b,x
 
 	tstb			; If non-zero, we are not printing out
 	bne	_text_appears_green_box	; yet
@@ -764,6 +764,7 @@ _text_appears_store_char:
 *****************
 
 creature_blink_finished:
+
 	RZB	1
 
 creature_blink:
@@ -785,8 +786,7 @@ creature_blink:
 ; Open the creature's eyes
 
 	clr	_creature_blink_is_blinking
-	clra
-	clrb
+	ldd	#$0000
 	std	_creature_blink_frames
 
 	ldx	#TEXTBUF+COLS_PER_LINE+1
@@ -807,8 +807,8 @@ _creature_blink_open_eyes:
 
 	lda	#1
 	sta	_creature_blink_is_blinking
-	clra
-	clrb
+
+	ldd	#$0000
 	std	_creature_blink_frames
 
 	ldx	#TEXTBUF+COLS_PER_LINE+1

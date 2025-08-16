@@ -446,8 +446,8 @@ title_screen:
 * This code was written by Allen C. Huffman and modified by me and SJ
 
         ldd     #GREEN_BOX << 8 | GREEN_BOX
-        tfr     d,x
-        leay    ,x              ; SJ contributed this
+        ldx     #GREEN_BOX << 8 | GREEN_BOX
+        ldy     #GREEN_BOX << 8 | GREEN_BOX
         ldu     #TEXTBUFEND     ; (1 past end of screen)
 
 loop48s:

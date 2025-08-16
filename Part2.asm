@@ -700,13 +700,13 @@ musplay		orcc		#$50		;nuke irq/firq
 
 text_appears:
 
-	tfr	x,u		; U = string to print
-	pshs	b
-	ldy	#TEXTBUF
+	leau	,x		; U = string to print
+	stb	st_b+1
+	ldx	#TEXTBUF
 	ldb	#COLS_PER_LINE
 	mul
-	leax	d,y		; X is where to start the animation
-	puls	b		; B is the character position to start
+	leax	d,x		; X is where to start the animation
+st_b:	ldb	#00		; B is the character position to start
 				;   printing the string
 
 _text_appears_buff_box:

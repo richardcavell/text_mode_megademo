@@ -858,7 +858,7 @@ _encase_text_loop:
 	puls	b,x
 	tsta
 	beq	_encase_no_skip
-	rts			; Simply return a
+	rts			; Simply return A
 
 _encase_no_skip:
 _encase_text_more:
@@ -904,25 +904,25 @@ _encase_are_we_done:
 	tstb
 	beq	_encase_right	; If we're going right
 
-	tfr	d,y
+	std	saved+1
 	tfr	x,d
 	andb	#0b00011111
 	cmpb	#0b00011111	; If X mod 32 == 31
-	tfr	y,d
+saved:	ldd	#$0000
 	bne	_encase_text_loop
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
-	rts			; we are finished. Return A
+	rts			; We are finished. Return A
 
 _encase_right:
-	tfr	d,y
+	std	saved2+1
 	tfr	x,d
 	andb	#0b00011111	; If X is evenly divisible
-	tfr	y,d
+saved2:	ldd	#$0000
 	bne	_encase_text_loop	;   by 32, then
 
 	jsr	wait_for_vblank_and_check_for_skip	; The final showing
-	rts			; we are finished. Return A
+	rts			; We are finished. Return A
 
 **************************************
 * Flashes text with white (buff) boxes

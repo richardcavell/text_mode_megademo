@@ -139,7 +139,8 @@ TEST_ADDR	EQU	32767
 	ldu	#TEXTBUF
 	ldx	#BACKBUF
 
-_setup_backbuffer_loop:
+_setup_backbuffer_loop: ; The following code is adapted from code written by
+			; Simon Jonassen
         pulu    d,y
         std     ,x
         sty     2,x
@@ -165,7 +166,7 @@ _setup_backbuffer_loop:
         sty     26,x
         pulu    d,y
         std     28,x
-        sty     30,x
+        sty     30,x	; End of code adapted from SJ's code
 
 	leax	COLS_PER_LINE,x
 	cmpx	#BACKBUFEND

@@ -934,9 +934,6 @@ _encase_right:
 
 flash_text_white:
 
-	tstb
-	beq	_flash_finished	; Handle the case where B = 0
-
 	decb			; We test at the bottom
 	pshs	b
 
@@ -999,7 +996,7 @@ flash_chars_white:
 _flash_chars_white_loop:
 	lda	,x
 
-	cmpa	#125		; '='
+	cmpa	#EQUALS_SIGN	; '='
 	beq	_flash_chars_not_flashable
 
 	cmpa	#65		; Is it from A to
@@ -1029,15 +1026,15 @@ _flash_chars_not_flashable:
 
 restore_chars:
 
-	ldy	#flash_text_storage
+	ldu	#flash_text_storage
 
 _flash_restore_chars:
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
 
-	cmpy	#flash_text_storage_end
+	cmpu	#flash_text_storage_end
 	bne	_flash_restore_chars
 
 	rts

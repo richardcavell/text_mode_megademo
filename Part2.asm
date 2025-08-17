@@ -1768,8 +1768,6 @@ loop48s_4:
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
 
-	clra
-	clrb
 	ldx	#ascii_art_cat
 	jsr	display_text_graphic
 

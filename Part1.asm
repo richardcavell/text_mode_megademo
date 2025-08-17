@@ -294,7 +294,7 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 	std	12,x
 	ldd	#"TO"
 	std	14,x
-	ldd	#$60*256+'S'
+	ldd	#$60*256+"S"
 	std	16,x
 	ldd	#"KI"
 	std	18,x

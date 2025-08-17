@@ -942,13 +942,13 @@ flash_text_white:
 	ldx	#TEXTBUF
 	leax	d,x		; X = starting position
 
-	ldy	#flash_text_storage
+	ldu	#flash_text_storage
 
 _flash_copy_line:
 	ldd	,x++		; Save the whole line
-	std	,y++
+	std	,u++
 
-	cmpy	#flash_text_storage_end
+	cmpu	#flash_text_storage_end
 	bne	_flash_copy_line
 
 				; Now the line has been saved,

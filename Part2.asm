@@ -49,6 +49,9 @@ TEXTBUF		EQU	$400	; We're not double-buffering in this part
 TEXTBUFSIZE	EQU	$200	; so there's only one text screen
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
 
+BACKBUF		EQU	back_buffer
+BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
+
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
 
@@ -359,6 +362,51 @@ service_vblank:
         clra                            ; No longer waiting
         sta     waiting_for_vblank
 
+copy_buffer:
+	lda	#1
+	beq	_no_copy
+
+        ldx     #TEXTBUF
+        ldu     #BACKBUF
+
+_copy_loop:     ; Copy the backbuffer to the text screen
+
+; This code was contributed by Simon Jonassen
+
+        pulu    d,y
+        std     ,x
+        sty     2,x
+        pulu    d,y
+        std     4,x
+        sty     6,x
+        pulu    d,y
+        std     8,x
+        sty     10,x
+
+        pulu    d,y
+        std     12,x
+        sty     14,x
+        pulu    d,y
+        std     16,x
+        sty     18,x
+        pulu    d,y
+        std     20,x
+        sty     22,x
+
+        pulu    d,y
+        std     24,x
+        sty     26,x
+        pulu    d,y
+        std     28,x
+        sty     30,x
+
+; End of code contributed by Simon Jonassen
+
+        leax    COLS_PER_LINE,x
+        cmpx    #TEXTBUFEND
+        blo     _copy_loop
+
+_no_copy:
 _dropped_frame:
         lda     PIA0BD                  ; Acknowledge interrupt
         rti
@@ -450,11 +498,11 @@ title_screen:
         ldd     #GREEN_BOX << 8 | GREEN_BOX
         ldx     #GREEN_BOX << 8 | GREEN_BOX
         ldy     #GREEN_BOX << 8 | GREEN_BOX
-        ldu     #TEXTBUFEND     ; (1 past end of screen)
+        ldu     #BACKBUFEND     ; (1 past end of screen)
 
 loop48s:
         pshu    d,x,y
-        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        cmpu    #BACKBUF+2      ; Compare U to two bytes from start
         bgt     loop48s         ; If X!=that, GOTO loop48s
         std     -2,u            ; Final 2 bytes
 
@@ -474,10 +522,6 @@ loop48s:
 ; Play the sound
 
 	jsr	play_sound
-
-; Then play the music
-
-	jsr	musplay
 
 ; "Encase" the three text items
 
@@ -702,7 +746,7 @@ text_appears:
 
 	leau	,x		; U = string to print
 	stb	st_b+1
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldb	#COLS_PER_LINE
 	mul
 	leax	d,x		; X is where to start the animation
@@ -789,7 +833,7 @@ creature_blink:
 	ldd	#$0000
 	std	_creature_blink_frames
 
-	ldx	#TEXTBUF+COLS_PER_LINE+1
+	ldx	#BACKBUF+COLS_PER_LINE+1
 	lda	#'O'
 	sta	,x
 	sta	2,x
@@ -811,7 +855,7 @@ _creature_blink_open_eyes:
 	ldd	#$0000
 	std	_creature_blink_frames
 
-	ldx	#TEXTBUF+COLS_PER_LINE+1
+	ldx	#BACKBUF+COLS_PER_LINE+1
 	lda	#'-' + 64
 	sta	,x
 	sta	2,x
@@ -843,7 +887,7 @@ encase_text:
 
 	ldb	#COLS_PER_LINE
 	mul
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	leax	d,x		; X is our starting position
 
 stb_et:	ldb	#00		; If 0, start on the left side
@@ -939,7 +983,7 @@ flash_text_white:
 
 	ldb	#COLS_PER_LINE
 	mul
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	leax	d,x		; X = starting position
 
 	ldu	#flash_text_storage
@@ -1054,7 +1098,7 @@ flash_text_storage_end:
 
 flash_screen:
 
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldu	#flash_screen_storage	; We overwrite the sound data
 
 _flash_screen_copy_loop:
@@ -1067,7 +1111,7 @@ _flash_screen_copy_loop:
 	ldd	,x++
 	std	,u++
 
-	cmpx	#TEXTBUFEND
+	cmpx	#BACKBUFEND
 	blo	_flash_screen_copy_loop
 
 	jsr	wait_for_vblank_and_check_for_skip
@@ -1090,11 +1134,11 @@ _flash_screen_no_skip_2:
         ldd     #WHITE_BOX << 8 | WHITE_BOX
         ldx     #WHITE_BOX << 8 | WHITE_BOX
         ldy     #WHITE_BOX << 8 | WHITE_BOX
-        ldu     #TEXTBUFEND     ; (1 past end of screen)
+        ldu     #BACKBUFEND     ; (1 past end of screen)
 
 loop48s_f:
         pshu    d,x,y
-        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        cmpu    #BACKBUF+2      ; Compare U to two bytes from start
         bgt     loop48s_f       ; If X!=that, GOTO loop48s_f
         std     -2,u            ; Final 2 bytes
 
@@ -1118,7 +1162,7 @@ _skip_flash_screen_3:
 	rts
 
 _skip_flash_screen_4:
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	ldu	#flash_screen_storage
 
 _flash_screen_restore_loop:
@@ -1131,7 +1175,7 @@ _flash_screen_restore_loop:
 	ldd	,u++
 	std	,x++
 
-	cmpx	#TEXTBUFEND
+	cmpx	#BACKBUFEND
 	bne	_flash_screen_restore_loop
 
 	jsr	wait_for_vblank_and_check_for_skip
@@ -1187,7 +1231,7 @@ _drop_each_line:
 	bsr	_drop_line		; Drop the top line
 	puls	a
 
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	inca
 	ldb	#COLS_PER_LINE
 	mul
@@ -1218,7 +1262,7 @@ _drop_line:
 _do_drop:
 	ldb	#COLS_PER_LINE
 	mul
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	leax	d,x			; X = pointer to a line of the screen
 
 	ldb	#COLS_PER_LINE
@@ -1254,7 +1298,7 @@ display_text_graphic:
 	tfr	d,u	; Save B
 	ldb	#COLS_PER_LINE
 	mul
-	ldx	#TEXTBUF
+	ldx	#BACKBUF
 	leax	d,x
 	tfr	u,d	; B = column number
 	leax	b,x	; X = Screen memory to start at
@@ -1285,6 +1329,12 @@ _display_text_graphic_finished:
 *****************
 
 opening_credits:
+
+	clr	copy_buffer+1	; No longer double-buffering
+
+; Now start playing the music
+
+	jsr	musplay
 
 * This code was written by Allen C. Huffman and modified by me and SJ
 
@@ -3206,3 +3256,11 @@ sample.end:
 
 zix		include	"Music/pop.asm"		; Popcorn tune
 endzix		equ	*
+
+	align COLS_PER_LINE
+
+back_buffer:
+
+	RZB	512,$60
+
+back_buffer_end:

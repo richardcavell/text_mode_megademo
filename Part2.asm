@@ -1055,17 +1055,17 @@ flash_text_storage_end:
 flash_screen:
 
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage	; We overwrite the sound data
+	ldu	#flash_screen_storage	; We overwrite the sound data
 
 _flash_screen_copy_loop:
 	ldd	,x++			; Make a copy of everything
-	std	,y++			; on the screen
+	std	,u++			; on the screen
 	ldd	,x++
-	std	,y++
+	std	,u++
 	ldd	,x++
-	std	,y++
+	std	,u++
 	ldd	,x++
-	std	,y++
+	std	,u++
 
 	cmpx	#TEXTBUFEND
 	blo	_flash_screen_copy_loop
@@ -1084,17 +1084,21 @@ _flash_screen_no_skip:
 	rts
 
 _flash_screen_no_skip_2:
-	ldx	#TEXTBUF
-	ldd	#WHITE_BOX << 8 | WHITE_BOX
 
-_flash_screen_white_loop:
-	std	,x++			; Make the whole screen buff color
-	std	,x++
-	std	,x++
-	std	,x++
+* This code was written by Allen C. Huffman and modified by me and SJ
 
-	cmpx	#TEXTBUFEND
-	bne	_flash_screen_white_loop
+        ldd     #WHITE_BOX << 8 | WHITE_BOX
+        ldx     #WHITE_BOX << 8 | WHITE_BOX
+        ldy     #WHITE_BOX << 8 | WHITE_BOX
+        ldu     #TEXTBUFEND     ; (1 past end of screen)
+
+loop48s_f:
+        pshu    d,x,y
+        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        bgt     loop48s_f       ; If X!=that, GOTO loop48s_f
+        std     -2,u            ; Final 2 bytes
+
+* End of code written by Allen C. Huffman and modified by me and SJ
 
 	jsr	wait_for_vblank_and_check_for_skip	; If space was pressed
 	tsta

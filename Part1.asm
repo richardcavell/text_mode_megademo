@@ -276,36 +276,42 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 	ldu	#skip_message
 	ldx	#BACKBUF+PLUCK_LINES*COLS_PER_LINE
 
-; This code was contributed by Simon Jonassen
+; This code was inspired by Simon Jonassen
 
-        pulu    d,y
+        ldd	#$6060
         std     ,x
-        sty     2,x
-        pulu    d,y
-        std     4,x
-        sty     6,x
-        pulu    d,y
-        std     8,x
-        sty     10,x
+	ldd	#"PR"
+	std	2,x
+	ldd	#"ES"
+	std	4,x
+	ldd	#"S"*256+$60
+	std	6,x
+	ldd	#"SP"
+	std	8,x
+	ldd	#"AC"
+	std	10,x
+	ldd	#"E"*256+$60
+	std	12,x
+	ldd	#"TO"
+	std	14,x
+	ldd	#$60*256+'S'
+	std	16,x
+	ldd	#"KI"
+	std	18,x
+	ldd	#"P"*256+$60
+	std	20,x
+	ldd	#"AN"
+	std	22,x
+	ldd	#"Y"*256+$60
+	std	24,x
+	ldd	#"PA"
+	std	26,x
+	ldd	#"RT"
+	std	28,x
+	ldd	#$6060
+	std	30,x
 
-        pulu    d,y
-        std     12,x
-        sty     14,x
-        pulu    d,y
-        std     16,x
-        sty     18,x
-        pulu    d,y
-        std     20,x
-        sty     22,x
-
-        pulu    d,y
-        std     24,x
-        sty     26,x
-        pulu    d,y
-        std     28,x
-        sty     30,x
-
-; End of code contributed by Simon Jonassen
+; End of code inspired by Simon Jonassen
 
 ***************************************
 * Set DP register for interrupt handler

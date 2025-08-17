@@ -1119,16 +1119,16 @@ _skip_flash_screen_3:
 
 _skip_flash_screen_4:
 	ldx	#TEXTBUF
-	ldy	#flash_screen_storage
+	ldu	#flash_screen_storage
 
 _flash_screen_restore_loop:
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
-	ldd	,y++
+	ldd	,u++
 	std	,x++
 
 	cmpx	#TEXTBUFEND

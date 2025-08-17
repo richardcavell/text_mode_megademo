@@ -237,17 +237,6 @@ WHITE_BOX       EQU     $CF
 
         orcc    #0b00010000             ; Switch off IRQ interrupts
 
-* This code is modified from code written by Simon Jonassen
-
-        lda     PIA0AC          ; Turn off HSYNC interrupt
-        anda    #0b11111110
-        sta     PIA0AC
-
-        lda     PIA0AD          ; Acknowledge any outstanding
-                                ; interrupt request
-
-* End of code modified from code written by Simon Jonassen
-
 *************************************
 * Restore BASIC's IRQ service routine
 *************************************
@@ -1747,6 +1736,17 @@ _display_string_finished:
 
 loading_screen:
 
+* This code is modified from code written by Simon Jonassen
+
+        lda     PIA0AC          ; Turn off HSYNC interrupt
+        anda    #0b11111110	; (this turns off the music)
+        sta     PIA0AC
+
+        lda     PIA0AD          ; Acknowledge any outstanding HSync
+                                ; interrupt request
+
+* End of code modified from code written by Simon Jonassen
+
 * This code was written by Allen C. Huffman and modified by me and SJ
 
         ldd     #GREEN_BOX << 8 | GREEN_BOX
@@ -1761,13 +1761,6 @@ loop48s_4:
         std     -2,u            ; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ
-
-        lda     PIA0AC          ; Turn off HSYNC interrupt
-        anda    #0b11111110
-        sta     PIA0AC
-
-        lda     PIA0AD          ; Acknowledge any outstanding HSync
-                                ; interrupt request
 
 	lda	#1
 	sta	copy_buffer+1		; Turn on back buffering

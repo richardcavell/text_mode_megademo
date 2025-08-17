@@ -519,6 +519,12 @@ loop48s:
 	tsta
 	bne	skip_title_screen
 
+	lda	#GREEN_BOX
+	sta	BACKBUF+13*COLS_PER_LINE-1
+
+	lda	#1
+	jsr	wait_frames
+
 ; Play the sound
 
 	jsr	play_sound
@@ -1746,15 +1752,25 @@ loading_screen:
         ldd     #GREEN_BOX << 8 | GREEN_BOX
         ldx     #GREEN_BOX << 8 | GREEN_BOX
         ldy     #GREEN_BOX << 8 | GREEN_BOX
-        ldu     #TEXTBUFEND     ; (1 past end of screen)
+        ldu     #BACKBUFEND     ; (1 past end of screen)
 
 loop48s_4:
         pshu    d,x,y
-        cmpu    #TEXTBUF+2      ; Compare U to two bytes from start
+        cmpu    #BACKBUF+2      ; Compare U to two bytes from start
         bgt     loop48s_4       ; If X!=that, GOTO loop48s_4
         std     -2,u            ; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ
+
+        lda     PIA0AC          ; Turn off HSYNC interrupt
+        anda    #0b11111110
+        sta     PIA0AC
+
+        lda     PIA0AD          ; Acknowledge any outstanding HSync
+                                ; interrupt request
+
+	lda	#1
+	sta	copy_buffer+1		; Turn on back buffering
 
 	lda	#WAIT_PERIOD
 	jsr	wait_frames
@@ -1789,7 +1805,7 @@ _skipped_loading_screen:
         ldd     #GREEN_BOX << 8 | GREEN_BOX
         ldx     #GREEN_BOX << 8 | GREEN_BOX
         ldy     #GREEN_BOX << 8 | GREEN_BOX
-        ldu     #TEXTBUFEND     ; (1 past end of screen)
+        ldu     #BACKBUFEND     ; (1 past end of screen)
 
 loop48s_5:
         pshu    d,x,y
@@ -1799,6 +1815,7 @@ loop48s_5:
 
 * End of code written by Allen C. Huffman and modified by me and SJ
 
+	clr	copy_buffer+1
 	rts
 
 ; This graphic was made by Microsoft Copilot and modified by me

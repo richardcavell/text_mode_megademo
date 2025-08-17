@@ -1,4 +1,4 @@
-* This is Part 2 of Text Mode Demo
+* This is Part 2 of Text Mode Megademo
 * by Richard Cavell
 * June - August 2025
 *

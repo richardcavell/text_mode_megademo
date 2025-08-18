@@ -325,10 +325,10 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 
 * End of code written by Simon Jonassen and modified by me
 
-*************************************
-* Pluck the screen
-* This is the first section of Part 1
-*************************************
+*****************************************
+* Count the characters
+* This is for the first section of Part 1
+*****************************************
 
 	ldx	#BACKBUF
 	ldu	#pluck_line_counts
@@ -342,7 +342,25 @@ _pluck_count_loop:
 	inc	,u		; Count non-spaces only
 
 _skip_count:
-	incb
+	cmpa	,x+
+	beq	_skip_count2
+
+	inc	,u
+
+_skip_count2:
+	cmpa	,x+
+	beq	_skip_count3
+
+	inc	,u
+
+_skip_count3:
+	cmpa	,x+
+	beq	_skip_count4
+
+	inc	,u
+
+_skip_count4:
+	addb	#4
 	cmpb	#COLS_PER_LINE
 	bne	_pluck_count_loop
 

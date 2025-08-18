@@ -405,10 +405,14 @@ _pluck_finished:
 	ldy	#GREEN_BOX << 8 | GREEN_BOX
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
-loop48s:
+_clr_screen_1:
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
 	pshu	d,x,y
 	cmpu	#BACKBUF+2	; Compare U to two bytes from start
-	bgt	loop48s		; If X!=that, GOTO loop48s
+	bgt	_clr_screen_1	; If X!=that, GOTO loop48s
 	std	-2,u		; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ
@@ -438,10 +442,14 @@ _skip_joke_startup:
 	ldy	#GREEN_BOX << 8 | GREEN_BOX
 	ldu	#BACKBUFEND	; (1 past end of screen)
 
-loop48s_2:
+_clr_screen_2:
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
+	pshu	d,x,y
 	pshu	d,x,y
 	cmpu	#BACKBUF+2	; Compare U to two bytes from start
-	bgt	loop48s_2	; If X!=that, GOTO loop48s_2
+	bgt	_clr_screen_2	; If X!=that, GOTO loop48s
 	std	-2,u		; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ
@@ -453,7 +461,7 @@ loop48s_2:
 * Display the baby elephant graphic
 ***********************************
 
-	ldu	#baby_elephant
+	ldu	#baby_elephant_graphic
 	ldx	#BACKBUF+COLS_PER_LINE	; Start one line down
 
 _display_text_graphic_loop:
@@ -462,6 +470,25 @@ _display_text_graphic_loop:
         cmpa    #TEXTGRAPHIC_END
         beq	_display_text_graphic_finished
         sta     ,x+
+
+        lda     ,u+
+        beq     text_graphic_new_line
+        cmpa    #TEXTGRAPHIC_END
+        beq	_display_text_graphic_finished
+        sta     ,x+
+
+        lda     ,u+
+        beq     text_graphic_new_line
+        cmpa    #TEXTGRAPHIC_END
+        beq	_display_text_graphic_finished
+        sta     ,x+
+
+        lda     ,u+
+        beq     text_graphic_new_line
+        cmpa    #TEXTGRAPHIC_END
+        beq	_display_text_graphic_finished
+        sta     ,x+
+
         bra     _display_text_graphic_loop
 
 text_graphic_new_line:
@@ -1404,7 +1431,7 @@ joke_startup_messages:
 
 * This art is by Shanaka Dias at asciiart.eu, and modified by me
 
-baby_elephant:
+baby_elephant_graphic:
 
 	FCV	"     ..-- ,.--.",0
 	FCV	"   .'   .'    /",0

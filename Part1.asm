@@ -495,7 +495,7 @@ text_graphic_new_line:
 
 	tfr	x,d
 	addd	#COLS_PER_LINE
-	andb	#%11100000
+	andb	#0b11100000
 	tfr	d,x
 
 	bra	_display_text_graphic_loop

@@ -630,7 +630,7 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
-	lda	#128
+	lda	#127
 
 smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?

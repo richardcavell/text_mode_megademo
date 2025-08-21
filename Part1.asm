@@ -829,9 +829,9 @@ collation_number_of_lines:
 pluck_more_to_do:
 
 	lda	plucks_data
-	bne	_pluck_screen_not_empty_result	; Only 2 plucks
+	bne	_pluck_screen_not_empty_result2	; Only 2 plucks
 	lda	plucks_data+4			; can happen
-	bne	_pluck_screen_not_empty_result	; at once
+	bne	_pluck_screen_not_empty_result2	; at once
 
 ;	Now fallthrough
 
@@ -869,8 +869,11 @@ pluck_lines_have_more:
 	bne	_pluck_screen_not_empty_result
 
 	lda	pluck_line_counts+14	; Note the change to lda
+_pluck_screen_not_empty_result2:	; Return A
+	rts
 
 _pluck_screen_not_empty_result:		; Return A
+	lda	#1
 	rts
 
 ***************

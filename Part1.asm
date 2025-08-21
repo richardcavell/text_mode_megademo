@@ -386,9 +386,9 @@ pluck_loop:
 	tsta				; If the user wants to skip, we finish
 	bne	_pluck_finished
 
-	jsr	pluck_is_screen_empty
-	tsta				; If the screen is empty, we finish
-	beq	pluck_loop
+	jsr	pluck_more_to_do
+	tsta				; If the screen is not empty, we loop
+	bne	pluck_loop
 
 _pluck_finished:
 
@@ -792,29 +792,28 @@ collation_number_of_lines:
 	RZB	1
 
 ************************************
-* Pluck - Is screen empty (yet)
+* Pluck - More to do?
 *
 * Inputs: None
 *
 * Outputs:
-* A = (Non-zero) Screen is empty
-* A = 0          Screen is not empty
+* A = (Non-zero) Screen has more content
+* A = 0          Screen is empty
 ************************************
 
-pluck_is_screen_empty:
+pluck_more_to_do:
 
 	lda	plucks_data
 	bne	_pluck_screen_not_empty		; Only 2 plucks
 	lda	plucks_data+4			; can happen
 	bne	_pluck_screen_not_empty		; at once
-	bra	pluck_are_lines_empty	; Return whatever this returns
+	bra	pluck_lines_have_more	; Return whatever this returns
 
-_pluck_screen_not_empty:
-	clra				; Screen is not clear
+_pluck_screen_not_empty:			; Screen is not clear
 	rts
 
 ************************************
-* Pluck - Are lines empty
+* Pluck - Lines have more
 *
 * Inputs: None
 *
@@ -823,30 +822,25 @@ _pluck_screen_not_empty:
 * A = (Non-zero) All lines are clear
 ************************************
 
-pluck_are_lines_empty:
+pluck_lines_have_more:
 
 	ldx	#pluck_line_counts
 
 _test_line:
 	lda	,x+
-	bne	_line_not_empty
+	bne	_line_result
 	lda	,x+
-	bne	_line_not_empty
+	bne	_line_result
 	lda	,x+
-	bne	_line_not_empty
+	bne	_line_result
 	lda	,x+
-	bne	_line_not_empty
+	bne	_line_result
 	lda	,x+
-	bne	_line_not_empty
+	bne	_line_result
 	cmpx	#pluck_line_counts_end
 	blo	_test_line
 
-_lines_are_clear:
-	lda	#1			; Lines are now clear
-	rts
-
-_line_not_empty:
-	clra				; Lines are not clear
+_line_result:			; Return A
 	rts
 
 ***************
@@ -910,9 +904,9 @@ _found_spare:
 
 pluck_a_char:
 
-	bsr	pluck_are_lines_empty
+	bsr	pluck_lines_have_more
 	tsta
-	bne	_no_chars_left
+	beq	_no_chars_left
 
 	bsr	pluck_collate_non_zero_lines
 	bsr	pluck_char_choose_a_line

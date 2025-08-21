@@ -273,7 +273,6 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 * Display skip message at the bottom of the screen
 **************************************************
 
-	ldu	#skip_message
 	ldx	#BACKBUF+PLUCK_LINES*COLS_PER_LINE
 
 ; This code was inspired by Simon Jonassen
@@ -791,15 +790,6 @@ pluck_end_collated_lines:
 collation_number_of_lines:
 
 	RZB	1
-
-******************
-* Our skip message
-******************
-
-skip_message:
-
-	FCV	"  PRESS SPACE TO SKIP ANY PART  "
-	FCB	0
 
 *************************************************
 * Pluck - Check to see if the screen is empty yet

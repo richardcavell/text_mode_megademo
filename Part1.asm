@@ -791,7 +791,7 @@ collation_number_of_lines:
 
 	RZB	1
 
-************************************
+****************************************
 * Pluck - More to do?
 *
 * Inputs: None
@@ -799,7 +799,7 @@ collation_number_of_lines:
 * Outputs:
 * A = (Non-zero) Screen has more content
 * A = 0          Screen is empty
-************************************
+****************************************
 
 pluck_more_to_do:
 
@@ -818,27 +818,56 @@ _pluck_screen_not_empty:			; Screen is not clear
 * Inputs: None
 *
 * Output:
-* A = 0 Lines are not clear
-* A = (Non-zero) All lines are clear
+* A = (Non-zero) Lines are not clear
+* A = 0 All lines are clear
 ************************************
 
 pluck_lines_have_more:
 
-	ldx	#pluck_line_counts
+	lda	pluck_line_counts
+	bne	_line_result
 
-_test_line:
-	lda	,x+
+	lda	pluck_line_counts+1
 	bne	_line_result
-	lda	,x+
+
+	lda	pluck_line_counts+2
 	bne	_line_result
-	lda	,x+
+
+	lda	pluck_line_counts+3
 	bne	_line_result
-	lda	,x+
+
+	lda	pluck_line_counts+4
 	bne	_line_result
-	lda	,x+
+
+	lda	pluck_line_counts+5
 	bne	_line_result
-	cmpx	#pluck_line_counts_end
-	blo	_test_line
+
+	lda	pluck_line_counts+6
+	bne	_line_result
+
+	lda	pluck_line_counts+7
+	bne	_line_result
+
+	lda	pluck_line_counts+8
+	bne	_line_result
+
+	lda	pluck_line_counts+9
+	bne	_line_result
+
+	lda	pluck_line_counts+10
+	bne	_line_result
+
+	lda	pluck_line_counts+11
+	bne	_line_result
+
+	lda	pluck_line_counts+12
+	bne	_line_result
+
+	lda	pluck_line_counts+13
+	bne	_line_result
+
+	lda	pluck_line_counts+14
+	bne	_line_result
 
 _line_result:			; Return A
 	rts

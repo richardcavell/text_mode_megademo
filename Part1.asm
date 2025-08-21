@@ -335,31 +335,56 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 	clrb
 
 _pluck_count_loop:
-	cmpa	,x+
+	cmpa	,x
 	beq	_skip_count
 
 	inc	,u		; Count non-spaces only
 
 _skip_count:
-	cmpa	,x+
+	cmpa	1,x
 	beq	_skip_count2
 
 	inc	,u
 
 _skip_count2:
-	cmpa	,x+
+	cmpa	2,x
 	beq	_skip_count3
 
 	inc	,u
 
 _skip_count3:
-	cmpa	,x+
+	cmpa	3,x
 	beq	_skip_count4
 
 	inc	,u
 
 _skip_count4:
-	addb	#4
+	cmpa	4,x
+	beq	_skip_count5
+
+	inc	,u
+
+_skip_count5:
+	cmpa	5,x
+	beq	_skip_count6
+
+	inc	,u
+
+_skip_count6:
+	cmpa	6,x
+	beq	_skip_count7
+
+	inc	,u
+
+_skip_count7:
+	cmpa	7,x
+	beq	_skip_count8
+
+	inc	,u
+
+_skip_count8:
+	leax	8,x
+	addb	#8
 	cmpb	#COLS_PER_LINE
 	bne	_pluck_count_loop
 

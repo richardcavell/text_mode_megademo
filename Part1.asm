@@ -829,13 +829,11 @@ collation_number_of_lines:
 pluck_more_to_do:
 
 	lda	plucks_data
-	bne	_pluck_screen_not_empty		; Only 2 plucks
+	bne	_pluck_screen_not_empty_result	; Only 2 plucks
 	lda	plucks_data+4			; can happen
-	bne	_pluck_screen_not_empty		; at once
-	bra	pluck_lines_have_more	; Return whatever this returns
+	bne	_pluck_screen_not_empty_result	; at once
 
-_pluck_screen_not_empty:			; Screen is not clear
-	rts
+;	Now fallthrough
 
 ************************************
 * Pluck - Lines have more
@@ -849,52 +847,30 @@ _pluck_screen_not_empty:			; Screen is not clear
 
 pluck_lines_have_more:
 
-	lda	pluck_line_counts
-	bne	_line_result
+	ldd	pluck_line_counts
+	bne	_pluck_screen_not_empty_result
 
-	lda	pluck_line_counts+1
-	bne	_line_result
+	ldd	pluck_line_counts+2
+	bne	_pluck_screen_not_empty_result
 
-	lda	pluck_line_counts+2
-	bne	_line_result
+	ldd	pluck_line_counts+4
+	bne	_pluck_screen_not_empty_result
 
-	lda	pluck_line_counts+3
-	bne	_line_result
+	ldd	pluck_line_counts+6
+	bne	_pluck_screen_not_empty_result
 
-	lda	pluck_line_counts+4
-	bne	_line_result
+	ldd	pluck_line_counts+8
+	bne	_pluck_screen_not_empty_result
 
-	lda	pluck_line_counts+5
-	bne	_line_result
+	ldd	pluck_line_counts+10
+	bne	_pluck_screen_not_empty_result
 
-	lda	pluck_line_counts+6
-	bne	_line_result
+	ldd	pluck_line_counts+12
+	bne	_pluck_screen_not_empty_result
 
-	lda	pluck_line_counts+7
-	bne	_line_result
+	lda	pluck_line_counts+14	; Note the change to lda
 
-	lda	pluck_line_counts+8
-	bne	_line_result
-
-	lda	pluck_line_counts+9
-	bne	_line_result
-
-	lda	pluck_line_counts+10
-	bne	_line_result
-
-	lda	pluck_line_counts+11
-	bne	_line_result
-
-	lda	pluck_line_counts+12
-	bne	_line_result
-
-	lda	pluck_line_counts+13
-	bne	_line_result
-
-	lda	pluck_line_counts+14
-	bne	_line_result
-
-_line_result:			; Return A
+_pluck_screen_not_empty_result:		; Return A
 	rts
 
 ***************

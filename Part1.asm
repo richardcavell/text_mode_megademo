@@ -791,15 +791,15 @@ collation_number_of_lines:
 
 	RZB	1
 
-*************************************************
-* Pluck - Check to see if the screen is empty yet
+************************************
+* Pluck - Is screen empty (yet)
 *
 * Inputs: None
 *
 * Outputs:
 * A = (Non-zero) Screen is empty
 * A = 0          Screen is not empty
-*************************************************
+************************************
 
 pluck_is_screen_empty:
 

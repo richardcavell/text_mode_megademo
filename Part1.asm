@@ -886,33 +886,6 @@ process_pluck:
 	tsta
 	beq	_process_pluck_2		; No, just keep processing
 
-	jsr	pluck_find_a_spare_slot		; Is there a spare data slot?
-	tsta
-	beq	_process_pluck_2		; No, just keep processing
-
-	stx	spare_slot			; Save for later use
-
-	jsr	pluck_a_char			; Yes, pluck a character
-
-_process_pluck_2:
-
-	jsr	process_pluck_2			; Do one frame
-
-	rts
-
-*****************************************
-* Pluck - Find a spare slot
-*
-* Inputs: None
-*
-* Outputs:
-* A = (Non-zero) There is a spare slot
-* A = 0		 There isn't a spare slot
-* X = (If A is non-zero) The slot address
-*****************************************
-
-pluck_find_a_spare_slot:
-
 	ldx	#plucks_data
 	lda	,x
 	beq	_found_spare
@@ -921,11 +894,17 @@ pluck_find_a_spare_slot:
 	lda	,x
 	beq	_found_spare
 
-	clra
-	rts
+	bra	_process_pluck_2
 
 _found_spare:
-	lda	#1	; Return X as well
+
+	stx	st_x2+1				; We use this below
+	jsr	pluck_a_char
+
+_process_pluck_2:
+
+	jsr	process_pluck_2			; Do one frame
+
 	rts
 
 ***************************
@@ -945,7 +924,7 @@ pluck_a_char:
 	bsr	pluck_char_choose_a_line
 
 	leau	,x		; Contributed by Simon Jonassen
-	ldx	spare_slot	; Get the value from pluck_find_a_spare_slot
+st_x2:	ldx	#0000		; Get the value from process_pluck
 	ldb	,u		; B = the character being plucked
 				; X is the slot
 				; U is the screen position

@@ -931,14 +931,13 @@ st_x2:	ldx	#0000		; Get the value from process_pluck
 	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
 	std	,x++		; SJ contributed this line as well
 	stu	,x		; And where it is
-	leax	,u		; SJ contributed this line
 
 *********************
 * Place white box
 *********************
 
 	lda	#WHITE_BOX
-	sta	,x
+	sta	,u
 
 	ldx	#pop_sound
 	ldu	#pop_sound_end

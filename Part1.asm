@@ -1054,8 +1054,7 @@ olda1:	lda	#$00
 	dec	a,x		; There'll be one less character after this
 	bne	_skip_cache_dirtying
 
-	clrb
-	stb	collation_number_of_lines	; Rebuild collation next time
+	clr	collation_number_of_lines	; Rebuild collation next time
 
 _skip_cache_dirtying:
 

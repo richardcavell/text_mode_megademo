@@ -920,8 +920,7 @@ pluck_a_char:
 	tsta
 	beq	_no_chars_left
 
-	bsr	pluck_collate_non_zero_lines
-	bsr	pluck_char_choose_a_line
+	bsr	pluck_collate_and_choose
 
 	leau	,x		; Contributed by Simon Jonassen
 st_x2:	ldx	#0000		; Get the value from process_pluck
@@ -946,16 +945,16 @@ st_x2:	ldx	#0000		; Get the value from process_pluck
 _no_chars_left:
 	rts		; No more unplucked characters left on the screen
 
-********************************
-* Pluck - Collate non-zero lines
+****************************
+* Pluck - Collate and choose
 *
 * Inputs: None
 *
 * Output:
-* A = Number of non-zero lines
-********************************
+* A = Chosen line number
+****************************
 
-pluck_collate_non_zero_lines:
+pluck_collate_and_choose:
 
 	lda	collation_number_of_lines
 	bne	pluck_use_collation	; Cached from prior operation
@@ -1019,16 +1018,9 @@ _pluck_collate_finished:
 	sta	collation_number_of_lines	; rebuild next time
 
 pluck_use_collation:
-	rts					; Return A
 
 ******************************
 * Pluck - Choose a line
-*
-* Inputs:
-* A = Number of collated lines
-*
-* Output:
-* A = Chosen line number
 ******************************
 
 pluck_char_choose_a_line:

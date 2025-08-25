@@ -1148,8 +1148,7 @@ pluck_phase_3:
 
 pluck_phase_3_ended:		; Character has gone off the right side
 
-	clra
-	sta	,u		; This slot is now empty
+	clr	,u		; This slot is now empty
 
 	rts
 

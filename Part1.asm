@@ -71,6 +71,8 @@ AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
 DSKREG		EQU	$FF40
 
+SET_SAM_R0	EQU	$FFD7
+
 *****************************
 * Define POLCAT and BREAK_KEY
 *****************************
@@ -195,6 +197,12 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 	lda	#$FF
 	tfr	a,dp
 	SETDP	$FF
+
+***********************
+* Enable half-fast mode
+***********************
+
+	sta	SET_SAM_R0	; Enable half-fast mode (Simon Jonassen)
 
 *********************
 * Turn off disk motor

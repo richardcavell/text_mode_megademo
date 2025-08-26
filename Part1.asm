@@ -227,7 +227,7 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 
 * End code modified from code written by Simon Jonassen
 
-	lda	#128
+	lda	#127
 	sta	AUDIO_PORT	; Get rid of that click
 
 * This code was modified from code written by Trey Tomes

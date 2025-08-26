@@ -1448,13 +1448,13 @@ baby_elephant_end:
 
 pop_sound:
 
-	INCLUDEBIN "Sounds/Pop/Pop.raw"
+	INCLUDEBIN "Sounds/Pop/Pop.snd"
 
 pop_sound_end:
 
 type_sound:
 
-	INCLUDEBIN "Sounds/Type/Type.raw"
+	INCLUDEBIN "Sounds/Type/Type.snd"
 
 type_sound_end:
 

@@ -12,10 +12,10 @@ PART5.BIN
 sin_table.asm
 sin_table_generator
 sound_stripper
-Sounds/Pop/Pop.raw
+Sounds/Pop/Pop.snd
 Sounds/Pop/Pop_resampled.raw
 Sounds/Type/Model_M_resampled.raw
-Sounds/Type/Type.raw
+Sounds/Type/Type.snd
 Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM_resampled.raw
 Sounds/RJFC_Presents_TMM/RJFC_Presents_TMM.raw
 Sounds/Dot/Finger_Snap_resampled.raw

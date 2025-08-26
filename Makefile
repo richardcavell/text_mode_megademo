@@ -17,11 +17,11 @@ PART3_SRC	=	Part3.asm
 PART4_SRC	=	Part4.asm
 PART5_SRC	=	Part5.asm
 
-POP_SOUND	=	Sounds/Pop/Pop.raw
+POP_SOUND	=	Sounds/Pop/Pop.snd
 POP_SOUND_RES	=	Sounds/Pop/Pop_resampled.raw
 POP_SOUND_SRC	=	Sounds/Pop/Mouth_pop.wav
 
-TYPE_SOUND	=	Sounds/Type/Type.raw
+TYPE_SOUND	=	Sounds/Type/Type.snd
 TYPE_SOUND_RES	=	Sounds/Type/Model_M_resampled.raw
 TYPE_SOUND_SRC	=	Sounds/Type/Model_M.wav
 

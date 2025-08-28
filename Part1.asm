@@ -198,12 +198,6 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 	tfr	a,dp
 	SETDP	$FF
 
-***********************
-* Enable half-fast mode
-***********************
-
-	sta	SET_SAM_R0	; Enable half-fast mode (Simon Jonassen)
-
 *********************
 * Turn off disk motor
 *********************

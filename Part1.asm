@@ -712,45 +712,27 @@ service_vblank:
 	clra				; No longer waiting
 	sta	waiting_for_vblank
 
-	ldx	#TEXTBUF
-	ldu	#BACKBUF
+st1val:	lda	#00
+	beq	_finished_storing
+st1add:	sta	0000
 
-_copy_loop:	; Copy the backbuffer to the text screen
+st2val:	lda	#00
+	beq	_finished_storing
+st2add:	sta	0000
 
-; This code was contributed by Simon Jonassen
+st3val:	lda	#00
+	beq	_finished_storing
+st3add:	sta	0000
 
-        pulu    d,y
-        std     ,x
-        sty     2,x
-        pulu    d,y
-        std     4,x
-        sty     6,x
-        pulu    d,y
-        std     8,x
-        sty     10,x
+st4val:	lda	#00
+	beq	_finished_storing
+st4add:	sta	0000
 
-        pulu    d,y
-        std     12,x
-        sty     14,x
-        pulu    d,y
-        std     16,x
-        sty     18,x
-        pulu    d,y
-        std     20,x
-        sty     22,x
+st5val:	lda	#00
+	beq	_finished_storing
+st5add:	sta	0000
 
-        pulu    d,y
-        std     24,x
-        sty     26,x
-        pulu    d,y
-        std     28,x
-        sty     30,x
-
-; End of code contributed by Simon Jonassen
-
-        leax    COLS_PER_LINE,x
-        cmpx    #TEXTBUFEND
-        blo     _copy_loop
+_finished_storing:
 
 _dropped_frame:
 	lda	PIA0BD			; Acknowledge interrupt
@@ -1179,8 +1161,71 @@ _wait_for_vblank_and_check_for_skip_loop:
 	lda	waiting_for_vblank
 	bne	_wait_for_vblank_and_check_for_skip_loop
 
+	clr	st1val+1
+	clr	st2val+1
+	clr	st3val+1
+	clr	st4val+1
+	clr	st5val+1
+
 _wait_for_vblank_skip:
 	rts
+
+******************
+* Prepare to store
+*
+* Inputs:
+* A = value
+* B = address
+*
+* Outputs: None
+******************
+
+prepare_to_store:
+
+	tst	st1val+1
+	bne	_try2
+
+	sta	st1val+1
+	stx	st1add+1
+	rts
+
+_try2:
+
+	tst	st2val+1
+	bne	_try3
+
+	sta	st2val+1
+	stx	st2add+1
+	rts
+
+_try3:
+
+	tst	st3val+1
+	bne	_try4
+
+	sta	st3val+1
+	stx	st3add+1
+	rts
+
+_try4:
+
+	tst	st4val+1
+	bne	_try5
+
+	sta	st4val+1
+	stx	st4add+1
+	rts
+
+_try5:
+
+	tst	st5val+1
+	bne	_full
+
+	sta	st5val+1
+	stx	st5add+1
+	rts
+
+_full:	bra	_full	; Error!
 
 ***********************************
 * Wait for a number of frames

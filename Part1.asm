@@ -41,8 +41,6 @@ WAIT_PERIOD	EQU	25
 TEXTBUF		EQU	$400	; This is the output text screen
 TEXTBUFSIZE	EQU	$200
 TEXTBUFEND	EQU	(TEXTBUF+TEXTBUFSIZE)
-BACKBUF		EQU	back_buffer	; We're double-buffering
-BACKBUFEND	EQU	(BACKBUF+TEXTBUFSIZE)
 
 COLS_PER_LINE	EQU	32
 TEXT_LINES	EQU	16
@@ -70,8 +68,6 @@ PIA2_CRA	EQU	$FF21
 AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
 DSKREG		EQU	$FF40
-
-SET_SAM_R0	EQU	$FFD7
 
 *****************************
 * Define POLCAT and BREAK_KEY
@@ -1496,11 +1492,3 @@ type_sound:
 	INCLUDEBIN "Sounds/Type/Type.snd"
 
 type_sound_end:
-
-**************************
-* Our backbuffer goes here
-**************************
-
-	align	COLS_PER_LINE
-
-back_buffer:

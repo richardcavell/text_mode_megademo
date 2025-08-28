@@ -130,46 +130,6 @@ TEST_ADDR	EQU	32767
 
 	dec	$71		; Make any reset COLD (Simon Jonassen)
 
-******************
-* Setup backbuffer
-******************
-
-	ldu	#TEXTBUF
-	ldx	#BACKBUF
-
-_setup_backbuffer_loop: ; The following code is adapted from code written by
-			; Simon Jonassen
-        pulu    d,y
-        std     ,x
-        sty     2,x
-        pulu    d,y
-        std     4,x
-        sty     6,x
-        pulu    d,y
-        std     8,x
-        sty     10,x
-
-        pulu    d,y
-        std     12,x
-        sty     14,x
-        pulu    d,y
-        std     16,x
-        sty     18,x
-        pulu    d,y
-        std     20,x
-        sty     22,x
-
-        pulu    d,y
-        std     24,x
-        sty     26,x
-        pulu    d,y
-        std     28,x
-        sty     30,x	; End of code adapted from SJ's code
-
-	leax	COLS_PER_LINE,x
-	cmpx	#BACKBUFEND
-	blo	_setup_backbuffer_loop
-
 *********************************
 * Install our IRQ service routine
 *********************************
@@ -271,7 +231,10 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 * Display skip message at the bottom of the screen
 **************************************************
 
-	ldx	#BACKBUF+PLUCK_LINES*COLS_PER_LINE
+	lda	#1
+	jsr	wait_frames
+
+	ldx	#TEXTBUF+PLUCK_LINES*COLS_PER_LINE
 
 ; This code was inspired by Simon Jonassen
 
@@ -327,7 +290,7 @@ _setup_backbuffer_loop: ; The following code is adapted from code written by
 * This is for the first section of Part 1
 *****************************************
 
-	ldx	#BACKBUF
+	ldx	#TEXTBUF
 	ldu	#pluck_line_counts
 	lda	#GREEN_BOX
 	clrb

@@ -888,7 +888,8 @@ st_x2:	ldx	#0000		; Get the value from process_pluck
 *********************
 
 	lda	#WHITE_BOX
-	sta	,u
+	leax	,u
+	jsr	prepare_to_store
 
 	ldx	#pop_sound
 	ldu	#pop_sound_end
@@ -1010,7 +1011,7 @@ olda1:	lda	#$00
 
 _skip_cache_dirtying:
 
-	ldx	#BACKBUF
+	ldx	#TEXTBUF
 	inca	; Make X point to the right end of the line
 	ldb	#COLS_PER_LINE
 	mul
@@ -1072,8 +1073,9 @@ plp2	cmpa	#PLUCK_PHASE_PLAIN
 
 * Phase 2
 
-	ldb	1,u
-	stb	[2,u]		; Show the plain character
+	lda	1,u
+	ldx	2,u		; Show the plain character
+	jsr	prepare_to_store
 
 	lda	#PLUCK_PHASE_PULLING	; Go to phase 3
 	sta	,u
@@ -1084,16 +1086,17 @@ plp2	cmpa	#PLUCK_PHASE_PLAIN
 
 pluck_phase_3:
 
-	ldx	2,u
 	lda	#GREEN_BOX
-	sta	,x+		; Erase the drawn character
+	ldx	2,u
+	jsr	prepare_to_store	; Erase the drawn character
 
+	leax	1,x
 	tfr	x,d
 	andb	#0b00011111	; Is it divisible by 32?
 	beq	pluck_phase_3_ended
 
-	ldb	1,u
-	stb	,x		; Draw it in the next column to the right
+	lda	1,u
+	jsr	prepare_to_store ; Draw it in the next column to the right
 	stx	2,u		; Update position in plucks_data
 
 	rts
@@ -1143,7 +1146,7 @@ _wait_for_vblank_skip:
 *
 * Inputs:
 * A = value
-* B = address
+* X = address
 *
 * Outputs: None
 ******************
@@ -1232,7 +1235,7 @@ _wait_frames_return:			; Return A
 
 display_messages:
 
-	ldu	#BACKBUF
+	ldu	#TEXTBUF
 
 _display_messages_loop:
 	lda	,x+

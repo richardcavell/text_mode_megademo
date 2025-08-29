@@ -231,9 +231,6 @@ TEST_ADDR	EQU	32767
 * Display skip message at the bottom of the screen
 **************************************************
 
-	lda	#1
-	jsr	wait_frames
-
 	ldx	#TEXTBUF+PLUCK_LINES*COLS_PER_LINE
 
 ; This code was inspired by Simon Jonassen
@@ -677,8 +674,7 @@ service_vblank:
 	lda	waiting_for_vblank	; The demo is waiting for the signal
 	beq	_dropped_frame
 
-	clra				; No longer waiting
-	sta	waiting_for_vblank
+	clr	waiting_for_vblank
 
 st1val:	lda	#00
 	beq	_finished_storing
@@ -1179,24 +1175,9 @@ _try3:
 	rts
 
 _try4:
-
-	tst	st4val+1
-	bne	_try5
-
 	sta	st4val+1
 	stx	st4add+1
 	rts
-
-_try5:
-
-	tst	st5val+1
-	bne	_full
-
-	sta	st5val+1
-	stx	st5add+1
-	rts
-
-_full:	bra	_full	; Error!
 
 ***********************************
 * Wait for a number of frames
@@ -1244,7 +1225,11 @@ _display_messages_loop:
 	beq	display_messages_big_pause
 	cmpa	#MESSAGES_END
 	beq	_display_messages_end
-	sta	,u+
+	pshs	x
+	leax	,u
+	jsr	prepare_to_store
+	puls	x
+	leau	1,u
 
 	cmpa	#GREEN_BOX
 	beq	_display_messages_skip_sound

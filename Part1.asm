@@ -382,13 +382,16 @@ _pluck_finished:
 * Joke startup screen
 *********************
 
+	lda	#1
+	jsr	wait_frames
+
 * Clear the screen
 * This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
 	ldx	#GREEN_BOX << 8 | GREEN_BOX
 	ldy	#GREEN_BOX << 8 | GREEN_BOX
-	ldu	#BACKBUFEND	; (1 past end of screen)
+	ldu	#TEXTBUFEND	; (1 past end of screen)
 
 _clr_screen_1:
 	pshu	d,x,y
@@ -396,7 +399,7 @@ _clr_screen_1:
 	pshu	d,x,y
 	pshu	d,x,y
 	pshu	d,x,y
-	cmpu	#BACKBUF+2	; Compare U to two bytes from start
+	cmpu	#TEXTBUF+2	; Compare U to two bytes from start
 	bgt	_clr_screen_1	; If X!=that, GOTO loop48s
 	std	-2,u		; Final 2 bytes
 
@@ -419,13 +422,16 @@ _skip_joke_startup:
 * Loading screen
 ****************
 
+	lda	#1
+	jsr	wait_frames
+
 * Clear the screen
 * This code was written by Allen C. Huffman and modified by me and SJ
 
 	ldd	#GREEN_BOX << 8 | GREEN_BOX
 	ldx	#GREEN_BOX << 8 | GREEN_BOX
 	ldy	#GREEN_BOX << 8 | GREEN_BOX
-	ldu	#BACKBUFEND	; (1 past end of screen)
+	ldu	#TEXTBUFEND	; (1 past end of screen)
 
 _clr_screen_2:
 	pshu	d,x,y
@@ -433,7 +439,7 @@ _clr_screen_2:
 	pshu	d,x,y
 	pshu	d,x,y
 	pshu	d,x,y
-	cmpu	#BACKBUF+2	; Compare U to two bytes from start
+	cmpu	#TEXTBUF+2	; Compare U to two bytes from start
 	bgt	_clr_screen_2	; If X!=that, GOTO loop48s
 	std	-2,u		; Final 2 bytes
 
@@ -447,7 +453,7 @@ _clr_screen_2:
 ***********************************
 
 	ldu	#baby_elephant_graphic
-	ldx	#BACKBUF+COLS_PER_LINE	; Start one line down
+	ldx	#TEXTBUF+COLS_PER_LINE	; Start one line down
 
 _display_text_graphic_loop:
         lda     ,u+
@@ -494,7 +500,10 @@ _display_text_graphic_finished:
 	cmpa	#TEST_VALUE
 	beq	_continue
 
-	ldx	#BACKBUF+15*COLS_PER_LINE+2
+	lda	#1
+	jsr	wait_frames
+
+	ldx	#TEXTBUF+15*COLS_PER_LINE+2
 	ldd	#"YO"
 	std	,x
 	ldd	#'U'*256+$60
@@ -524,9 +533,6 @@ _display_text_graphic_finished:
 	ldd	#"UE"
 	std	26,x
 
-	lda	#1
-	jsr	wait_frames
-
 _infinite:
 	bra	_infinite
 
@@ -535,7 +541,10 @@ _continue:
 * Print loading text
 ********************
 
-	ldx	#BACKBUF+15*COLS_PER_LINE+11
+	lda	#1
+	jsr	wait_frames
+
+	ldx	#TEXTBUF+15*COLS_PER_LINE+11
 
 	ldd	#"LO"
 	std	,x

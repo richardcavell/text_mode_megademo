@@ -327,7 +327,7 @@ stb_p	ldb	#4
 **************************************************
 
 	lda	#1
-	jsr	wait_frames
+	jsr	wait_frames	; Wait until the screen is drawn
 
 	ldx	#TEXTBUF+PLUCK_LINES*COLS_PER_LINE
 

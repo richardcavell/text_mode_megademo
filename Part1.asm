@@ -250,66 +250,71 @@ TEST_ADDR	EQU	32767
 	ldx	#TEXTBUF
 	ldu	#pluck_line_counts
 	lda	#GREEN_BOX
-	clrb
+
+_pluck_count_line:
+	ldb	#4
 
 _pluck_count_loop:
+	stb	stb_p+1
+	ldb	,u
+
 	cmpa	,x
 	beq	_skip_count
 
-	inc	,u		; Count non-spaces only
+	incb			; Count non-spaces only
 
 _skip_count:
 	cmpa	1,x
 	beq	_skip_count2
 
-	inc	,u
+	incb
 
 _skip_count2:
 	cmpa	2,x
 	beq	_skip_count3
 
-	inc	,u
+	incb
 
 _skip_count3:
 	cmpa	3,x
 	beq	_skip_count4
 
-	inc	,u
+	incb
 
 _skip_count4:
 	cmpa	4,x
 	beq	_skip_count5
 
-	inc	,u
+	incb
 
 _skip_count5:
 	cmpa	5,x
 	beq	_skip_count6
 
-	inc	,u
+	incb
 
 _skip_count6:
 	cmpa	6,x
 	beq	_skip_count7
 
-	inc	,u
+	incb
 
 _skip_count7:
 	cmpa	7,x
 	beq	_skip_count8
 
-	inc	,u
+	incb
 
 _skip_count8:
+	stb	,u
 	leax	8,x
-	addb	#8
-	cmpb	#COLS_PER_LINE
+stb_p	ldb	#4
+	decb
 	bne	_pluck_count_loop
 
 	leau	1,u
-	clrb
 	cmpu	#pluck_line_counts_end
-	blo	_pluck_count_loop
+	blo	_pluck_count_line
 
 **************************************
 * Turn IRQ and FIRQ interrupts back on

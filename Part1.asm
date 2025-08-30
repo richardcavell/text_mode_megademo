@@ -211,9 +211,9 @@ TEST_ADDR	EQU	32767
 
 * End of code modified by me from code written by other people
 
-********************
-* Turn on interrupts
-********************
+********************************
+* Turn on VSync/HSync interrupts
+********************************
 
 * This code was originally written by Simon Jonassen (The Invisible Man)
 * and then modified by me
@@ -229,49 +229,6 @@ TEST_ADDR	EQU	32767
 	lda	PIA0AD		; Acknowledge any outstanding HSync interrupt
 
 * End code modified by me from code written by Simon Jonassen
-
-**************************************************
-* Display skip message at the bottom of the screen
-**************************************************
-
-	ldx	#TEXTBUF+PLUCK_LINES*COLS_PER_LINE
-
-; This code was inspired by Simon Jonassen
-
-        ldd	#$6060
-        std     ,x
-	ldd	#"PR"
-	std	2,x
-	ldd	#"ES"
-	std	4,x
-	ldd	#"S"*256+$60
-	std	6,x
-	ldd	#"SP"
-	std	8,x
-	ldd	#"AC"
-	std	10,x
-	ldd	#"E"*256+$60
-	std	12,x
-	ldd	#"TO"
-	std	14,x
-	ldd	#$60*256+"S"
-	std	16,x
-	ldd	#"KI"
-	std	18,x
-	ldd	#"P"*256+$60
-	std	20,x
-	ldd	#"AN"
-	std	22,x
-	ldd	#"Y"*256+$60
-	std	24,x
-	ldd	#"PA"
-	std	26,x
-	ldd	#"RT"
-	std	28,x
-	ldd	#$6060
-	std	30,x
-
-; End of code inspired by Simon Jonassen
 
 ***************************************
 * Set DP register for interrupt handler
@@ -359,6 +316,52 @@ _skip_count8:
 **************************************
 
 	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
+
+**************************************************
+* Display skip message at the bottom of the screen
+**************************************************
+
+	lda	#1
+	jsr	wait_frames
+
+	ldx	#TEXTBUF+PLUCK_LINES*COLS_PER_LINE
+
+; This code was inspired by Simon Jonassen
+
+        ldd	#$6060
+        std     ,x
+	ldd	#"PR"
+	std	2,x
+	ldd	#"ES"
+	std	4,x
+	ldd	#"S"*256+$60
+	std	6,x
+	ldd	#"SP"
+	std	8,x
+	ldd	#"AC"
+	std	10,x
+	ldd	#"E"*256+$60
+	std	12,x
+	ldd	#"TO"
+	std	14,x
+	ldd	#$60*256+"S"
+	std	16,x
+	ldd	#"KI"
+	std	18,x
+	ldd	#"P"*256+$60
+	std	20,x
+	ldd	#"AN"
+	std	22,x
+	ldd	#"Y"*256+$60
+	std	24,x
+	ldd	#"PA"
+	std	26,x
+	ldd	#"RT"
+	std	28,x
+	ldd	#$6060
+	std	30,x
+
+; End of code inspired by Simon Jonassen
 
 ************
 * Pluck loop

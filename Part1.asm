@@ -119,12 +119,16 @@ PLUCK_PHASE_PULLING	EQU	3
 TEST_VALUE	EQU	123
 TEST_ADDR	EQU	32767
 
-*********************************
+******
+* Code
+******
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
-		ORG $1800
+	ORG $1800
+
+	SETDP	0
 
 	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
 
@@ -158,8 +162,7 @@ TEST_ADDR	EQU	32767
 * Turn off disk motor
 *********************
 
-	clra
-	sta	DSKREG		; Turn off disk motor
+	clr	DSKREG		; Turn off disk motor
 
 *********************
 * Turn 6-bit audio on

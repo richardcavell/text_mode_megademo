@@ -698,10 +698,6 @@ st4val:	lda	#00
 	beq	_finished_storing
 st4add:	sta	0000
 
-st5val:	lda	#00
-	beq	_finished_storing
-st5add:	sta	0000
-
 _finished_storing:
 
 _dropped_frame:
@@ -1138,7 +1134,6 @@ _wait_for_vblank_and_check_for_skip_loop:
 	clr	st2val+1
 	clr	st3val+1
 	clr	st4val+1
-	clr	st5val+1
 
 _wait_for_vblank_skip:
 	rts

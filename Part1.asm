@@ -1,3 +1,6 @@
+; Up to line 461
+; Process pluck during vertical blank
+; Blit the elephant in
 * This is Part 1 of Text Mode Megademo
 * by Richard Cavell
 * June - August 2025

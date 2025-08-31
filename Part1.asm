@@ -408,7 +408,7 @@ _clr_screen_1:
 	pshu	d,x,y
 	pshu	d,x,y
 	cmpu	#TEXTBUF+2	; Compare U to two bytes from start
-	bgt	_clr_screen_1	; If X!=that, GOTO loop48s
+	bgt	_clr_screen_1	; If X!=that, GOTO _clr_screen_1
 	std	-2,u		; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ
@@ -448,7 +448,7 @@ _clr_screen_2:
 	pshu	d,x,y
 	pshu	d,x,y
 	cmpu	#TEXTBUF+2	; Compare U to two bytes from start
-	bgt	_clr_screen_2	; If X!=that, GOTO loop48s
+	bgt	_clr_screen_2	; If X!=that, GOTO _clr_screen_2
 	std	-2,u		; Final 2 bytes
 
 * End of code written by Allen C. Huffman and modified by me and SJ

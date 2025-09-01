@@ -1,6 +1,5 @@
 ; Up to line 461
 ; Process pluck during vertical blank
-; Blit the elephant in
 * This is Part 1 of Text Mode Megademo
 * by Richard Cavell
 * June - August 2025
@@ -466,41 +465,42 @@ _clr_screen_2:
 	ldu	#baby_elephant_graphic
 	ldx	#TEXTBUF+COLS_PER_LINE	; Start one line down
 
-_display_text_graphic_loop:
-        lda     ,u+
-        beq     text_graphic_new_line
-        cmpa    #TEXTGRAPHIC_END
-        beq	_display_text_graphic_finished
-        sta     ,x+
+; The following code is adapted from code written by Simon Jonassen
 
-        lda     ,u+
-        beq     text_graphic_new_line
-        cmpa    #TEXTGRAPHIC_END
-        beq	_display_text_graphic_finished
-        sta     ,x+
+_copy_elephant:
 
-        lda     ,u+
-        beq     text_graphic_new_line
-        cmpa    #TEXTGRAPHIC_END
-        beq	_display_text_graphic_finished
-        sta     ,x+
+        pulu    d,y
+        std     ,x
+        sty     2,x
+        pulu    d,y
+        std     4,x
+        sty     6,x
+        pulu    d,y
+        std     8,x
+        sty     10,x
 
-        lda     ,u+
-        beq     text_graphic_new_line
-        cmpa    #TEXTGRAPHIC_END
-        beq	_display_text_graphic_finished
-        sta     ,x+
+        pulu    d,y
+        std     12,x
+        sty     14,x
+        pulu    d,y
+        std     16,x
+        sty     18,x
+        pulu    d,y
+        std     20,x
+        sty     22,x
 
-        bra     _display_text_graphic_loop
+        pulu    d,y
+        std     24,x
+        sty     26,x
+        pulu    d,y
+        std     28,x
+        sty     30,x
 
-text_graphic_new_line:
+; End of code adapted from Simon Jonassen's code
 
-	tfr	x,d
-	addd	#COLS_PER_LINE
-	andb	#0b11100000
-	tfr	d,x
-
-	bra	_display_text_graphic_loop
+	leax	COLS_PER_LINE,x
+	cmpu	#baby_elephant_end
+	blo	_copy_elephant
 
 _display_text_graphic_finished:
 
@@ -1430,19 +1430,30 @@ joke_startup_messages:
 
 baby_elephant_graphic:
 
-	FCV	"     ..-- ,.--.",0
-	FCV	"   .'   .'    /",0
-	FCV	"   ! @       !'..--------..",0
-	FCV	"  /      \\../              '.",0
-	FCV	" /  .-.-                     \\",0
-	FCV	"(  /    \\                     !",0
-	FCV	" \\\\      '.                  !#",0
-	FCV	"  \\\\       \\   -.           /",0
-	FCV	"   :\\       !    ).......'   \\",0
-	FCV	"    \"       !   /  \\   !  \\   )",0
-	FCV	"      SND   !   !./'   :.. \.-'",0
-	FCV	"            '--'",0
-	FCB	TEXTGRAPHIC_END
+	FCV	"     ..-- ,.--."
+	RZB	17,$60
+	FCV	"   .'   .'    /"
+	RZB	17,$60
+	FCV	"   ! @       !'..--------.."
+	RZB	5,$60
+	FCV	"  /      \\../              '."
+	RZB	3,$60
+	FCV	" /  .-.-                     \\"
+	RZB	2,$60
+	FCV	"(  /    \\                     !"
+	RZB	1,$60
+	FCV	" \\\\      '.                  !#"
+	RZB	1,$60
+	FCV	"  \\\\       \\   -.           /"
+	RZB	3,$60
+	FCV	"   :\\       !    ).......'   \\"
+	RZB	2,$60
+	FCV	"    \"       !   /  \\   !  \\   )"
+	RZB	1,$60
+	FCV	"      SND   !   !./'   :.. \\.-'"
+	RZB	1,$60
+	FCV	"            '--'"
+	RZB	16,$60
 
 baby_elephant_end:
 

@@ -1,4 +1,4 @@
-; Up to line 461
+; Up to line 505
 ; Process pluck during vertical blank
 * This is Part 1 of Text Mode Megademo
 * by Richard Cavell

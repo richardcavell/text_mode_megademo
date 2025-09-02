@@ -1,4 +1,4 @@
-; Up to line 505
+; Up to line 609
 ; Process pluck during vertical blank
 * This is Part 1 of Text Mode Megademo
 * by Richard Cavell
@@ -68,6 +68,8 @@ AUDIO_PORT  	EQU	$FF20		; (the top 6 bits)
 DDRA		EQU	$FF20
 PIA2_CRA	EQU	$FF21
 AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
+
+AUDIO_NEUTRAL	EQU	127
 
 DSKREG		EQU	$FF40
 
@@ -182,7 +184,7 @@ TEST_ADDR	EQU	32767
 
 * End code modified from code written by Simon Jonassen
 
-	lda	#127
+	lda	#AUDIO_NEUTRAL
 	sta	AUDIO_PORT	; Get rid of that click
 
 * This code was modified from code written by Trey Tomes
@@ -568,9 +570,6 @@ _continue:
 	ldd	#(('.'+64)*256)+'.'+64
 	std	8,x
 
-	lda	#1
-	jsr	wait_frames
-
 *********************
 * Turn off interrupts
 *********************
@@ -635,7 +634,7 @@ irq_service_routine:
 
 * This code was written by Simon Jonassen and modified by me
 
-	lda	#127
+	lda	#AUDIO_NEUTRAL
 
 smp_1:	ldx	#0		; pointer to sample
 end_1:	cmpx	#0		; done ?

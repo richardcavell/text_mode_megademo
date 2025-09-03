@@ -1359,8 +1359,8 @@ _spare_slot:
 
 play_sound:
 
-	ldy	smp_1+1
-	cmpy	end_1+1
+	ldd	smp_1+1
+	cmpd	end_1+1
 	bne	_slot_2
 
 * This code was modified from code written by Simon Jonassen
@@ -1373,8 +1373,8 @@ play_sound:
 	rts
 
 _slot_2:
-	ldy	smp_2+1
-	cmpy	end_2+1
+	ldd	smp_2+1
+	cmpd	end_2+1
 	bne	_slot_3
 
 * This code was modified from code written by Simon Jonassen
@@ -1387,8 +1387,8 @@ _slot_2:
 	rts
 
 _slot_3:
-	ldy	smp_3+1
-	cmpy	end_3+1
+	ldd	smp_3+1
+	cmpd	end_3+1
 	bne	_slot_4
 
 * This code was modified from code written by Simon Jonassen

@@ -1,5 +1,3 @@
-; Up to line 609
-; Process pluck during vertical blank
 * This is Part 1 of Text Mode Megademo
 * by Richard Cavell
 * June - August 2025
@@ -430,6 +428,25 @@ _clr_screen_1:
 
 _skip_joke_startup:
 
+***************************
+* Turn off HSync interrupts
+***************************
+
+	orcc	#0b00010000		; Switch off IRQ interrupts
+
+* This code is modified from code written by Simon Jonassen
+
+	lda	PIA0AC		; Turn off HSYNC interrupt
+	anda	#0b11111110
+	sta	PIA0AC
+
+	lda	PIA0AD		; Acknowledge any outstanding
+				; interrupt request
+
+* End of code modified from code written by Simon Jonassen
+
+	andcc	#0b11101111		; Switch IRQ interrupts back on
+
 ****************
 * Loading screen
 ****************
@@ -570,26 +587,11 @@ _continue:
 	ldd	#(('.'+64)*256)+'.'+64
 	std	8,x
 
-*********************
-* Turn off interrupts
-*********************
-
-	orcc	#0b00010000		; Switch off IRQ interrupts
-
-* This code is modified from code written by Simon Jonassen
-
-	lda	PIA0AC		; Turn off HSYNC interrupt
-	anda	#0b11111110
-	sta	PIA0AC
-
-	lda	PIA0AD		; Acknowledge any outstanding
-				; interrupt request
-
-* End of code modified from code written by Simon Jonassen
-
 *************************************
 * Restore BASIC's IRQ service routine
 *************************************
+
+	orcc	#0b00010000		; Switch off IRQ interrupts
 
 	lda	decb_irq_service_instruction
 	sta	IRQ_INSTRUCTION

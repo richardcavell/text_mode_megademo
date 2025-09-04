@@ -853,7 +853,7 @@ process_pluck:
 	lda	,x
 	beq	_found_spare
 
-	bra	_process_pluck_2
+	jmp	process_pluck_2
 
 _found_spare:
 
@@ -862,9 +862,7 @@ _found_spare:
 
 _process_pluck_2:
 
-	jsr	process_pluck_2			; Do one frame
-
-	rts
+	jmp	process_pluck_2			; Do one frame
 
 ***************************
 * Pluck - Pluck a character

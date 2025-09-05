@@ -1149,19 +1149,23 @@ _wait_for_vblank_skip:
 * Prepare to store
 *
 * Inputs:
-* A = value
-* X = address
+* A = Value
+* X = Address
 *
 * Outputs: None
 ******************
 
 prepare_to_store:
 
+	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
+
 	tst	st1val+1
 	bne	_try2
 
 	sta	st1val+1
 	stx	st1add+1
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
 
 _try2:
@@ -1171,6 +1175,8 @@ _try2:
 
 	sta	st2val+1
 	stx	st2add+1
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
 
 _try3:
@@ -1180,11 +1186,15 @@ _try3:
 
 	sta	st3val+1
 	stx	st3add+1
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
 
 _try4:
 	sta	st4val+1
 	stx	st4add+1
+
+	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
 
 ***********************************

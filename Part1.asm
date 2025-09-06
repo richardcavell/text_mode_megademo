@@ -132,29 +132,13 @@ TEST_ADDR	EQU	32767
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
-	ORG $1800
+	ORG	$1800
 
 	SETDP	0
 
 	orcc	#0b01010000	; Switch off IRQ and FIRQ interrupts
 
 	dec	$71		; Make any reset COLD (Simon Jonassen)
-
-*********************************
-* Install our IRQ service routine
-*********************************
-
-	lda	IRQ_INSTRUCTION		; Should be JMP (extended ($7e))
-	sta	decb_irq_service_instruction
-
-	ldx	IRQ_HANDLER			; Load the current vector
-	stx	decb_irq_service_routine	; We could call it at the end
-						; of our own handler
-
-		; DP JMP Shaves off 1 byte and cycle !!
-
-	ldd	#$0E*256+(irq_service_routine&255)
-	std	IRQ_INSTRUCTION
 
 ****************************************
 * Set DP register for hardware registers
@@ -247,6 +231,22 @@ TEST_ADDR	EQU	32767
 	SETDP	irq_service_routine/256
 
 * End of code written by Simon Jonassen and modified by me
+
+*********************************
+* Install our IRQ service routine
+*********************************
+
+	lda	IRQ_INSTRUCTION		; Should be JMP (extended ($7e))
+	sta	decb_irq_service_instruction
+
+	ldx	IRQ_HANDLER			; Load the current vector
+	stx	decb_irq_service_routine	; We could call it at the end
+						; of our own handler
+
+		; DP JMP Shaves off 1 byte and cycle !!
+
+	ldd	#$0E*256+(irq_service_routine&255)
+	std	IRQ_INSTRUCTION
 
 *****************************************
 * Count the characters

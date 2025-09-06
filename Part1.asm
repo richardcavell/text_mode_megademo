@@ -67,9 +67,13 @@ DDRA		EQU	$FF20
 PIA2_CRA	EQU	$FF21
 AUDIO_PORT_ON	EQU	$FF23		; Port Enable Audio (bit 3)
 
-AUDIO_NEUTRAL	EQU	127
-
 DSKREG		EQU	$FF40
+
+*****************************
+* To stop that annoying click
+*****************************
+
+AUDIO_NEUTRAL	EQU	127
 
 *****************************
 * Define POLCAT and BREAK_KEY

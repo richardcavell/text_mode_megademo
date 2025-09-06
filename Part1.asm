@@ -125,9 +125,9 @@ PLUCK_PHASE_PULLING	EQU	3
 TEST_VALUE	EQU	123
 TEST_ADDR	EQU	32767
 
-******
-* Code
-******
+********
+* Code *
+********
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command

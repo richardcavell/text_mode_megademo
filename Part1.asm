@@ -1,6 +1,6 @@
 * This is Part 1 of Text Mode Megademo
 * by Richard Cavell
-* June - August 2025
+* June - September 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -708,8 +708,58 @@ st4val:	lda	#00
 st4add:	sta	0000
 
 _finished_storing:
-
 _dropped_frame:
+
+	ldu	#plucks_data
+	lda	,u
+	cmpa	#3
+	bne	_second_one
+
+	lda	#GREEN_BOX
+	ldx	2,u
+	sta	,x
+
+	leax	1,x
+	tfr	x,d
+	andb	#0b00011111	; Is it divisible by 32?
+	beq	pluck_phase_3_ended
+
+	lda	1,u
+	sta	,x
+	stx	2,u		; Update position in plucks_data
+
+	bra	_second_one
+
+pluck_phase_3_ended:		; Character has gone off the right side
+
+	clr	,u		; This slot is now empty
+
+_second_one:
+	ldu	#plucks_data+4
+	lda	,u
+	cmpa	#3
+	bne	_goodbye
+
+	lda	#GREEN_BOX
+	ldx	2,u
+	sta	,x
+
+	leax	1,x
+	tfr	x,d
+	andb	#0b00011111	; Is it divisible by 32?
+	beq	pluck_phase_3_ended2
+
+	lda	1,u
+	sta	,x
+	stx	2,u		; Update position in plucks_data
+
+	bra	_goodbye
+
+pluck_phase_3_ended2:		; Character has gone off the right side
+
+	clr	,u		; This slot is now empty
+
+_goodbye:
 	lda	PIA0BD			; Acknowledge interrupt
 	rti
 
@@ -1091,26 +1141,7 @@ plp2	cmpa	#PLUCK_PHASE_PLAIN
 
 pluck_phase_3:
 
-	lda	#GREEN_BOX
-	ldx	2,u
-	jsr	prepare_to_store	; Erase the drawn character
-
-	leax	1,x
-	tfr	x,d
-	andb	#0b00011111	; Is it divisible by 32?
-	beq	pluck_phase_3_ended
-
-	lda	1,u
-	jsr	prepare_to_store ; Draw it in the next column to the right
-	stx	2,u		; Update position in plucks_data
-
-	rts
-
-pluck_phase_3_ended:		; Character has gone off the right side
-
-	clr	,u		; This slot is now empty
-
-	rts
+	rts		; Let the VBlank handler handle it
 
 ******************************************
 * Wait for VBlank and check for skip

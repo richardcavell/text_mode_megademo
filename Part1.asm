@@ -314,7 +314,7 @@ _skip_count7:
 _skip_count8:
 	stb	,u
 	leax	8,x
-stb_p	ldb	#4
+stb_p:	ldb	#4
 	decb
 	bne	_pluck_count_loop
 

@@ -396,6 +396,10 @@ _pluck_finished:
 * Joke startup screen
 *********************
 
+	clra
+	sta	plucks_data		; Turn off all active plucks
+	sta	plucks_data+4
+
 	lda	#1
 	jsr	wait_frames
 

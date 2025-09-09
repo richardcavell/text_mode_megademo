@@ -536,7 +536,7 @@ _display_text_graphic_finished:
 
 	lda	TEST_ADDR
 	cmpa	#TEST_VALUE
-	beq	_continue
+	beq	_ram_test_passed
 
 	lda	#1
 	jsr	wait_frames
@@ -574,7 +574,7 @@ _display_text_graphic_finished:
 _infinite:
 	bra	_infinite
 
-_continue:
+_ram_test_passed:
 ********************
 * Print loading text
 ********************

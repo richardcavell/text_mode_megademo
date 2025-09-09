@@ -707,14 +707,6 @@ st2val:	lda	#00
 	beq	_finished_storing
 st2add:	sta	0000
 
-st3val:	lda	#00
-	beq	_finished_storing
-st3add:	sta	0000
-
-st4val:	lda	#00
-	beq	_finished_storing
-st4add:	sta	0000
-
 _finished_storing:
 _dropped_frame:
 

@@ -693,11 +693,7 @@ _4_is_silent:
 ****************
 
 service_vblank:
-
-	lda	waiting_for_vblank	; The demo is waiting for the signal
-	beq	_dropped_frame
-
-	clr	waiting_for_vblank
+	clr	waiting_for_vblank	; The demo might be waiting for this
 
 st1val:	lda	#00
 	beq	_finished_storing
@@ -708,7 +704,6 @@ st2val:	lda	#00
 st2add:	sta	0000
 
 _finished_storing:
-_dropped_frame:
 
 	ldu	#plucks_data
 	lda	,u
@@ -1170,8 +1165,6 @@ _wait_for_vblank_and_check_for_skip_loop:
 
 	clr	st1val+1
 	clr	st2val+1
-	clr	st3val+1
-	clr	st4val+1
 
 _wait_for_vblank_skip:
 	rts
@@ -1211,22 +1204,7 @@ _try2:
 	rts
 
 _try3:
-
-	tst	st3val+1
-	bne	_try4
-
-	sta	st3val+1
-	stx	st3add+1
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-	rts
-
-_try4:
-	sta	st4val+1
-	stx	st4add+1
-
-	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
-	rts
+	bra	_try3
 
 ***********************************
 * Wait for a number of frames

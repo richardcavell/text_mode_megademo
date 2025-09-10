@@ -707,8 +707,8 @@ _finished_storing:
 
 	ldu	#plucks_data
 	lda	,u
-	cmpa	#3
-	bne	_second_one
+	cmpa	#PLUCK_PHASE_PULLING
+	bne	_second_slot
 
 	lda	#GREEN_BOX
 	ldx	2,u
@@ -723,17 +723,17 @@ _finished_storing:
 	sta	,x
 	stx	2,u		; Update position in plucks_data
 
-	bra	_second_one
+	bra	_second_slot
 
 pluck_phase_3_ended:		; Character has gone off the right side
 
 	clr	,u		; This slot is now empty
 
-_second_one:
+_second_slot:
 	ldu	#plucks_data+4
 	lda	,u
-	cmpa	#3
-	bne	_goodbye
+	cmpa	#PLUCK_PHASE_PULLING
+	bne	_goodbye_vblank
 
 	lda	#GREEN_BOX
 	ldx	2,u
@@ -748,13 +748,13 @@ _second_one:
 	sta	,x
 	stx	2,u		; Update position in plucks_data
 
-	bra	_goodbye
+	bra	_goodbye_vblank
 
 pluck_phase_3_ended2:		; Character has gone off the right side
 
 	clr	,u		; This slot is now empty
 
-_goodbye:
+_goodbye_vblank:
 	lda	PIA0BD			; Acknowledge interrupt
 	rti
 
@@ -768,7 +768,7 @@ _goodbye:
 
 waiting_for_vblank:
 
-	RZB	1	; The interrupt handler reads and clears this
+	RZB	1	; The interrupt handler clears this
 
 **********************************************
 * Variables relating to DECB's own IRQ handler

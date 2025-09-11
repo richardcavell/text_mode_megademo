@@ -913,6 +913,7 @@ _process_pluck_2:
 * Pluck - Pluck a character
 *
 * Inputs: None
+*
 * Outputs: None
 ***************************
 

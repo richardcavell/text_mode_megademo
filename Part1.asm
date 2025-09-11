@@ -1476,9 +1476,9 @@ baby_elephant_graphic:
 
 baby_elephant_end:
 
-*************************************
-* Here is our raw data for our sounds
-*************************************
+*********************
+* Here are our sounds
+*********************
 
 pop_sound:
 

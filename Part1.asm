@@ -925,21 +925,19 @@ pluck_a_char:
 
 	bsr	pluck_collate_and_choose
 
-	leau	,x		; Contributed by Simon Jonassen
-st_x2:	ldx	#0000		; Get the value from process_pluck
-	ldb	,u		; B = the character being plucked
-				; X is the slot
-				; U is the screen position
+st_x2:	ldu	#0000		; Get the value from process_pluck
+	ldb	,x		; B = the character being plucked
+				; X is the screen position
+				; U is the slot
 	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
-	std	,x		; SJ contributed this line as well
-	stu	2,x		; And where it is
+	std	,u		; SJ contributed this line as well
+	stx	2,u		; And where it is
 
 *********************
 * Place white box
 *********************
 
 	lda	#WHITE_BOX
-	leax	,u
 	jsr	prepare_to_store
 
 	ldx	#pop_sound

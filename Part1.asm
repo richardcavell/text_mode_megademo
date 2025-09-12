@@ -931,8 +931,8 @@ st_x2:	ldx	#0000		; Get the value from process_pluck
 				; X is the slot
 				; U is the screen position
 	lda	#PLUCK_PHASE_TURN_WHITE	; This is our new phase
-	std	,x++		; SJ contributed this line as well
-	stu	,x		; And where it is
+	std	,x		; SJ contributed this line as well
+	stu	2,x		; And where it is
 
 *********************
 * Place white box

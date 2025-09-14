@@ -1191,19 +1191,13 @@ prepare_to_store:
 	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
 
-_try2:
-
-	tst	st2val+1
-	bne	_try3
+_try2:	; Testing shows this will always work
 
 	sta	st2val+1
 	stx	st2add+1
 
 	andcc	#0b10101111	; Switch IRQ and FIRQ interrupts back on
 	rts
-
-_try3:
-	bra	_try3
 
 ***********************************
 * Wait for a number of frames

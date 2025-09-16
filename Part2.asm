@@ -1,6 +1,6 @@
 * This is Part 2 of Text Mode Megademo
 * by Richard Cavell
-* June - August 2025
+* June - September 2025
 *
 * This file is intended to be assembled by asm6809, which is
 * written by Ciaran Anscomb
@@ -32,7 +32,7 @@
 * https://www.asciiart.eu/animals/birds-land
 * Both graphics have been modified by me
 * Animation of the small creature by me
-*
+
 *************************
 * EQUATES
 *************************

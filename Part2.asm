@@ -79,6 +79,12 @@ AUDIO_PORT_ON   EQU     $FF23           ; Port Enable Audio (bit 3)
 DSKREG          EQU     $FF40
 
 *****************************
+* To stop that annoying click
+*****************************
+
+AUDIO_NEUTRAL   EQU     127
+
+*****************************
 * Define POLCAT and BREAK_KEY
 *****************************
 
@@ -99,12 +105,16 @@ TEXT_END 	EQU     255
 GREEN_BOX       EQU     $60
 WHITE_BOX       EQU     $CF
 
-***********************************
+********
+* Code *
+********
 
 * This starting location is found through experimentation with mame -debug
 * and the CLEAR command
 
-		ORG $1800
+	ORG $1800
+
+	SETDP	0
 
         orcc    #0b01010000     ; Switch off IRQ and FIRQ interrupts
 
